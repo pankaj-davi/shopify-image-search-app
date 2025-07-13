@@ -1,0 +1,45 @@
+# Node modules
+node_modules/
+
+# Build output
+/build
+/.cache
+/.turbo
+
+# Environment variables
+.env
+.env.*.local
+.env.local
+
+# Prisma generated files and local db
+prisma/dev.db
+prisma/dev.db-journal
+*.tsbuildinfo
+
+# VSCode and editor settings
+.vscode/
+*.swp
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Firebase
+firebase-debug.log
+.firebaserc
+
+# Misc
+package-lock.json
+test-firebase.js
+
+/extensions/*/dist
+
+# Ignore shopify files created during app dev
+.shopify/*
+.shopify.lock
