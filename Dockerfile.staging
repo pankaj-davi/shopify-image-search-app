@@ -1,23 +1,35 @@
 # Staging Dockerfile
 FROM node:20-alpine AS base
 
-# Install system dependencies
-RUN apk add --no-cache \
+# Add security labels
+LABEL maintainer="Shopify Image Search App Team"
+LABEL version="1.0.0"
+LABEL security.scan="enabled"
+
+# Install system dependencies with security updates
+RUN apk update && apk upgrade && apk add --no-cache \
     openssl \
     curl \
-    git
+    git \
+    dumb-init \
+    && rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+# Create non-root user early
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S shopify -u 1001 -G nodejs
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Copy package files
+COPY --chown=shopify:nodejs package*.json ./
+COPY --chown=shopify:nodejs tsconfig.json ./
+
+# Install dependencies with security checks
+RUN npm ci --only=production --audit && \
+    npm cache clean --force
 
 # Copy source code
-COPY . .
+COPY --chown=shopify:nodejs . .
 
 # Set staging environment
 ENV NODE_ENV=staging
@@ -26,17 +38,15 @@ ENV PORT=3000
 # Build the application
 RUN npm run build
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S shopify -u 1001
-
-# Change ownership and switch to non-root user
-RUN chown -R shopify:nodejs /app
+# Switch to non-root user
 USER shopify
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
 
 EXPOSE 3000
 

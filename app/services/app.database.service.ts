@@ -17,7 +17,7 @@ export class AppDatabaseService {
 
     try {
       // Check if store exists
-      let store = await db.getStore(shopDomain);
+      const store = await db.getStore(shopDomain);
       
       if (!store) {
         // Create new store

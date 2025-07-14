@@ -98,7 +98,10 @@
     "eslint-config-prettier": "^10.0.1",
     "prettier": "^3.2.4",
     "typescript": "^5.2.2",
-    "vite": "^6.2.2"
+    "vite": "^6.2.2",
+    "cross-env": "^7.0.3",
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2"
   },
   "workspaces": [
     "extensions/*"
@@ -120,5 +123,14 @@
     "minimatch": "9.0.5",
     "vite": "^6.2.2"
   },
-  "author": "menar"
+  "author": "menar",
+  "license": "MIT",
+  "homepage": "https://github.com/pankaj-davi/shopify-image-search-app#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pankaj-davi/shopify-image-search-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pankaj-davi/shopify-image-search-app/issues"
+  }
 }
