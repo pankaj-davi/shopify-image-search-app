@@ -39,24 +39,27 @@ function logInfo(message) {
 function logOperation(operation, status, details = '') {
   const timestamp = new Date().toISOString();
   operations.push({ timestamp, operation, status, details });
-  
-  const statusIcon = status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️';
-  console.log(`${statusIcon} ${operation}: ${status.toUpperCase()}${details ? ` - ${details}` : ''}`);
+
+  const statusIcon =
+    status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️';
+  console.log(
+    `${statusIcon} ${operation}: ${status.toUpperCase()}${details ? ` - ${details}` : ''}`
+  );
 }
 
 async function validateEnvironment() {
   logInfo('🔍 Validating database environment...');
-  
+
   const requiredEnvVars = [];
   const optionalEnvVars = [];
-  
+
   // Check database provider
   const dbProvider = process.env.DATABASE_PROVIDER;
   if (!dbProvider) {
     logWarning('DATABASE_PROVIDER not set, defaulting to firebase');
     process.env.DATABASE_PROVIDER = 'firebase';
   }
-  
+
   // Provider-specific environment validation
   switch (dbProvider) {
     case 'firebase':
@@ -76,7 +79,7 @@ async function validateEnvironment() {
       requiredEnvVars.push('MONGODB_URI');
       break;
   }
-  
+
   // Check required environment variables
   const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
   if (missingVars.length > 0) {
@@ -87,35 +90,43 @@ async function validateEnvironment() {
     );
     return false;
   }
-  
+
   // Check if .env file exists
   if (!fs.existsSync('.env') && !process.env.CI) {
-    logWarning('.env file not found - make sure environment variables are set properly');
+    logWarning(
+      '.env file not found - make sure environment variables are set properly'
+    );
   }
-  
+
   logSuccess(`Environment validated for ${dbProvider} database`);
   return true;
 }
 
 async function checkDatabaseConnectivity() {
   logInfo('🔗 Testing database connectivity...');
-  
+
   try {
     const dbProvider = process.env.DATABASE_PROVIDER || 'firebase';
-    
+
     switch (dbProvider) {
       case 'firebase':
         // Test Firebase connectivity
-        await runCommand('node -e "console.log(\'Firebase config check passed\')"', 'Firebase Connection Test');
+        await runCommand(
+          'node -e "console.log(\'Firebase config check passed\')"',
+          'Firebase Connection Test'
+        );
         break;
       case 'prisma':
         // Test Prisma connectivity
-        await runCommand('npx prisma db status || npx prisma db push --preview-feature || echo "Prisma check completed"', 'Prisma Connection Test');
+        await runCommand(
+          'npx prisma db status || npx prisma db push --preview-feature || echo "Prisma check completed"',
+          'Prisma Connection Test'
+        );
         break;
       default:
         logWarning(`No connectivity test available for ${dbProvider}`);
     }
-    
+
     logSuccess('Database connectivity test passed');
     return true;
   } catch (error) {
@@ -130,23 +141,23 @@ async function checkDatabaseConnectivity() {
 
 async function runCommand(command, context = '') {
   try {
-    const result = execSync(command, { 
-      encoding: 'utf8', 
+    const result = execSync(command, {
+      encoding: 'utf8',
       stdio: 'pipe',
       cwd: process.cwd(),
-      timeout: 60000 // 60 second timeout for database operations
+      timeout: 60000, // 60 second timeout for database operations
     });
-    
+
     logOperation(context || command, 'success');
     return { success: true, output: result };
   } catch (error) {
     const errorMessage = error.message || error.toString();
     const stderr = error.stderr || '';
     const stdout = error.stdout || '';
-    
+
     // Analyze database-specific errors
     analyzeDatabaseError(errorMessage + stderr, context);
-    
+
     logOperation(context || command, 'error', errorMessage);
     return { success: false, error: errorMessage, stdout, stderr };
   }
@@ -157,50 +168,51 @@ function analyzeDatabaseError(errorOutput, context) {
     {
       pattern: /connection refused|ECONNREFUSED/i,
       message: 'Database connection refused',
-      solution: 'Check if database server is running and accessible'
+      solution: 'Check if database server is running and accessible',
     },
     {
       pattern: /authentication failed|access denied/i,
       message: 'Database authentication failed',
-      solution: 'Verify database credentials (username, password, API keys)'
+      solution: 'Verify database credentials (username, password, API keys)',
     },
     {
       pattern: /database.*not found|schema.*not found/i,
       message: 'Database or schema not found',
-      solution: 'Create the database/schema or check the database name'
+      solution: 'Create the database/schema or check the database name',
     },
     {
       pattern: /timeout|timed out/i,
       message: 'Database operation timed out',
-      solution: 'Check network connectivity or increase timeout values'
+      solution: 'Check network connectivity or increase timeout values',
     },
     {
       pattern: /permission denied|insufficient privileges/i,
       message: 'Insufficient database permissions',
-      solution: 'Grant necessary permissions to the database user'
+      solution: 'Grant necessary permissions to the database user',
     },
     {
       pattern: /syntax error|invalid query/i,
       message: 'Database query syntax error',
-      solution: 'Check the SQL syntax or database schema'
+      solution: 'Check the SQL syntax or database schema',
     },
     {
       pattern: /disk full|no space/i,
       message: 'Database storage full',
-      solution: 'Free up disk space or increase storage capacity'
+      solution: 'Free up disk space or increase storage capacity',
     },
     {
       pattern: /firebase.*error|firestore.*error/i,
       message: 'Firebase/Firestore error',
-      solution: 'Check Firebase project configuration and service account permissions'
+      solution:
+        'Check Firebase project configuration and service account permissions',
     },
     {
       pattern: /prisma.*error/i,
       message: 'Prisma ORM error',
-      solution: 'Check Prisma schema and database connection string'
-    }
+      solution: 'Check Prisma schema and database connection string',
+    },
   ];
-  
+
   commonErrors.forEach(({ pattern, message, solution }) => {
     if (pattern.test(errorOutput)) {
       logError(message, solution, context);
@@ -211,10 +223,10 @@ function analyzeDatabaseError(errorOutput, context) {
 async function runDatabaseOperation(operation, options = {}) {
   const startTime = Date.now();
   logInfo(`🚀 Starting database operation: ${operation}`);
-  
+
   try {
     let result;
-    
+
     switch (operation) {
       case 'migrate':
         result = await runMigration();
@@ -234,10 +246,10 @@ async function runDatabaseOperation(operation, options = {}) {
       default:
         throw new Error(`Unknown database operation: ${operation}`);
     }
-    
+
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     logSuccess(`Database operation '${operation}' completed in ${duration}s`);
-    
+
     return result;
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -252,7 +264,7 @@ async function runDatabaseOperation(operation, options = {}) {
 
 async function runMigration() {
   const dbProvider = process.env.DATABASE_PROVIDER || 'firebase';
-  
+
   if (dbProvider === 'prisma') {
     return await runCommand('npx prisma migrate deploy', 'Database Migration');
   } else {
@@ -262,15 +274,22 @@ async function runMigration() {
 }
 
 async function runBackup(backupName) {
-  const timestamp = backupName || `backup-${new Date().toISOString().replace(/[:.]/g, '-')}`;
-  return await runCommand(`npm run db:backup -- --name="${timestamp}"`, 'Database Backup');
+  const timestamp =
+    backupName || `backup-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+  return await runCommand(
+    `npm run db:backup -- --name="${timestamp}"`,
+    'Database Backup'
+  );
 }
 
 async function runRestore(backupName) {
   if (!backupName) {
     throw new Error('Backup name is required for restore operation');
   }
-  return await runCommand(`npm run db:restore -- --backup="${backupName}"`, 'Database Restore');
+  return await runCommand(
+    `npm run db:restore -- --backup="${backupName}"`,
+    'Database Restore'
+  );
 }
 
 async function runSeed() {
@@ -281,17 +300,17 @@ async function runReset(force = false) {
   if (process.env.NODE_ENV === 'production' && !force) {
     throw new Error('Database reset not allowed in production environment');
   }
-  
+
   if (!force) {
     logWarning('Database reset will permanently delete all data!');
   }
-  
+
   return await runCommand('npm run db:reset', 'Database Reset');
 }
 
 function generateReport(operation, success) {
   const duration = new Date().toISOString();
-  
+
   console.log('\n' + '='.repeat(60));
   console.log('📊 DATABASE OPERATION REPORT');
   console.log('='.repeat(60));
@@ -301,14 +320,14 @@ function generateReport(operation, success) {
   console.log(`✅ Success: ${success ? 'YES' : 'NO'}`);
   console.log(`⚠️ Warnings: ${warnings.length}`);
   console.log(`❌ Errors: ${errors.length}`);
-  
+
   if (warnings.length > 0) {
     console.log('\n🔸 WARNINGS:');
     warnings.forEach((warning, i) => {
       console.log(`  ${i + 1}. [${warning.context}] ${warning.message}`);
     });
   }
-  
+
   if (errors.length > 0) {
     console.log('\n🔸 ERRORS:');
     errors.forEach((error, i) => {
@@ -318,17 +337,19 @@ function generateReport(operation, success) {
       }
     });
   }
-  
+
   if (operations.length > 0) {
     console.log('\n🔸 OPERATIONS:');
     operations.forEach((op, i) => {
-      console.log(`  ${i + 1}. ${op.operation} - ${op.status} (${op.timestamp})`);
+      console.log(
+        `  ${i + 1}. ${op.operation} - ${op.status} (${op.timestamp})`
+      );
       if (op.details) {
         console.log(`     📝 ${op.details}`);
       }
     });
   }
-  
+
   // Save report to file
   const report = {
     operation,
@@ -340,19 +361,22 @@ function generateReport(operation, success) {
     operations,
     environment: {
       NODE_ENV: process.env.NODE_ENV,
-      CI: process.env.CI
-    }
+      CI: process.env.CI,
+    },
   };
-  
+
   try {
-    fs.writeFileSync('database-operation-report.json', JSON.stringify(report, null, 2));
+    fs.writeFileSync(
+      'database-operation-report.json',
+      JSON.stringify(report, null, 2)
+    );
     console.log('\n📄 Detailed report saved to database-operation-report.json');
   } catch (error) {
     logWarning('Could not save database report to file');
   }
-  
+
   console.log('='.repeat(60));
-  
+
   return success;
 }
 
@@ -360,7 +384,7 @@ function generateReport(operation, success) {
 async function main() {
   const args = process.argv.slice(2);
   const operation = args[0];
-  
+
   if (!operation || args.includes('--help')) {
     console.log(`
 Usage: node database-error-handler.js <operation> [options]
@@ -385,37 +409,38 @@ Examples:
     `);
     process.exit(0);
   }
-  
+
   const options = {};
-  
+
   // Parse options
   const backupNameIndex = args.indexOf('--backup-name');
   if (backupNameIndex !== -1 && args[backupNameIndex + 1]) {
     options.backupName = args[backupNameIndex + 1];
   }
-  
+
   if (args.includes('--force')) {
     options.force = true;
   }
-  
+
   let success = false;
-  
+
   try {
     // Validate environment
     const envValid = await validateEnvironment();
     if (!envValid) {
       process.exit(1);
     }
-    
+
     // Test connectivity (optional - don't fail if this doesn't work)
     await checkDatabaseConnectivity().catch(() => {
-      logWarning('Database connectivity test failed, but continuing with operation');
+      logWarning(
+        'Database connectivity test failed, but continuing with operation'
+      );
     });
-    
+
     // Run the database operation
     await runDatabaseOperation(operation, options);
     success = true;
-    
   } catch (error) {
     logError(
       `Database operation failed: ${error.message}`,
@@ -423,15 +448,15 @@ Examples:
     );
     success = false;
   }
-  
+
   // Generate and display report
   generateReport(operation, success);
-  
+
   process.exit(success ? 0 : 1);
 }
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('\n💥 Uncaught Exception in database operation:', error);
   generateReport('unknown', false);
   process.exit(1);
@@ -445,7 +470,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Run if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
+  main().catch(error => {
     console.error('\n💥 Database script failed:', error);
     generateReport('unknown', false);
     process.exit(1);

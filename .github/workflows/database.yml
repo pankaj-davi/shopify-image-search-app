@@ -68,7 +68,7 @@ jobs:
       - name: 🗄️ Execute database action
         run: |
           echo "🚀 Starting database operation with error handling..."
-          
+
           case "${{ github.event.inputs.action }}" in
             "migrate")
               echo "🔄 Running database migrations with error handling..."
@@ -122,7 +122,7 @@ jobs:
           if [ "${{ github.event.inputs.action }}" = "backup" ]; then
             echo "Backup Name: backup-$(date +%Y%m%d-%H%M%S)"
           fi
-          
+
           # Display detailed report if available
           if [ -f "database-operation-report.json" ]; then
             echo ""
