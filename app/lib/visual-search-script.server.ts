@@ -7,7 +7,7 @@ import { join } from 'path';
 // Read the unified script file content - try backup file first, then fallback to original
 const scriptPaths = [
   join(process.cwd(), 'public', 'visual-search-unified-backup.js'),
-  join(process.cwd(), 'public', 'visual-search-unified.js')
+  join(process.cwd(), 'public', 'visual-search-unified.js'),
 ];
 
 let scriptContent = '';
@@ -23,7 +23,9 @@ for (const scriptPath of scriptPaths) {
 }
 
 if (!scriptContent) {
-  console.error('❌ Failed to read visual search unified script from any location');
+  console.error(
+    '❌ Failed to read visual search unified script from any location'
+  );
   scriptContent = `
     console.warn('Visual search unified script could not be loaded');
     (function() {

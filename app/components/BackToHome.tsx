@@ -1,37 +1,33 @@
-import { Button, Box, InlineStack } from "@shopify/polaris";
+import { Button, Box, InlineStack } from '@shopify/polaris';
 
 interface BackToHomeProps {
-  variant?: "primary" | "secondary" | "tertiary";
-  size?: "micro" | "slim" | "medium" | "large";
-  style?: "floating" | "inline" | "header";
+  variant?: 'primary' | 'secondary' | 'tertiary';
+  size?: 'micro' | 'slim' | 'medium' | 'large';
+  style?: 'floating' | 'inline' | 'header';
 }
 
-export default function BackToHome({ 
-  variant = "secondary",
-  size = "medium",
-  style = "inline"
+export default function BackToHome({
+  variant = 'secondary',
+  size = 'medium',
+  style = 'inline',
 }: BackToHomeProps) {
   const button = (
-    <Button
-      url="/app"
-      variant={variant}
-      size={size}
-    >
+    <Button url="/app" variant={variant} size={size}>
       🏠 Back to Home
     </Button>
   );
 
-  if (style === "floating") {
+  if (style === 'floating') {
     return (
-      <Box 
-        position="fixed" 
-        insetBlockStart="400" 
-        insetInlineEnd="400" 
+      <Box
+        position="fixed"
+        insetBlockStart="400"
+        insetInlineEnd="400"
         zIndex="1000"
       >
-        <Box 
-          background="bg-surface" 
-          borderRadius="200" 
+        <Box
+          background="bg-surface"
+          borderRadius="200"
           shadow="300"
           padding="200"
         >
@@ -41,7 +37,7 @@ export default function BackToHome({
     );
   }
 
-  if (style === "header") {
+  if (style === 'header') {
     return (
       <InlineStack align="space-between" blockAlign="center">
         {button}
@@ -49,24 +45,20 @@ export default function BackToHome({
     );
   }
 
-  return (
-    <Box paddingBlockEnd="500">
-      {button}
-    </Box>
-  );
+  return <Box paddingBlockEnd="500">{button}</Box>;
 }
 
 // Updated styles using Polaris tokens
 export const BACK_TO_HOME_STYLES = {
   // Use Polaris spacing tokens instead of hardcoded values
   inlineTop: {
-    marginBottom: "var(--p-space-500)" // 20px equivalent in Polaris
+    marginBottom: 'var(--p-space-500)', // 20px equivalent in Polaris
   },
-  
+
   cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "var(--p-space-400)" // 16px equivalent in Polaris
-  }
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 'var(--p-space-400)', // 16px equivalent in Polaris
+  },
 };

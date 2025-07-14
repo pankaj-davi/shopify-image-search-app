@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile.staging
     ports:
-      - "3001:3000"
+      - '3001:3000'
     environment:
       - NODE_ENV=staging
       - DATABASE_PROVIDER=firebase
@@ -22,19 +22,19 @@ services:
       - staging_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  # Production environment  
+  # Production environment
   shopify-app-production:
     build:
       context: .
       dockerfile: Dockerfile.production
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - DATABASE_PROVIDER=firebase
@@ -49,7 +49,7 @@ services:
       - production_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
       interval: 30s
       timeout: 10s
       retries: 3

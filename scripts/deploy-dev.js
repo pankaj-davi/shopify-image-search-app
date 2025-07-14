@@ -13,7 +13,7 @@ const DEV_CONFIG = {
   branch: 'develop',
   skipTests: process.argv.includes('--skip-tests'),
   skipBuild: process.argv.includes('--skip-build'),
-  force: process.argv.includes('--force')
+  force: process.argv.includes('--force'),
 };
 
 async function runCommand(command, description) {
@@ -29,10 +29,13 @@ async function runCommand(command, description) {
 
 async function setupDevEnvironment() {
   console.log('🔧 Setting up development environment...');
-  
+
   // Generate development environment
-  await runCommand('npm run setup:env development', 'Generate development environment');
-  
+  await runCommand(
+    'npm run setup:env development',
+    'Generate development environment'
+  );
+
   // Check if .env exists, if not copy from .env.example
   if (!fs.existsSync('.env')) {
     if (fs.existsSync('.env.example')) {
@@ -40,7 +43,7 @@ async function setupDevEnvironment() {
       console.log('⚠️ Please edit .env file with your development values');
     }
   }
-  
+
   console.log('✅ Development environment setup completed');
 }
 
@@ -49,10 +52,10 @@ async function deployToDevelopment() {
     console.log('🧪 Starting development deployment...');
     console.log(`📅 Deployment time: ${new Date().toISOString()}`);
     console.log(`🎯 Platform: ${DEV_CONFIG.platform}`);
-    
+
     // Setup environment
     await setupDevEnvironment();
-    
+
     // Run tests (unless skipped)
     if (!DEV_CONFIG.skipTests) {
       console.log('🧪 Running tests...');
@@ -66,12 +69,12 @@ async function deployToDevelopment() {
         console.warn('⚠️ Tests failed but continuing due to --force flag');
       }
     }
-    
+
     // Build application (unless skipped)
     if (!DEV_CONFIG.skipBuild) {
       await runCommand('npm run build', 'Build application');
     }
-    
+
     // Setup development database
     console.log('🗄️ Setting up development database...');
     try {
@@ -80,22 +83,21 @@ async function deployToDevelopment() {
     } catch (error) {
       console.warn('⚠️ Database setup had issues, but continuing...');
     }
-    
+
     // Deploy based on platform
     await deployToPlatform(DEV_CONFIG.platform);
-    
+
     // Post-deployment tasks
     await postDeploymentTasks();
-    
+
     console.log('🎉 Development deployment completed successfully!');
-    
+
     // Display deployment info
     console.log('\n📊 Development Deployment Summary:');
     console.log(`   Platform: ${DEV_CONFIG.platform}`);
     console.log(`   Environment: ${DEV_CONFIG.environment}`);
     console.log(`   Time: ${new Date().toISOString()}`);
     console.log(`   Branch: ${DEV_CONFIG.branch}`);
-    
   } catch (error) {
     console.error('❌ Development deployment failed:', error.message);
     process.exit(1);
@@ -104,7 +106,7 @@ async function deployToDevelopment() {
 
 async function deployToPlatform(platform) {
   console.log(`🚀 Deploying to ${platform} (development)...`);
-  
+
   switch (platform) {
     case 'railway':
       await deployToRailway();
@@ -134,9 +136,12 @@ async function deployToRailway() {
     console.log('📦 Installing Railway CLI...');
     await runCommand('npm install -g @railway/cli', 'Install Railway CLI');
   }
-  
+
   await runCommand('railway login', 'Login to Railway');
-  await runCommand('railway environment development', 'Set development environment');
+  await runCommand(
+    'railway environment development',
+    'Set development environment'
+  );
   await runCommand('railway up --service shopify-app-dev', 'Deploy to Railway');
 }
 
@@ -146,8 +151,11 @@ async function deployToHeroku() {
   } catch (error) {
     throw new Error('Heroku CLI not installed. Please install it first.');
   }
-  
-  await runCommand('heroku git:remote -a shopify-app-dev', 'Setup Heroku remote');
+
+  await runCommand(
+    'heroku git:remote -a shopify-app-dev',
+    'Setup Heroku remote'
+  );
   await runCommand('git push heroku develop:main', 'Deploy to Heroku');
 }
 
@@ -158,13 +166,19 @@ async function deployToVercel() {
     console.log('📦 Installing Vercel CLI...');
     await runCommand('npm install -g vercel', 'Install Vercel CLI');
   }
-  
+
   await runCommand('vercel --prod --yes', 'Deploy to Vercel');
 }
 
 async function deployToDocker() {
-  await runCommand('docker build -f Dockerfile.staging -t shopify-app:dev .', 'Build Docker image');
-  await runCommand('docker run -d -p 3000:3000 --name shopify-app-dev shopify-app:dev', 'Run Docker container');
+  await runCommand(
+    'docker build -f Dockerfile.staging -t shopify-app:dev .',
+    'Build Docker image'
+  );
+  await runCommand(
+    'docker run -d -p 3000:3000 --name shopify-app-dev shopify-app:dev',
+    'Run Docker container'
+  );
   console.log('🐳 Development app running at http://localhost:3000');
 }
 
@@ -172,31 +186,36 @@ async function deployLocal() {
   console.log('🏠 Starting local development server...');
   console.log('📝 Note: This will start the development server locally');
   console.log('🌐 App will be available at http://localhost:3000');
-  
+
   // Start development server in background
   execSync('npm run dev', { stdio: 'inherit' });
 }
 
 async function postDeploymentTasks() {
   console.log('🔧 Running post-deployment tasks...');
-  
+
   // Deploy Firebase rules for development
   try {
-    await runCommand('npm run firebase:rules development', 'Deploy Firebase rules');
+    await runCommand(
+      'npm run firebase:rules development',
+      'Deploy Firebase rules'
+    );
   } catch (error) {
     console.warn('⚠️ Firebase rules deployment failed');
   }
-  
+
   // Wait and run health check
   console.log('⏳ Waiting for deployment to be ready...');
   await new Promise(resolve => setTimeout(resolve, 30000));
-  
+
   try {
     await runCommand('npm run health:check', 'Health check');
   } catch (error) {
-    console.warn('⚠️ Health check failed, but deployment may still be successful');
+    console.warn(
+      '⚠️ Health check failed, but deployment may still be successful'
+    );
   }
-  
+
   console.log('✅ Post-deployment tasks completed');
 }
 

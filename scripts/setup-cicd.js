@@ -9,13 +9,13 @@ import fs from 'fs';
 
 const SETUP_STEPS = [
   '🔧 Environment Setup',
-  '🔐 Secret Configuration', 
+  '🔐 Secret Configuration',
   '🗄️ Database Setup',
   '🐳 Docker Configuration',
   '🚀 GitHub Actions Setup',
   '📊 Monitoring Setup',
   '🔒 Security Setup',
-  '✅ Validation'
+  '✅ Validation',
 ];
 
 class CICDSetup {
@@ -27,14 +27,14 @@ class CICDSetup {
   log(message, isError = false) {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] ${message}`;
-    
+
     if (isError) {
       console.error(`❌ ${message}`);
       this.errors.push(logEntry);
     } else {
       console.log(`✅ ${message}`);
     }
-    
+
     this.setupLog.push(logEntry);
   }
 
@@ -56,16 +56,19 @@ class CICDSetup {
 
   async checkPrerequisites() {
     console.log('🔍 Checking prerequisites...');
-    
+
     const checks = [
       { command: 'node --version', name: 'Node.js' },
       { command: 'npm --version', name: 'npm' },
-      { command: 'git --version', name: 'Git' }
+      { command: 'git --version', name: 'Git' },
     ];
 
     for (const check of checks) {
       try {
-        const version = execSync(check.command, { stdio: 'pipe', encoding: 'utf8' }).trim();
+        const version = execSync(check.command, {
+          stdio: 'pipe',
+          encoding: 'utf8',
+        }).trim();
         this.log(`${check.name}: ${version}`);
       } catch (error) {
         this.log(`${check.name} not found or not working`, true);
@@ -85,11 +88,14 @@ class CICDSetup {
 
   async setupEnvironment() {
     console.log('\n🔧 Setting up environment...');
-    
+
     // Create environment files if they don't exist
     if (!fs.existsSync('.env')) {
       if (fs.existsSync('.env.example')) {
-        await this.runCommand('cp .env.example .env', 'Copy environment template');
+        await this.runCommand(
+          'cp .env.example .env',
+          'Copy environment template'
+        );
         this.log('Please edit .env file with your actual values');
       } else {
         this.log('.env.example not found', true);
@@ -99,23 +105,35 @@ class CICDSetup {
     }
 
     // Generate staging and production environment templates
-    await this.runCommand('npm run setup:env:staging', 'Generate staging environment template');
-    await this.runCommand('npm run setup:env:production', 'Generate production environment template');
+    await this.runCommand(
+      'npm run setup:env:staging',
+      'Generate staging environment template'
+    );
+    await this.runCommand(
+      'npm run setup:env:production',
+      'Generate production environment template'
+    );
   }
 
   async setupDatabase() {
     console.log('\n🗄️ Setting up database...');
-    
+
     // Check database provider
     const dbProvider = process.env.DATABASE_PROVIDER || 'firebase';
     this.log(`Database provider: ${dbProvider}`);
 
     if (dbProvider === 'prisma') {
       await this.runCommand('npx prisma generate', 'Generate Prisma client');
-      await this.runCommand('npx prisma migrate dev --name init', 'Run database migrations');
+      await this.runCommand(
+        'npx prisma migrate dev --name init',
+        'Run database migrations'
+      );
       this.log('Prisma database setup completed');
     } else if (dbProvider === 'firebase') {
-      await this.runCommand('npm run health:firebase', 'Test Firebase connection');
+      await this.runCommand(
+        'npm run health:firebase',
+        'Test Firebase connection'
+      );
       this.log('Firebase database setup completed');
     }
 
@@ -125,12 +143,12 @@ class CICDSetup {
 
   async setupDocker() {
     console.log('\n🐳 Setting up Docker...');
-    
+
     const dockerFiles = [
       'Dockerfile',
-      'Dockerfile.staging', 
+      'Dockerfile.staging',
       'Dockerfile.production',
-      'docker-compose.yml'
+      'docker-compose.yml',
     ];
 
     for (const file of dockerFiles) {
@@ -145,19 +163,18 @@ class CICDSetup {
     try {
       execSync('docker --version', { stdio: 'pipe' });
       this.log('Docker is available');
-      
+
       // Test build staging dockerfile
       await this.runCommand(
         'docker build -f Dockerfile.staging -t shopify-app:staging-test .',
         'Test Docker staging build'
       );
-      
+
       // Clean up test image
       await this.runCommand(
         'docker rmi shopify-app:staging-test',
         'Clean up test Docker image'
       );
-      
     } catch (error) {
       this.log('Docker not available - skipping Docker tests');
     }
@@ -165,13 +182,13 @@ class CICDSetup {
 
   async setupGitHubActions() {
     console.log('\n🚀 Setting up GitHub Actions...');
-    
+
     const workflowFiles = [
       '.github/workflows/ci.yml',
       '.github/workflows/deploy.yml',
       '.github/workflows/security.yml',
       '.github/workflows/monitoring.yml',
-      '.github/workflows/database.yml'
+      '.github/workflows/database.yml',
     ];
 
     let allWorkflowsExist = true;
@@ -210,10 +227,10 @@ class CICDSetup {
 
   async setupMonitoring() {
     console.log('\n📊 Setting up monitoring...');
-    
+
     // Test monitoring script
     await this.runCommand('npm run monitoring', 'Test monitoring script');
-    
+
     // Check if monitoring dependencies are installed
     const monitoringDeps = ['node-fetch'];
     for (const dep of monitoringDeps) {
@@ -228,14 +245,14 @@ class CICDSetup {
 
   async setupSecurity() {
     console.log('\n🔒 Setting up security...');
-    
+
     // Run security audit
     await this.runCommand('npm run security:audit', 'Run security audit');
-    
+
     // Check for security-related files
     const securityFiles = [
       '.github/workflows/security.yml',
-      'scripts/monitoring.js'
+      'scripts/monitoring.js',
     ];
 
     for (const file of securityFiles) {
@@ -249,16 +266,16 @@ class CICDSetup {
 
   async validateSetup() {
     console.log('\n✅ Validating setup...');
-    
+
     // Test build
     await this.runCommand('npm run build', 'Test application build', true);
-    
+
     // Test linting
     await this.runCommand('npm run lint', 'Test linting');
-    
+
     // Test health checks
     await this.runCommand('npm run health:check', 'Test health checks');
-    
+
     this.log('All validation checks completed');
   }
 
@@ -272,18 +289,18 @@ class CICDSetup {
         totalSteps: SETUP_STEPS.length,
         completedSteps: SETUP_STEPS.length - this.errors.length,
         hasErrors: this.errors.length > 0,
-        errorCount: this.errors.length
+        errorCount: this.errors.length,
       },
-      nextSteps: this.generateNextSteps()
+      nextSteps: this.generateNextSteps(),
     };
 
     // Save report to file
     fs.writeFileSync('cicd-setup-report.json', JSON.stringify(report, null, 2));
-    
+
     // Generate markdown report
     const markdownReport = this.generateMarkdownReport(report);
     fs.writeFileSync('CICD_SETUP_REPORT.md', markdownReport);
-    
+
     return report;
   }
 
@@ -298,7 +315,7 @@ class CICDSetup {
       '7. Set up SSL certificates for production',
       '8. Configure domain names and DNS',
       '9. Set up backup retention policies',
-      '10. Review security settings and access controls'
+      '10. Review security settings and access controls',
     ];
 
     if (this.errors.length > 0) {
@@ -328,11 +345,15 @@ ${SETUP_STEPS.map((step, index) => `${index + 1}. ${step}`).join('\n')}
 
 ${report.nextSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
 
-${report.summary.hasErrors ? `
+${
+  report.summary.hasErrors
+    ? `
 ## ❌ Errors Found
 
 ${report.errors.map(error => `- ${error}`).join('\n')}
-` : ''}
+`
+    : ''
+}
 
 ## 📚 Documentation
 
@@ -360,7 +381,7 @@ Happy coding! 🚀
   async run() {
     try {
       console.log('🚀 Starting CI/CD Setup for Shopify App with Firebase\n');
-      
+
       await this.checkPrerequisites();
       await this.setupEnvironment();
       await this.setupDatabase();
@@ -369,22 +390,25 @@ Happy coding! 🚀
       await this.setupMonitoring();
       await this.setupSecurity();
       await this.validateSetup();
-      
+
       const report = await this.generateReport();
-      
+
       console.log('\n🎉 CI/CD Setup completed!');
       console.log(`📝 Setup report saved to: cicd-setup-report.json`);
       console.log(`📖 Markdown report saved to: CICD_SETUP_REPORT.md`);
-      
+
       if (report.summary.hasErrors) {
-        console.log('\n⚠️ Some issues were found. Please check the report for details.');
+        console.log(
+          '\n⚠️ Some issues were found. Please check the report for details.'
+        );
         console.log('You can re-run this script after fixing the issues.');
       } else {
-        console.log('\n✅ Everything looks good! Your CI/CD pipeline is ready.');
+        console.log(
+          '\n✅ Everything looks good! Your CI/CD pipeline is ready.'
+        );
       }
-      
+
       console.log('\n📚 Next: Review CI_CD_GUIDE.md for detailed instructions');
-      
     } catch (error) {
       this.log(`Setup failed: ${error.message}`, true);
       console.error('\n❌ CI/CD Setup failed:', error.message);

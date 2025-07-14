@@ -1,5 +1,5 @@
-import { useLocation } from "@remix-run/react";
-import StickyHeader from "./StickyHeader";
+import { useLocation } from '@remix-run/react';
+import StickyHeader from './StickyHeader';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -7,82 +7,85 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
-  
+
   // Define page titles and back navigation
   const getPageInfo = () => {
     const path = location.pathname;
-    
+
     // Skip header for certain pages (like auth)
     if (path.includes('/auth/')) {
       return null;
     }
-    
+
     // Main dashboard - no back button
     if (path === '/app' || path === '/app/') {
       return {
-        title: "Visual Search Dashboard",
-        showBackButton: false
+        title: 'Visual Search Dashboard',
+        showBackButton: false,
       };
     }
-    
+
     // Define page configurations
-    const pageConfigs: Record<string, { title: string; showBackButton: boolean; backUrl?: string }> = {
+    const pageConfigs: Record<
+      string,
+      { title: string; showBackButton: boolean; backUrl?: string }
+    > = {
       '/app/navigation': {
-        title: "Navigation Hub",
+        title: 'Navigation Hub',
         showBackButton: true,
-        backUrl: "/app"
+        backUrl: '/app',
       },
       '/app/visual-search': {
-        title: "Visual Search Settings",
+        title: 'Visual Search Settings',
         showBackButton: true,
-        backUrl: "/app/navigation"
+        backUrl: '/app/navigation',
       },
       '/app/preview': {
-        title: "Preview & Customization",
+        title: 'Preview & Customization',
         showBackButton: true,
-        backUrl: "/app/navigation"
+        backUrl: '/app/navigation',
       },
       '/app/additional': {
-        title: "Analytics & Reports",
+        title: 'Analytics & Reports',
         showBackButton: true,
-        backUrl: "/app/navigation"
+        backUrl: '/app/navigation',
       },
       '/app/verify-integration': {
-        title: "Visual Search Integration Verification",
+        title: 'Visual Search Integration Verification',
         showBackButton: true,
-        backUrl: "/app"
+        backUrl: '/app',
       },
       '/app/testing-tools': {
-        title: "Visual Search Testing Tools",
+        title: 'Visual Search Testing Tools',
         showBackButton: true,
-        backUrl: "/app"
-      }
+        backUrl: '/app',
+      },
     };
-    
+
     // Get config for current path
     const config = pageConfigs[path];
     if (config) {
       return config;
     }
-    
+
     // Default for unknown pages
     return {
-      title: "Visual Search App",
+      title: 'Visual Search App',
       showBackButton: true,
-      backUrl: "/app"
+      backUrl: '/app',
     };
   };
-  
+
   const pageInfo = getPageInfo();
-  
+
   // Don't render header for auth pages
   if (!pageInfo) {
     return <>{children}</>;
   }
-  
+
   return (
     <>
-      <StickyHeader 
+      <StickyHeader
         title={pageInfo.title}
         showBackButton={pageInfo.showBackButton}
         backUrl={pageInfo.backUrl}

@@ -1,12 +1,15 @@
 export class ScriptInjectionService {
-  private static readonly SCRIPT_TAG_DISPLAY_SCOPE = "ALL";
+  private static readonly SCRIPT_TAG_DISPLAY_SCOPE = 'ALL';
 
   /**
    * Get the app URL dynamically
    */
   private static getAppUrl(): string {
     // Use environment variable first, then fall back to current Cloudflare tunnel
-    return process.env.SHOPIFY_APP_URL || "https://dna-dts-teams-niger.trycloudflare.com";
+    return (
+      process.env.SHOPIFY_APP_URL ||
+      'https://dna-dts-teams-niger.trycloudflare.com'
+    );
   }
 
   /**
@@ -14,8 +17,10 @@ export class ScriptInjectionService {
    */
   static async removeAllVisualSearchScripts(admin: any, shopDomain: string) {
     try {
-      console.log(`[Script Cleanup] Removing all visual search scripts for shop: ${shopDomain}`);
-      
+      console.log(
+        `[Script Cleanup] Removing all visual search scripts for shop: ${shopDomain}`
+      );
+
       // Find all visual search scripts (including old ones with different URLs)
       const existingScripts = await admin.graphql(`
         query {
@@ -32,22 +37,30 @@ export class ScriptInjectionService {
       `);
 
       const existingScriptData = await existingScripts.json();
-      const visualSearchScripts = existingScriptData.data.scriptTags.edges.filter(
-        (edge: any) => edge.node.src.includes('/visual-search-script.js') || 
-                      edge.node.src.includes('/visual-search-unified.js')
+      const visualSearchScripts =
+        existingScriptData.data.scriptTags.edges.filter(
+          (edge: any) =>
+            edge.node.src.includes('/visual-search-script.js') ||
+            edge.node.src.includes('/visual-search-unified.js')
+        );
+
+      console.log(
+        `[Script Cleanup] Found ${visualSearchScripts.length} visual search scripts to remove`
       );
 
-      console.log(`[Script Cleanup] Found ${visualSearchScripts.length} visual search scripts to remove`);
-
       if (visualSearchScripts.length === 0) {
-        return { success: true, message: "No visual search scripts found to remove" };
+        return {
+          success: true,
+          message: 'No visual search scripts found to remove',
+        };
       }
 
       // Remove all visual search scripts
       const removePromises = visualSearchScripts.map(async (script: any) => {
         console.log(`[Script Cleanup] Removing script: ${script.node.src}`);
-        
-        const deleteScriptMutation = await admin.graphql(`
+
+        const deleteScriptMutation = await admin.graphql(
+          `
           mutation scriptTagDelete($id: ID!) {
             scriptTagDelete(id: $id) {
               deletedScriptTagId
@@ -57,39 +70,45 @@ export class ScriptInjectionService {
               }
             }
           }
-        `, {
-          variables: {
-            id: script.node.id
+        `,
+          {
+            variables: {
+              id: script.node.id,
+            },
           }
-        });
+        );
 
         return await deleteScriptMutation.json();
       });
 
       const deleteResults = await Promise.all(removePromises);
-      const errors = deleteResults.filter(result => 
-        result.data.scriptTagDelete.userErrors.length > 0
+      const errors = deleteResults.filter(
+        result => result.data.scriptTagDelete.userErrors.length > 0
       );
 
       if (errors.length > 0) {
-        console.error("[Script Cleanup] Errors removing scripts:", errors);
-        return { 
-          success: false, 
-          error: "Some scripts could not be removed"
+        console.error('[Script Cleanup] Errors removing scripts:', errors);
+        return {
+          success: false,
+          error: 'Some scripts could not be removed',
         };
       }
 
-      console.log(`[Script Cleanup] Successfully removed ${visualSearchScripts.length} visual search scripts`);
-      return { 
-        success: true, 
-        message: `Removed ${visualSearchScripts.length} old visual search scripts`
+      console.log(
+        `[Script Cleanup] Successfully removed ${visualSearchScripts.length} visual search scripts`
+      );
+      return {
+        success: true,
+        message: `Removed ${visualSearchScripts.length} old visual search scripts`,
       };
-
     } catch (error) {
-      console.error("[Script Cleanup] Error removing visual search scripts:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      console.error(
+        '[Script Cleanup] Error removing visual search scripts:',
+        error
+      );
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -97,15 +116,28 @@ export class ScriptInjectionService {
   /**
    * Inject visual search script into a Shopify store
    */
-  static async injectVisualSearchScript(admin: any, shopDomain: string, appUrl?: string) {
+  static async injectVisualSearchScript(
+    admin: any,
+    shopDomain: string,
+    appUrl?: string
+  ) {
     try {
       // First, remove all existing visual search scripts
-      const cleanupResult = await this.removeAllVisualSearchScripts(admin, shopDomain);
+      const cleanupResult = await this.removeAllVisualSearchScripts(
+        admin,
+        shopDomain
+      );
       if (!cleanupResult.success) {
-        console.error("[Script Injection] Failed to cleanup old scripts:", cleanupResult.error);
+        console.error(
+          '[Script Injection] Failed to cleanup old scripts:',
+          cleanupResult.error
+        );
         // Continue anyway - try to inject new script
       } else {
-        console.log("[Script Injection] Cleanup completed:", cleanupResult.message);
+        console.log(
+          '[Script Injection] Cleanup completed:',
+          cleanupResult.message
+        );
       }
 
       // Build script URL with shop parameter and cache-busting timestamp
@@ -113,12 +145,15 @@ export class ScriptInjectionService {
       const finalAppUrl = appUrl || this.getAppUrl();
       const scriptTagSrc = `${finalAppUrl}/visual-search-unified.js?shop=${encodeURIComponent(shopDomain)}&t=${timestamp}`;
 
-      console.log(`[Script Injection] Injecting new script for shop: ${shopDomain}`);
+      console.log(
+        `[Script Injection] Injecting new script for shop: ${shopDomain}`
+      );
       console.log(`[Script Injection] Using App URL: ${finalAppUrl}`);
       console.log(`[Script Injection] Script URL: ${scriptTagSrc}`);
 
       // Create new script tag
-      const createScriptMutation = await admin.graphql(`
+      const createScriptMutation = await admin.graphql(
+        `
         mutation scriptTagCreate($input: ScriptTagInput!) {
           scriptTagCreate(input: $input) {
             scriptTag {
@@ -132,40 +167,47 @@ export class ScriptInjectionService {
             }
           }
         }
-      `, {
-        variables: {
-          input: {
-            src: scriptTagSrc,
-            displayScope: this.SCRIPT_TAG_DISPLAY_SCOPE
-          }
+      `,
+        {
+          variables: {
+            input: {
+              src: scriptTagSrc,
+              displayScope: this.SCRIPT_TAG_DISPLAY_SCOPE,
+            },
+          },
         }
-      });
+      );
 
       const result = await createScriptMutation.json();
-      
+
       if (result.data.scriptTagCreate.userErrors.length > 0) {
         const errorMessages = result.data.scriptTagCreate.userErrors
           .map((error: any) => `${error.field}: ${error.message}`)
           .join(', ');
-        console.error("Error creating script tag:", result.data.scriptTagCreate.userErrors);
-        return { 
-          success: false, 
-          error: `Script injection failed: ${errorMessages}`
+        console.error(
+          'Error creating script tag:',
+          result.data.scriptTagCreate.userErrors
+        );
+        return {
+          success: false,
+          error: `Script injection failed: ${errorMessages}`,
         };
       }
 
-      console.log(`Visual search script injected successfully for shop: ${shopDomain}`);
-      return { 
-        success: true, 
-        message: "Visual search script successfully activated! The camera icon will now appear in all search bars on your store.",
-        scriptTag: result.data.scriptTagCreate.scriptTag 
+      console.log(
+        `Visual search script injected successfully for shop: ${shopDomain}`
+      );
+      return {
+        success: true,
+        message:
+          'Visual search script successfully activated! The camera icon will now appear in all search bars on your store.',
+        scriptTag: result.data.scriptTagCreate.scriptTag,
       };
-
     } catch (error) {
-      console.error("Error injecting visual search script:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      console.error('Error injecting visual search script:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -192,17 +234,19 @@ export class ScriptInjectionService {
 
       const existingScriptData = await existingScripts.json();
       const scriptToRemove = existingScriptData.data.scriptTags.edges.find(
-        (edge: any) => edge.node.src.includes('/visual-search-script.js') || 
-                      edge.node.src.includes('/visual-search-unified.js')
+        (edge: any) =>
+          edge.node.src.includes('/visual-search-script.js') ||
+          edge.node.src.includes('/visual-search-unified.js')
       );
 
       if (!scriptToRemove) {
         console.log(`No visual search script found for shop: ${shopDomain}`);
-        return { success: true, message: "No script to remove" };
+        return { success: true, message: 'No script to remove' };
       }
 
       // Delete the script tag
-      const deleteScriptMutation = await admin.graphql(`
+      const deleteScriptMutation = await admin.graphql(
+        `
         mutation scriptTagDelete($id: ID!) {
           scriptTagDelete(id: $id) {
             deletedScriptTagId
@@ -212,33 +256,39 @@ export class ScriptInjectionService {
             }
           }
         }
-      `, {
-        variables: {
-          id: scriptToRemove.node.id
+      `,
+        {
+          variables: {
+            id: scriptToRemove.node.id,
+          },
         }
-      });
+      );
 
       const result = await deleteScriptMutation.json();
-      
+
       if (result.data.scriptTagDelete.userErrors.length > 0) {
-        console.error("Error deleting script tag:", result.data.scriptTagDelete.userErrors);
-        return { 
-          success: false, 
-          error: result.data.scriptTagDelete.userErrors 
+        console.error(
+          'Error deleting script tag:',
+          result.data.scriptTagDelete.userErrors
+        );
+        return {
+          success: false,
+          error: result.data.scriptTagDelete.userErrors,
         };
       }
 
-      console.log(`Visual search script removed successfully for shop: ${shopDomain}`);
-      return { 
-        success: true, 
-        deletedId: result.data.scriptTagDelete.deletedScriptTagId 
+      console.log(
+        `Visual search script removed successfully for shop: ${shopDomain}`
+      );
+      return {
+        success: true,
+        deletedId: result.data.scriptTagDelete.deletedScriptTagId,
       };
-
     } catch (error) {
-      console.error("Error removing visual search script:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      console.error('Error removing visual search script:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }

@@ -1,7 +1,7 @@
-import { vitePlugin as remix } from "@remix-run/dev";
-import { installGlobals } from "@remix-run/node";
-import { defineConfig, type UserConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { vitePlugin as remix } from '@remix-run/dev';
+import { installGlobals } from '@remix-run/node';
+import { defineConfig, type UserConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 installGlobals({ nativeFetch: true });
 
@@ -17,28 +17,28 @@ if (
   delete process.env.HOST;
 }
 
-const host = new URL(process.env.SHOPIFY_APP_URL || "http://localhost")
+const host = new URL(process.env.SHOPIFY_APP_URL || 'http://localhost')
   .hostname;
 
 let hmrConfig;
-if (host === "localhost") {
-  console.log("🔧 Configuring HMR for localhost");
+if (host === 'localhost') {
+  console.log('🔧 Configuring HMR for localhost');
   hmrConfig = {
-    protocol: "ws",
-    host: "localhost",
+    protocol: 'ws',
+    host: 'localhost',
     port: 64999,
     clientPort: 64999,
   };
-  console.log("HMR Config:", hmrConfig);
+  console.log('HMR Config:', hmrConfig);
 } else {
-  console.log("🔧 Configuring HMR for production");
+  console.log('🔧 Configuring HMR for production');
   hmrConfig = {
-    protocol: "wss",
+    protocol: 'wss',
     host: host,
     port: parseInt(process.env.FRONTEND_PORT!) || 8002,
     clientPort: 443,
   };
-  console.log("HMR Config:", hmrConfig);
+  console.log('HMR Config:', hmrConfig);
 }
 
 export default defineConfig({
@@ -51,12 +51,12 @@ export default defineConfig({
     hmr: hmrConfig,
     fs: {
       // See https://vitejs.dev/config/server-options.html#server-fs-allow for more information
-      allow: ["app", "node_modules"],
+      allow: ['app', 'node_modules'],
     },
   },
   plugins: [
     remix({
-      ignoredRouteFiles: ["**/.*"],
+      ignoredRouteFiles: ['**/.*'],
       future: {
         v3_fetcherPersist: true,
         v3_relativeSplatPath: true,
@@ -72,6 +72,6 @@ export default defineConfig({
     assetsInlineLimit: 0,
   },
   optimizeDeps: {
-    include: ["@shopify/app-bridge-react", "@shopify/polaris"],
+    include: ['@shopify/app-bridge-react', '@shopify/polaris'],
   },
 }) satisfies UserConfig;

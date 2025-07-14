@@ -1,34 +1,34 @@
-import "@shopify/shopify-app-remix/adapters/node";
+import '@shopify/shopify-app-remix/adapters/node';
 import {
   ApiVersion,
   AppDistribution,
   shopifyApp,
   DeliveryMethod,
-} from "@shopify/shopify-app-remix/server";
-import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import prisma from "./db.server";
-import type { Session } from "@shopify/shopify-app-remix/server";
-import { initializeFirebase } from "./services/firebase.service";
+} from '@shopify/shopify-app-remix/server';
+import { PrismaSessionStorage } from '@shopify/shopify-app-session-storage-prisma';
+import prisma from './db.server';
+import type { Session } from '@shopify/shopify-app-remix/server';
+import { initializeFirebase } from './services/firebase.service';
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
+  apiSecretKey: process.env.SHOPIFY_API_SECRET || '',
   apiVersion: ApiVersion.January25,
-  scopes: process.env.SCOPES?.split(","),
-  appUrl: process.env.SHOPIFY_APP_URL || "",
-  authPathPrefix: "/auth",
+  scopes: process.env.SCOPES?.split(','),
+  appUrl: process.env.SHOPIFY_APP_URL || '',
+  authPathPrefix: '/auth',
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
   webhooks: {
     APP_UNINSTALLED: {
       deliveryMethod: DeliveryMethod.Http,
-      callbackUrl: "/webhooks/app/uninstalled",
+      callbackUrl: '/webhooks/app/uninstalled',
     },
   },
   afterAuth: async (session: Session) => {
     await shopify.registerWebhooks({ session });
     const firestore = initializeFirebase();
-    await firestore.collection("storeEvents").add({
+    await firestore.collection('storeEvents').add({
       shopDomain: session.shop,
       installed: true,
       timestamp: new Date().toISOString(),

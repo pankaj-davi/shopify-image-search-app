@@ -7,6 +7,7 @@ This guide shows you how to deploy your Shopify app to development environment u
 ### **Method 1: GitHub Actions (Recommended)**
 
 #### **Automatic Deployment**
+
 Push to your development branch to trigger automatic deployment:
 
 ```bash
@@ -35,6 +36,7 @@ This will automatically trigger the development deployment workflow.
 ### **Method 2: Command Line Deployment**
 
 #### **Quick Development Deployment**
+
 ```bash
 # Deploy to Railway (recommended)
 npm run deploy:dev:railway
@@ -53,6 +55,7 @@ npm run deploy:dev:local
 ```
 
 #### **Custom Platform Deployment**
+
 ```bash
 # General command with options
 npm run deploy:dev <platform> [options]
@@ -64,8 +67,9 @@ npm run deploy:dev local --force
 ```
 
 #### **Available Options**
+
 - `--skip-tests` - Skip running tests
-- `--skip-build` - Skip building application  
+- `--skip-build` - Skip building application
 - `--force` - Continue even if tests fail
 
 ## 🔧 Setup Development Environment
@@ -109,7 +113,7 @@ In your GitHub repository settings, add these secrets for development:
 
 ```
 DEV_FIREBASE_PROJECT_ID=your-dev-firebase-project
-DEV_FIREBASE_CLIENT_EMAIL=dev-service@your-project.iam.gserviceaccount.com  
+DEV_FIREBASE_CLIENT_EMAIL=dev-service@your-project.iam.gserviceaccount.com
 DEV_FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----
 DEV_SHOPIFY_API_KEY=your-dev-api-key
 DEV_SHOPIFY_API_SECRET=your-dev-api-secret
@@ -146,6 +150,7 @@ npm run deploy:dev:railway
 ```
 
 **Configuration:**
+
 - Create a Railway project
 - Set environment variables in Railway dashboard
 - Connect your GitHub repository for automatic deployments
@@ -251,6 +256,7 @@ npm run firebase:rules development
 ### **Database Isolation**
 
 Development uses a separate Firebase project to ensure:
+
 - ✅ Data isolation from staging/production
 - ✅ Safe testing of database changes
 - ✅ Independent security rules
@@ -271,6 +277,7 @@ npm run monitoring
 ### **Deployment Status**
 
 Check deployment status in:
+
 - GitHub Actions tabs
 - Platform-specific dashboards (Railway, Heroku, etc.)
 - Application health endpoints
@@ -284,7 +291,7 @@ Check deployment status in:
 # Railway
 railway logs
 
-# Heroku  
+# Heroku
 heroku logs --tail --app shopify-app-dev
 
 # Docker
@@ -296,6 +303,7 @@ docker logs shopify-app-dev
 ### **Common Issues**
 
 #### **Build Failures**
+
 ```bash
 # Check linting
 npm run lint
@@ -308,6 +316,7 @@ npm test
 ```
 
 #### **Environment Issues**
+
 ```bash
 # Regenerate environment
 npm run setup:env development
@@ -319,6 +328,7 @@ npm run health:firebase
 ```
 
 #### **Deployment Failures**
+
 ```bash
 # Force deployment (skip tests)
 npm run deploy:dev railway --force
@@ -339,6 +349,7 @@ heroku ps --app shopify-app-dev  # for Heroku
 ## 🎯 Development Workflow Best Practices
 
 ### **Branch Strategy**
+
 ```bash
 # Feature development
 git checkout -b feature/new-feature
@@ -352,12 +363,14 @@ git push origin develop  # Triggers dev deployment
 ```
 
 ### **Testing Strategy**
+
 1. **Local testing** first with `npm run dev`
 2. **Automated testing** via CI/CD pipeline
 3. **Manual testing** on deployed development environment
 4. **Database testing** with seeded data
 
 ### **Environment Promotion**
+
 ```
 Development → Staging → Production
      ↓            ↓         ↓

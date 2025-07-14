@@ -33,22 +33,22 @@ jobs:
   database-management:
     name: 🗄️ Database Management
     runs-on: ubuntu-latest
-    
+
     environment: ${{ github.event.inputs.environment }}
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: 📦 Install dependencies
         run: npm ci
-      
+
       - name: 🔧 Setup environment
         run: |
           if [ "${{ github.event.inputs.environment }}" = "production" ]; then
@@ -64,7 +64,7 @@ jobs:
             echo "FIREBASE_CLIENT_EMAIL=${{ secrets.STAGING_FIREBASE_CLIENT_EMAIL }}" >> $GITHUB_ENV
             echo "FIREBASE_PRIVATE_KEY=${{ secrets.STAGING_FIREBASE_PRIVATE_KEY }}" >> $GITHUB_ENV
           fi
-      
+
       - name: 🗄️ Execute database action
         run: |
           case "${{ github.event.inputs.action }}" in
@@ -111,7 +111,7 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ env.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL: ${{ env.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ env.FIREBASE_PRIVATE_KEY }}
-      
+
       - name: 📊 Generate report
         run: |
           echo "📊 Database Management Report"
@@ -120,16 +120,16 @@ jobs:
           echo "Environment: ${{ github.event.inputs.environment }}"
           echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
           echo "Database Provider: $DATABASE_PROVIDER"
-          
+
           if [ "${{ github.event.inputs.action }}" = "backup" ]; then
             echo "Backup Name: backup-$(date +%Y%m%d-%H%M%S)"
           fi
-      
+
       - name: 📢 Notify completion
         run: |
           echo "✅ Database action '${{ github.event.inputs.action }}' completed successfully!"
         if: success()
-      
+
       - name: 📢 Notify failure
         run: |
           echo "❌ Database action '${{ github.event.inputs.action }}' failed!"

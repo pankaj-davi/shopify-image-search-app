@@ -11,16 +11,16 @@ import path from 'path';
 const environments = {
   development: {
     projectId: process.env.FIREBASE_PROJECT_ID,
-    rules: 'firestore-dev.rules'
+    rules: 'firestore-dev.rules',
   },
   staging: {
     projectId: process.env.STAGING_FIREBASE_PROJECT_ID,
-    rules: 'firestore-staging.rules'
+    rules: 'firestore-staging.rules',
   },
   production: {
     projectId: process.env.PRODUCTION_FIREBASE_PROJECT_ID,
-    rules: 'firestore-production.rules'
-  }
+    rules: 'firestore-production.rules',
+  },
 };
 
 function createFirestoreRules(environment) {
@@ -72,49 +72,54 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
   }
-}`
+}`,
   };
-  
+
   return rules[environment] || rules.production;
 }
 
 async function deployRules(environment = 'development') {
   try {
     console.log(`🔒 Deploying Firestore rules for ${environment}...`);
-    
+
     const config = environments[environment];
     if (!config || !config.projectId) {
-      throw new Error(`Invalid environment or missing project ID for ${environment}`);
+      throw new Error(
+        `Invalid environment or missing project ID for ${environment}`
+      );
     }
-    
+
     // Create rules directory if it doesn't exist
     const rulesDir = 'firestore-rules';
     if (!fs.existsSync(rulesDir)) {
       fs.mkdirSync(rulesDir);
     }
-    
+
     // Create rules file
     const rulesPath = path.join(rulesDir, config.rules);
     const rulesContent = createFirestoreRules(environment);
     fs.writeFileSync(rulesPath, rulesContent);
-    
+
     console.log(`📝 Rules file created: ${rulesPath}`);
-    
+
     // Deploy rules using Firebase CLI
     try {
-      execSync(`firebase deploy --only firestore:rules --project ${config.projectId}`, {
-        stdio: 'inherit',
-        cwd: process.cwd()
-      });
-      
+      execSync(
+        `firebase deploy --only firestore:rules --project ${config.projectId}`,
+        {
+          stdio: 'inherit',
+          cwd: process.cwd(),
+        }
+      );
+
       console.log(`✅ Firestore rules deployed successfully to ${environment}`);
-      
     } catch (deployError) {
       console.error(`❌ Failed to deploy rules: ${deployError.message}`);
-      console.log('💡 Make sure Firebase CLI is installed and you are authenticated');
+      console.log(
+        '💡 Make sure Firebase CLI is installed and you are authenticated'
+      );
       console.log('💡 Run: npm install -g firebase-tools && firebase login');
     }
-    
   } catch (error) {
     console.error(`❌ Error deploying Firestore rules: ${error.message}`);
     process.exit(1);

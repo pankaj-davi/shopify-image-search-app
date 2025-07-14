@@ -5,11 +5,12 @@ Copy these values to your GitHub repository secrets:
 ## Required Development Secrets
 
 ### Firebase Configuration
+
 ```
 Secret Name: DEV_FIREBASE_PROJECT_ID
 Secret Value: shopify-app-db
 
-Secret Name: DEV_FIREBASE_CLIENT_EMAIL  
+Secret Name: DEV_FIREBASE_CLIENT_EMAIL
 Secret Value: firebase-adminsdk-fbsvc@shopify-app-db.iam.gserviceaccount.com
 
 Secret Name: DEV_FIREBASE_PRIVATE_KEY
@@ -47,6 +48,7 @@ Secret Value: https://shopify-app-db-default-rtdb.firebaseio.com/
 ```
 
 ### Shopify Configuration
+
 ```
 Secret Name: DEV_SHOPIFY_API_KEY
 Secret Value: 19b92a0c7d4e217c2220271d82babe19
@@ -62,12 +64,13 @@ Secret Value: write_products,read_products,write_script_tags,read_themes
 ```
 
 ### Optional Platform Secrets (Choose One)
+
 ```
 # For Railway deployment
 Secret Name: RAILWAY_TOKEN
 Secret Value: [Get from railway.app dashboard]
 
-# For Heroku deployment  
+# For Heroku deployment
 Secret Name: HEROKU_API_KEY
 Secret Value: [Get from Heroku account settings]
 
@@ -77,11 +80,12 @@ Secret Value: [Get from Vercel account settings]
 ```
 
 ### Optional Notification Secrets
+
 ```
 Secret Name: SLACK_WEBHOOK_URL
 Secret Value: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 
-Secret Name: DISCORD_WEBHOOK_URL  
+Secret Name: DISCORD_WEBHOOK_URL
 Secret Value: https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK
 ```
 
@@ -93,7 +97,8 @@ Secret Value: https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK
 4. Click "Add secret"
 5. Repeat for all secrets above
 
-## Note: 
+## Note:
+
 - Copy the EXACT values from your .env file
 - The private key should include the full content with BEGIN/END lines
 - Make sure there are no extra spaces or characters

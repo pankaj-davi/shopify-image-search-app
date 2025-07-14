@@ -15,7 +15,7 @@
   "plugins": ["@typescript-eslint"],
   "extends": ["eslint:recommended"],
   "rules": {
-    "no-unused-vars": "warn",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "no-case-declarations": "warn",
     "prefer-const": "warn"
   },

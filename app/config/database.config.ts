@@ -24,7 +24,8 @@ export interface DatabaseConfig {
 }
 
 // Current database provider - change this to switch databases
-export const DATABASE_PROVIDER: DatabaseProvider = process.env.DATABASE_PROVIDER as DatabaseProvider || 'firebase';
+export const DATABASE_PROVIDER: DatabaseProvider =
+  (process.env.DATABASE_PROVIDER as DatabaseProvider) || 'firebase';
 
 export const databaseConfig: DatabaseConfig = {
   provider: DATABASE_PROVIDER,

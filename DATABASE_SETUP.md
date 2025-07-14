@@ -16,26 +16,30 @@ DATABASE_PROVIDER=firebase
 ### 2. Configure Your Chosen Database
 
 #### 🔥 Firebase (Recommended for rapid development)
+
 ```env
 DATABASE_PROVIDER=firebase
 FIREBASE_PROJECT_ID=your-firebase-project-id
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----"
 ```
+
 **📋 [See detailed Firebase setup guide](./FIREBASE_SETUP.md)**
 
 #### 🗄️ Prisma (SQL databases)
+
 ```env
 DATABASE_PROVIDER=prisma
 # SQLite (default)
 DATABASE_URL="file:dev.sqlite"
 # PostgreSQL
 # DATABASE_URL="postgresql://username:password@localhost:5432/database"
-# MySQL  
+# MySQL
 # DATABASE_URL="mysql://username:password@localhost:3306/database"
 ```
 
 #### 🍃 MongoDB (Coming soon)
+
 ```env
 DATABASE_PROVIDER=mongodb
 MONGODB_CONNECTION_STRING=mongodb://localhost:27017
@@ -43,6 +47,7 @@ MONGODB_DATABASE_NAME=shopify_app
 ```
 
 #### 🗂️ Supabase (Coming soon)
+
 ```env
 DATABASE_PROVIDER=supabase
 SUPABASE_URL=https://your-project.supabase.co
@@ -52,15 +57,18 @@ SUPABASE_ANON_KEY=your-anon-key
 ### 3. Run Database Setup
 
 For **Prisma**:
+
 ```bash
 npm run prisma:migrate
 npm run prisma:generate
 ```
 
 For **Firebase**:
+
 - No setup needed, database is created automatically
 
 ### 4. Start Your App
+
 ```bash
 npm run dev
 ```
@@ -102,7 +110,7 @@ app/
 await appDatabase.syncStore(storeInfo);
 await appDatabase.getStore(shopDomain);
 
-// Product operations  
+// Product operations
 await appDatabase.syncProductFromShopify(shopifyProduct, shopDomain);
 await appDatabase.getStoreProducts(shopDomain, limit);
 await appDatabase.searchProducts(searchTerm, shopDomain);
@@ -112,6 +120,7 @@ await appDatabase.deleteProduct(productId);
 ## 🎯 Data Models
 
 ### Store
+
 ```typescript
 {
   id: string;
@@ -124,6 +133,7 @@ await appDatabase.deleteProduct(productId);
 ```
 
 ### Product
+
 ```typescript
 {
   id: string;
@@ -150,15 +160,18 @@ await appDatabase.deleteProduct(productId);
 ## 🚨 Troubleshooting
 
 ### "Database provider not supported"
+
 - Check that `DATABASE_PROVIDER` is set correctly in `.env`
 - Ensure the provider value matches exactly: `firebase`, `prisma`, `mongodb`, or `supabase`
 
 ### Firebase permission errors
+
 - Verify your service account credentials
 - Check Firestore security rules
 - Ensure the Firebase project is active
 
 ### Prisma connection errors
+
 - Run `npm run prisma:generate` after schema changes
 - Check your `DATABASE_URL` format
 - Ensure the database exists and is accessible
@@ -170,12 +183,12 @@ await appDatabase.deleteProduct(productId);
 ✅ **Easy switching** between database providers  
 ✅ **Type-safe** operations with TypeScript  
 ✅ **Scalable** architecture for future growth  
-✅ **Console logging** for debugging and monitoring  
+✅ **Console logging** for debugging and monitoring
 
 ## 📈 Production Recommendations
 
 - **Firebase**: Great for rapid development and real-time features
-- **Prisma + PostgreSQL**: Best for complex queries and relationships  
+- **Prisma + PostgreSQL**: Best for complex queries and relationships
 - **MongoDB**: Perfect for document-based data and flexible schemas
 - **Supabase**: Excellent for real-time features with SQL database
 

@@ -1,4 +1,8 @@
-import { type DatabaseInterface, type ProductData, type StoreData } from './database.interface';
+import {
+  type DatabaseInterface,
+  type ProductData,
+  type StoreData,
+} from './database.interface';
 import prisma from '../db.server';
 
 export class PrismaDatabase implements DatabaseInterface {
@@ -18,7 +22,7 @@ export class PrismaDatabase implements DatabaseInterface {
           updatedAt: product.updatedAt,
         },
       });
-      
+
       console.log('🗄️ Product created in Prisma:', result.id);
       return result.id;
     } catch (error) {
@@ -33,7 +37,7 @@ export class PrismaDatabase implements DatabaseInterface {
         take: limit,
         orderBy: { createdAt: 'desc' },
       });
-      
+
       console.log(`🗄️ Retrieved ${products.length} products from Prisma`);
       return products.map(this.mapPrismaProduct);
     } catch (error) {
@@ -47,7 +51,7 @@ export class PrismaDatabase implements DatabaseInterface {
       const product = await prisma.product.findUnique({
         where: { id },
       });
-      
+
       return product ? this.mapPrismaProduct(product) : null;
     } catch (error) {
       console.error('❌ Error getting product by ID from Prisma:', error);
@@ -55,7 +59,10 @@ export class PrismaDatabase implements DatabaseInterface {
     }
   }
 
-  async updateProduct(id: string, updates: Partial<ProductData>): Promise<void> {
+  async updateProduct(
+    id: string,
+    updates: Partial<ProductData>
+  ): Promise<void> {
     try {
       await prisma.product.update({
         where: { id },
@@ -64,7 +71,7 @@ export class PrismaDatabase implements DatabaseInterface {
           updatedAt: new Date(),
         },
       });
-      
+
       console.log('🗄️ Product updated in Prisma:', id);
     } catch (error) {
       console.error('❌ Error updating product in Prisma:', error);
@@ -77,7 +84,7 @@ export class PrismaDatabase implements DatabaseInterface {
       await prisma.product.delete({
         where: { id },
       });
-      
+
       console.log('🗄️ Product deleted from Prisma:', id);
     } catch (error) {
       console.error('❌ Error deleting product from Prisma:', error);
@@ -97,7 +104,7 @@ export class PrismaDatabase implements DatabaseInterface {
           updatedAt: store.updatedAt,
         },
       });
-      
+
       console.log('🗄️ Store created in Prisma:', result.id);
       return result.id;
     } catch (error) {
@@ -111,7 +118,7 @@ export class PrismaDatabase implements DatabaseInterface {
       const store = await prisma.store.findUnique({
         where: { shopDomain },
       });
-      
+
       return store ? this.mapPrismaStore(store) : null;
     } catch (error) {
       console.error('❌ Error getting store from Prisma:', error);
@@ -119,7 +126,10 @@ export class PrismaDatabase implements DatabaseInterface {
     }
   }
 
-  async updateStore(shopDomain: string, updates: Partial<StoreData>): Promise<void> {
+  async updateStore(
+    shopDomain: string,
+    updates: Partial<StoreData>
+  ): Promise<void> {
     try {
       await prisma.store.update({
         where: { shopDomain },
@@ -128,10 +138,43 @@ export class PrismaDatabase implements DatabaseInterface {
           updatedAt: new Date(),
         },
       });
-      
+
       console.log('🗄️ Store updated in Prisma:', shopDomain);
     } catch (error) {
       console.error('❌ Error updating store in Prisma:', error);
+      throw error;
+    }
+  }
+
+  async deleteStore(shopDomain: string): Promise<boolean> {
+    try {
+      await prisma.store.delete({
+        where: { shopDomain },
+      });
+
+      console.log('🗄️ Store deleted from Prisma:', shopDomain);
+      return true;
+    } catch (error) {
+      console.error('❌ Error deleting store from Prisma:', error);
+      return false;
+    }
+  }
+
+  async recordStoreEvent(
+    shopDomain: string,
+    eventType: string,
+    eventData: Record<string, any>
+  ): Promise<void> {
+    try {
+      // Record store event in Prisma (you can create a separate events table if needed)
+      console.log('📝 Recording store event in Prisma:', {
+        shopDomain,
+        eventType,
+        eventData,
+      });
+      // For now, just log the event. In production, you might want to store this in an events table
+    } catch (error) {
+      console.error('❌ Error recording store event in Prisma:', error);
       throw error;
     }
   }
@@ -164,14 +207,17 @@ export class PrismaDatabase implements DatabaseInterface {
   }
 
   // Prisma-specific methods
-  async getProductsByShop(shopDomain: string, limit: number = 10): Promise<ProductData[]> {
+  async getProductsByShop(
+    shopDomain: string,
+    limit: number = 10
+  ): Promise<ProductData[]> {
     try {
       const products = await prisma.product.findMany({
         where: { shopDomain },
         take: limit,
         orderBy: { createdAt: 'desc' },
       });
-      
+
       return products.map(this.mapPrismaProduct);
     } catch (error) {
       console.error('❌ Error getting products by shop from Prisma:', error);
@@ -179,7 +225,10 @@ export class PrismaDatabase implements DatabaseInterface {
     }
   }
 
-  async searchProducts(searchTerm: string, shopDomain?: string): Promise<ProductData[]> {
+  async searchProducts(
+    searchTerm: string,
+    shopDomain?: string
+  ): Promise<ProductData[]> {
     try {
       const whereClause: any = {
         OR: [
@@ -196,7 +245,7 @@ export class PrismaDatabase implements DatabaseInterface {
         where: whereClause,
         orderBy: { createdAt: 'desc' },
       });
-      
+
       return products.map(this.mapPrismaProduct);
     } catch (error) {
       console.error('❌ Error searching products in Prisma:', error);

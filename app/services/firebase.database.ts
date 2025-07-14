@@ -1,4 +1,8 @@
-import { type DatabaseInterface, type ProductData, type StoreData } from './database.interface';
+import {
+  type DatabaseInterface,
+  type ProductData,
+  type StoreData,
+} from './database.interface';
 import { getFirestoreInstance } from './firebase.service';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -13,8 +17,10 @@ export class FirebaseDatabase implements DatabaseInterface {
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       };
-      
-      const docRef = await this.firestore.collection('products').add(productData);
+
+      const docRef = await this.firestore
+        .collection('products')
+        .add(productData);
       console.log('🔥 Product created in Firebase:', docRef.id);
       return docRef.id;
     } catch (error) {
@@ -29,11 +35,11 @@ export class FirebaseDatabase implements DatabaseInterface {
         .collection('products')
         .orderBy('createdAt', 'desc')
         .limit(limit);
-      
+
       const snapshot = await query.get();
-      
+
       const products: ProductData[] = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const data = doc.data();
         products.push({
           id: doc.id,
@@ -48,7 +54,7 @@ export class FirebaseDatabase implements DatabaseInterface {
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
       });
-      
+
       console.log(`🔥 Retrieved ${products.length} products from Firebase`);
       return products;
     } catch (error) {
@@ -60,11 +66,11 @@ export class FirebaseDatabase implements DatabaseInterface {
   async getProductById(id: string): Promise<ProductData | null> {
     try {
       const doc = await this.firestore.collection('products').doc(id).get();
-      
+
       if (!doc.exists) {
         return null;
       }
-      
+
       const data = doc.data()!;
       return {
         id: doc.id,
@@ -84,13 +90,16 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
-  async updateProduct(id: string, updates: Partial<ProductData>): Promise<void> {
+  async updateProduct(
+    id: string,
+    updates: Partial<ProductData>
+  ): Promise<void> {
     try {
       const updateData = {
         ...updates,
         updatedAt: FieldValue.serverTimestamp(),
       };
-      
+
       await this.firestore.collection('products').doc(id).update(updateData);
       console.log('🔥 Product updated in Firebase:', id);
     } catch (error) {
@@ -117,11 +126,11 @@ export class FirebaseDatabase implements DatabaseInterface {
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       };
-      
+
       // Use shopDomain as document ID for easy retrieval
       const docRef = this.firestore.collection('stores').doc(store.shopDomain);
       await docRef.set(storeData);
-      
+
       console.log('🔥 Store created in Firebase:', store.shopDomain);
       return store.shopDomain;
     } catch (error) {
@@ -132,12 +141,15 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async getStore(shopDomain: string): Promise<StoreData | null> {
     try {
-      const doc = await this.firestore.collection('stores').doc(shopDomain).get();
-      
+      const doc = await this.firestore
+        .collection('stores')
+        .doc(shopDomain)
+        .get();
+
       if (!doc.exists) {
         return null;
       }
-      
+
       const data = doc.data()!;
       return {
         id: doc.id,
@@ -154,14 +166,20 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
-  async updateStore(shopDomain: string, updates: Partial<StoreData>): Promise<void> {
+  async updateStore(
+    shopDomain: string,
+    updates: Partial<StoreData>
+  ): Promise<void> {
     try {
       const updateData = {
         ...updates,
         updatedAt: FieldValue.serverTimestamp(),
       };
-      
-      await this.firestore.collection('stores').doc(shopDomain).update(updateData);
+
+      await this.firestore
+        .collection('stores')
+        .doc(shopDomain)
+        .update(updateData);
       console.log('🔥 Store updated in Firebase:', shopDomain);
     } catch (error) {
       console.error('❌ Error updating store in Firebase:', error);
@@ -170,18 +188,21 @@ export class FirebaseDatabase implements DatabaseInterface {
   }
 
   // Firebase-specific methods
-  async getProductsByShop(shopDomain: string, limit: number = 10): Promise<ProductData[]> {
+  async getProductsByShop(
+    shopDomain: string,
+    limit: number = 10
+  ): Promise<ProductData[]> {
     try {
       const query = this.firestore
         .collection('products')
         .where('shopDomain', '==', shopDomain)
         .orderBy('createdAt', 'desc')
         .limit(limit);
-      
+
       const snapshot = await query.get();
-      
+
       const products: ProductData[] = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const data = doc.data();
         products.push({
           id: doc.id,
@@ -196,7 +217,7 @@ export class FirebaseDatabase implements DatabaseInterface {
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
       });
-      
+
       return products;
     } catch (error) {
       console.error('❌ Error getting products by shop from Firebase:', error);
@@ -204,25 +225,28 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
-  async searchProducts(searchTerm: string, shopDomain?: string): Promise<ProductData[]> {
+  async searchProducts(
+    searchTerm: string,
+    shopDomain?: string
+  ): Promise<ProductData[]> {
     try {
       let query: any = this.firestore.collection('products');
-      
+
       if (shopDomain) {
         query = query.where('shopDomain', '==', shopDomain);
       }
-      
+
       // Note: Firestore doesn't support full-text search natively
       // For production, consider using Algolia or Elasticsearch
       const snapshot = await query.get();
-      
+
       const products: ProductData[] = [];
       snapshot.forEach((doc: any) => {
         const data = doc.data();
         const title = data.title?.toLowerCase() || '';
         const handle = data.handle?.toLowerCase() || '';
         const search = searchTerm.toLowerCase();
-        
+
         if (title.includes(search) || handle.includes(search)) {
           products.push({
             id: doc.id,
@@ -238,7 +262,7 @@ export class FirebaseDatabase implements DatabaseInterface {
           });
         }
       });
-      
+
       return products;
     } catch (error) {
       console.error('❌ Error searching products in Firebase:', error);
@@ -246,9 +270,15 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
-  async recordStoreEvent(shopDomain: string, eventType: string, eventData: Record<string, any>): Promise<void> {
+  async recordStoreEvent(
+    shopDomain: string,
+    eventType: string,
+    eventData: Record<string, any>
+  ): Promise<void> {
     try {
-      console.log(`🔥 Attempting to record store event: ${eventType} for ${shopDomain}`);
+      console.log(
+        `🔥 Attempting to record store event: ${eventType} for ${shopDomain}`
+      );
       const event = {
         shopDomain,
         eventType,
@@ -258,7 +288,9 @@ export class FirebaseDatabase implements DatabaseInterface {
 
       console.log('🔥 Event data prepared:', event);
       await this.firestore.collection('storeEvents').add(event);
-      console.log(`🔥 Store event successfully recorded: ${eventType} for ${shopDomain}`);
+      console.log(
+        `🔥 Store event successfully recorded: ${eventType} for ${shopDomain}`
+      );
     } catch (error) {
       console.error('❌ Error recording store event in Firebase:', error);
       throw error;

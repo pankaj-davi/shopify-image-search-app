@@ -1,4 +1,7 @@
-import { databaseConfig, type DatabaseProvider } from '../config/database.config';
+import {
+  databaseConfig,
+  type DatabaseProvider,
+} from '../config/database.config';
 
 // Generic database interface
 export interface DatabaseInterface {
@@ -8,14 +11,18 @@ export interface DatabaseInterface {
   getProductById(id: string): Promise<ProductData | null>;
   updateProduct(id: string, updates: Partial<ProductData>): Promise<void>;
   deleteProduct(id: string): Promise<void>;
-  
+
   // Store operations
   createStore(store: StoreData): Promise<string>;
   getStore(shopDomain: string): Promise<StoreData | null>;
   updateStore(shopDomain: string, updates: Partial<StoreData>): Promise<void>;
 
   // Event logging
-  recordStoreEvent(shopDomain: string, eventType: string, eventData: Record<string, any>): Promise<void>;
+  recordStoreEvent(
+    shopDomain: string,
+    eventType: string,
+    eventData: Record<string, any>
+  ): Promise<void>;
 }
 
 // Data types
@@ -45,24 +52,24 @@ export interface StoreData {
 // Database factory function
 export async function createDatabaseInstance(): Promise<DatabaseInterface> {
   const provider = databaseConfig.provider;
-  
+
   switch (provider) {
     case 'firebase':
       const { FirebaseDatabase } = await import('./firebase.database');
       return new FirebaseDatabase();
-    
+
     // case 'prisma':
     //   const { PrismaDatabase } = await import('./prisma.database');
-      // return new PrismaDatabase();
-    
+    // return new PrismaDatabase();
+
     // case 'mongodb':
     //   const { MongoDatabase } = await import('./mongo.database');
     //   return new MongoDatabase();
-    
+
     // case 'supabase':
     //   const { SupabaseDatabase } = await import('./supabase.database');
-      // return new SupabaseDatabase();
-    
+    // return new SupabaseDatabase();
+
     default:
       throw new Error(`Unsupported database provider: ${provider}`);
   }

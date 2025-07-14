@@ -17,9 +17,11 @@ export function initializeFirebase(): Firestore {
     if (apps.length === 0) {
       // Initialize Firebase Admin SDK
       const { firebase } = databaseConfig;
-      
+
       if (!firebase?.projectId) {
-        throw new Error('Firebase project ID is required. Please set FIREBASE_PROJECT_ID environment variable.');
+        throw new Error(
+          'Firebase project ID is required. Please set FIREBASE_PROJECT_ID environment variable.'
+        );
       }
 
       // For server-side usage with service account

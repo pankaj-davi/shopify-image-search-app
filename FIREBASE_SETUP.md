@@ -29,7 +29,8 @@ FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccoun
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----"
 ```
 
-**Important**: 
+**Important**:
+
 - Replace `\n` in the private key with actual newlines, or use the format above
 - Keep the quotes around the private key
 - Never commit these credentials to version control
@@ -53,6 +54,7 @@ service cloud.firestore {
 ### 5. Test Your Setup
 
 Run your app and check the console for:
+
 ```
 🔥 Firebase initialized successfully
 ```
@@ -83,11 +85,13 @@ Your data will be organized as:
 ## 🔄 Switching from Firebase to Other Databases
 
 To switch to Prisma:
+
 1. Change `DATABASE_PROVIDER=prisma` in your `.env`
 2. Run `npm run prisma:migrate`
 3. Restart your app
 
 To switch to MongoDB or Supabase:
+
 1. Implement the respective database classes
 2. Change the `DATABASE_PROVIDER` in your `.env`
 3. Configure the respective environment variables
@@ -95,12 +99,15 @@ To switch to MongoDB or Supabase:
 ## 🚨 Troubleshooting
 
 ### Error: "Firebase project ID is required"
+
 - Make sure `FIREBASE_PROJECT_ID` is set in your `.env` file
 
 ### Error: "Permission denied"
+
 - Check your Firestore security rules
 - Verify your service account has the right permissions
 
 ### Error: "Invalid private key"
+
 - Make sure the private key is properly formatted with `\n` characters
 - Ensure the entire key is wrapped in quotes

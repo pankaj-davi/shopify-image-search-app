@@ -7,31 +7,37 @@
 :root {
   /* Light theme colors (default) */
   --visual-search-text-primary: var(--p-color-text, #202223);
-  --visual-search-text-secondary: var(--p-color-text-secondary, #6D7175);
-  --visual-search-text-subdued: var(--p-color-text-subdued, #8C9196);
-  --visual-search-bg-surface: var(--p-color-bg-surface, #FFFFFF);
-  --visual-search-bg-surface-hover: var(--p-color-bg-surface-hover, #F6F6F7);
-  --visual-search-bg-surface-secondary: var(--p-color-bg-surface-secondary, #F6F6F7);
-  --visual-search-border: var(--p-color-border, #D1D5DB);
+  --visual-search-text-secondary: var(--p-color-text-secondary, #6d7175);
+  --visual-search-text-subdued: var(--p-color-text-subdued, #8c9196);
+  --visual-search-bg-surface: var(--p-color-bg-surface, #ffffff);
+  --visual-search-bg-surface-hover: var(--p-color-bg-surface-hover, #f6f6f7);
+  --visual-search-bg-surface-secondary: var(
+    --p-color-bg-surface-secondary,
+    #f6f6f7
+  );
+  --visual-search-border: var(--p-color-border, #d1d5db);
   --visual-search-brand-primary: var(--p-color-bg-fill-brand, #008060);
-  --visual-search-brand-active: var(--p-color-bg-fill-brand-active, #004C3F);
-  --visual-search-critical: var(--p-color-bg-fill-critical, #DC2626);
+  --visual-search-brand-active: var(--p-color-bg-fill-brand-active, #004c3f);
+  --visual-search-critical: var(--p-color-bg-fill-critical, #dc2626);
   --visual-search-success: var(--p-color-bg-fill-success, #059669);
-  --visual-search-warning: var(--p-color-bg-fill-warning, #D97706);
+  --visual-search-warning: var(--p-color-bg-fill-warning, #d97706);
 }
 
 /* Dark theme overrides */
 @media (prefers-color-scheme: dark) {
   :root {
-    --visual-search-text-primary: var(--p-color-text, #E3E3E3);
-    --visual-search-text-secondary: var(--p-color-text-secondary, #B5B5B5);
-    --visual-search-text-subdued: var(--p-color-text-subdued, #8C9196);
-    --visual-search-bg-surface: var(--p-color-bg-surface, #1A1A1A);
+    --visual-search-text-primary: var(--p-color-text, #e3e3e3);
+    --visual-search-text-secondary: var(--p-color-text-secondary, #b5b5b5);
+    --visual-search-text-subdued: var(--p-color-text-subdued, #8c9196);
+    --visual-search-bg-surface: var(--p-color-bg-surface, #1a1a1a);
     --visual-search-bg-surface-hover: var(--p-color-bg-surface-hover, #262626);
-    --visual-search-bg-surface-secondary: var(--p-color-bg-surface-secondary, #262626);
-    --visual-search-border: var(--p-color-border, #3F3F46);
-    --visual-search-brand-primary: var(--p-color-bg-fill-brand, #00A47C);
-    --visual-search-brand-active: var(--p-color-bg-fill-brand-active, #00D9A7);
+    --visual-search-bg-surface-secondary: var(
+      --p-color-bg-surface-secondary,
+      #262626
+    );
+    --visual-search-border: var(--p-color-border, #3f3f46);
+    --visual-search-brand-primary: var(--p-color-bg-fill-brand, #00a47c);
+    --visual-search-brand-active: var(--p-color-bg-fill-brand-active, #00d9a7);
   }
 }
 
@@ -96,26 +102,26 @@
 }
 
 /* Shopify admin theme detection */
-[data-theme="dark"] {
-  --visual-search-text-primary: #E3E3E3;
-  --visual-search-text-secondary: #B5B5B5;
-  --visual-search-text-subdued: #8C9196;
-  --visual-search-bg-surface: #1A1A1A;
+[data-theme='dark'] {
+  --visual-search-text-primary: #e3e3e3;
+  --visual-search-text-secondary: #b5b5b5;
+  --visual-search-text-subdued: #8c9196;
+  --visual-search-bg-surface: #1a1a1a;
   --visual-search-bg-surface-hover: #262626;
   --visual-search-bg-surface-secondary: #262626;
-  --visual-search-border: #3F3F46;
-  --visual-search-brand-primary: #00A47C;
-  --visual-search-brand-active: #00D9A7;
+  --visual-search-border: #3f3f46;
+  --visual-search-brand-primary: #00a47c;
+  --visual-search-brand-active: #00d9a7;
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
   --visual-search-text-primary: #202223;
-  --visual-search-text-secondary: #6D7175;
-  --visual-search-text-subdued: #8C9196;
-  --visual-search-bg-surface: #FFFFFF;
-  --visual-search-bg-surface-hover: #F6F6F7;
-  --visual-search-bg-surface-secondary: #F6F6F7;
-  --visual-search-border: #D1D5DB;
+  --visual-search-text-secondary: #6d7175;
+  --visual-search-text-subdued: #8c9196;
+  --visual-search-bg-surface: #ffffff;
+  --visual-search-bg-surface-hover: #f6f6f7;
+  --visual-search-bg-surface-secondary: #f6f6f7;
+  --visual-search-border: #d1d5db;
   --visual-search-brand-primary: #008060;
-  --visual-search-brand-active: #004C3F;
+  --visual-search-brand-active: #004c3f;
 }
