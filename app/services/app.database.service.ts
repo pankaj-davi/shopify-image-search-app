@@ -1,4 +1,8 @@
-import { getDatabase, type ProductData, type StoreData } from './database.interface';
+import {
+  getDatabase,
+  type ProductData,
+  type StoreData,
+} from './database.interface';
 
 export class AppDatabaseService {
   private database: any = null;
@@ -18,7 +22,7 @@ export class AppDatabaseService {
     try {
       // Check if store exists
       const store = await db.getStore(shopDomain);
-      
+
       if (!store) {
         // Create new store
         const storeData: StoreData = {
@@ -28,7 +32,7 @@ export class AppDatabaseService {
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        
+
         const storeId = await db.createStore(storeData);
         console.log(`✅ Store synced (created): ${shopDomain} -> ${storeId}`);
         return storeId;
@@ -65,15 +69,21 @@ export class AppDatabaseService {
         ...updates,
         updatedAt: new Date(),
       };
-      
-      console.log(`📝 [Database] Updating store ${shopDomain} with:`, JSON.stringify(updateData, null, 2));
-      
+
+      console.log(
+        `📝 [Database] Updating store ${shopDomain} with:`,
+        JSON.stringify(updateData, null, 2)
+      );
+
       await db.updateStore(shopDomain, updateData);
       console.log(`✅ Store updated: ${shopDomain}`);
-      
+
       // Verify the update by reading back
       const verifyData = await db.getStore(shopDomain);
-      console.log(`✅ [Database] Verification - store data after update:`, JSON.stringify(verifyData, null, 2));
+      console.log(
+        `✅ [Database] Verification - store data after update:`,
+        JSON.stringify(verifyData, null, 2)
+      );
     } catch (error) {
       console.error(`❌ Error updating store: ${shopDomain}`, error);
       throw error;
@@ -86,7 +96,7 @@ export class AppDatabaseService {
 
     try {
       const variant = shopifyProduct.variants?.edges?.[0]?.node;
-      
+
       const productData: ProductData = {
         shopifyProductId: shopifyProduct.id,
         title: shopifyProduct.title,
@@ -96,12 +106,16 @@ export class AppDatabaseService {
         sku: variant?.sku || '',
         shopDomain,
         createdAt: new Date(shopifyProduct.createdAt),
-        updatedAt: new Date(shopifyProduct.updatedAt || shopifyProduct.createdAt),
+        updatedAt: new Date(
+          shopifyProduct.updatedAt || shopifyProduct.createdAt
+        ),
       };
 
       // Check if product already exists
-      const existingProducts = await this.getProductsByShopifyId(shopifyProduct.id);
-      
+      const existingProducts = await this.getProductsByShopifyId(
+        shopifyProduct.id
+      );
+
       if (existingProducts.length > 0) {
         // Update existing product
         const existingProduct = existingProducts[0];
@@ -118,7 +132,9 @@ export class AppDatabaseService {
       } else {
         // Create new product
         const productId = await db.createProduct(productData);
-        console.log(`✅ Product synced (created): ${productData.title} -> ${productId}`);
+        console.log(
+          `✅ Product synced (created): ${productData.title} -> ${productId}`
+        );
         return productId;
       }
     } catch (error) {
@@ -127,22 +143,29 @@ export class AppDatabaseService {
     }
   }
 
-  async getProductsByShopifyId(shopifyProductId: string): Promise<ProductData[]> {
+  async getProductsByShopifyId(
+    shopifyProductId: string
+  ): Promise<ProductData[]> {
     const db = await this.getDB();
-    
+
     try {
       // For now, get all products and filter (could be optimized per database)
       const products = await db.getProducts(1000); // Get more products to search through
-      return products.filter((p: ProductData) => p.shopifyProductId === shopifyProductId);
+      return products.filter(
+        (p: ProductData) => p.shopifyProductId === shopifyProductId
+      );
     } catch (error) {
       console.error('❌ Error getting products by Shopify ID:', error);
       return [];
     }
   }
 
-  async getStoreProducts(shopDomain: string, limit: number = 10): Promise<ProductData[]> {
+  async getStoreProducts(
+    shopDomain: string,
+    limit: number = 10
+  ): Promise<ProductData[]> {
     const db = await this.getDB();
-    
+
     try {
       // Check if database has shop-specific method
       if (db.getProductsByShop) {
@@ -150,7 +173,9 @@ export class AppDatabaseService {
       } else {
         // Fallback: get all and filter
         const products = await db.getProducts(1000);
-        return products.filter((p: ProductData) => p.shopDomain === shopDomain).slice(0, limit);
+        return products
+          .filter((p: ProductData) => p.shopDomain === shopDomain)
+          .slice(0, limit);
       }
     } catch (error) {
       console.error('❌ Error getting store products:', error);
@@ -158,9 +183,12 @@ export class AppDatabaseService {
     }
   }
 
-  async searchProducts(searchTerm: string, shopDomain?: string): Promise<ProductData[]> {
+  async searchProducts(
+    searchTerm: string,
+    shopDomain?: string
+  ): Promise<ProductData[]> {
     const db = await this.getDB();
-    
+
     try {
       if (db.searchProducts) {
         return await db.searchProducts(searchTerm, shopDomain);
@@ -168,7 +196,9 @@ export class AppDatabaseService {
         // Fallback: basic search
         const products = await db.getProducts(1000);
         return products.filter((p: ProductData) => {
-          const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || p.handle.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesSearch =
+            p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.handle.toLowerCase().includes(searchTerm.toLowerCase());
           const matchesShop = !shopDomain || p.shopDomain === shopDomain;
           return matchesSearch && matchesShop;
         });
@@ -181,7 +211,7 @@ export class AppDatabaseService {
 
   async deleteProduct(productId: string): Promise<void> {
     const db = await this.getDB();
-    
+
     try {
       await db.deleteProduct(productId);
       console.log(`✅ Product deleted: ${productId}`);

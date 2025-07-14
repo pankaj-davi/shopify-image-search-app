@@ -13,9 +13,7 @@
     }
   },
   "plugins": ["@typescript-eslint"],
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "rules": {
     "no-unused-vars": "warn",
     "no-case-declarations": "warn",
