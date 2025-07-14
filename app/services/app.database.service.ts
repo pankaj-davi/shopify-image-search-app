@@ -58,6 +58,28 @@ export class AppDatabaseService {
     }
   }
 
+  async updateStore(shopDomain: string, updates: Partial<StoreData>) {
+    const db = await this.getDB();
+    try {
+      const updateData = {
+        ...updates,
+        updatedAt: new Date(),
+      };
+      
+      console.log(`📝 [Database] Updating store ${shopDomain} with:`, JSON.stringify(updateData, null, 2));
+      
+      await db.updateStore(shopDomain, updateData);
+      console.log(`✅ Store updated: ${shopDomain}`);
+      
+      // Verify the update by reading back
+      const verifyData = await db.getStore(shopDomain);
+      console.log(`✅ [Database] Verification - store data after update:`, JSON.stringify(verifyData, null, 2));
+    } catch (error) {
+      console.error(`❌ Error updating store: ${shopDomain}`, error);
+      throw error;
+    }
+  }
+
   // Product operations
   async syncProductFromShopify(shopifyProduct: any, shopDomain: string) {
     const db = await this.getDB();

@@ -13,23 +13,26 @@ import { TitleBar } from "@shopify/app-bridge-react";
 export default function AdditionalPage() {
   return (
     <Page>
-      <TitleBar title="Additional page" />
+      <TitleBar title="Analytics & Reports" />
       <Layout>
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="300">
-              <Text as="p" variant="bodyMd">
-                The app template comes with an additional page which
-                demonstrates how to create multiple pages within app navigation
-                using{" "}
-                <Link
-                  url="https://shopify.dev/docs/apps/tools/app-bridge"
-                  target="_blank"
-                  removeUnderline
-                >
-                  App Bridge
-                </Link>
-                .
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">
+                  Analytics & Reports
+                </Text>
+                <Text as="p" variant="bodyMd">
+                  The app template comes with an additional page which
+                  demonstrates how to create multiple pages within app navigation
+                  using{" "}
+                  <Link
+                    url="https://shopify.dev/docs/apps/tools/app-bridge"
+                    target="_blank"
+                    removeUnderline
+                  >
+                    App Bridge
+                  </Link>
+                  .
               </Text>
               <Text as="p" variant="bodyMd">
                 To create your own page and have it show up in the app

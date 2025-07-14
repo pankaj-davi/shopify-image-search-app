@@ -37,6 +37,7 @@ export interface StoreData {
   shopDomain: string;
   name: string;
   myshopifyDomain: string;
+  themeConfig?: any; // Visual search theme configuration
   createdAt: Date;
   updatedAt: Date;
 }

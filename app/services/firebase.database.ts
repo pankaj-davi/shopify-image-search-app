@@ -144,6 +144,7 @@ export class FirebaseDatabase implements DatabaseInterface {
         shopDomain: data.shopDomain,
         name: data.name,
         myshopifyDomain: data.myshopifyDomain,
+        themeConfig: data.themeConfig, // Include theme configuration
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
       };

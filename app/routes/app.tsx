@@ -4,6 +4,7 @@ import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
+import AppLayout from "../components/AppLayout";
 
 import { authenticate } from "../shopify.server";
 
@@ -27,7 +28,9 @@ export default function App() {
         <Link to="/app/additional">Additional page</Link>
         <Link to="/app/additional">tesssssssss page</Link>
       </NavMenu>
-      <Outlet />
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
     </AppProvider>
   );
 }
