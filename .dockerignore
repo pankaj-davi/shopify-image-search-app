@@ -59,3 +59,32 @@ docker-compose*.yml
 tmp
 temp
 *.tmp
+
+# Development and testing files
+tests/
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+
+# Development scripts
+scripts/backup-database.js
+scripts/restore-database.js
+scripts/health-check.js
+
+# Development database files
+prisma/dev.db*
+prisma/dev.sqlite*
+*.sqlite
+*.db
+
+# Build analysis and performance files
+bundlesize.json
+.bundlewatch.json
+
+# Security scan results
+security-report.md
+dependency-audit.json
+*.sarif
