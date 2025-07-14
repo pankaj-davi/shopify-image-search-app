@@ -67,39 +67,37 @@ jobs:
 
       - name: 🗄️ Execute database action
         run: |
+          echo "🚀 Starting database operation with error handling..."
+          
           case "${{ github.event.inputs.action }}" in
             "migrate")
-              echo "🔄 Running database migrations..."
-              if [ "$DATABASE_PROVIDER" = "prisma" ]; then
-                npx prisma migrate deploy
-              else
-                echo "No migrations needed for Firebase"
-              fi
+              echo "🔄 Running database migrations with error handling..."
+              npm run db:migrate:safe
               ;;
             "backup")
-              echo "💾 Creating database backup..."
-              npm run db:backup
+              echo "💾 Creating database backup with error handling..."
+              npm run db:backup:safe
               ;;
             "restore")
               if [ -n "${{ github.event.inputs.backup_name }}" ]; then
                 echo "🔄 Restoring from backup: ${{ github.event.inputs.backup_name }}"
-                npm run db:restore -- --backup="${{ github.event.inputs.backup_name }}"
+                npm run db:restore:safe -- --backup-name="${{ github.event.inputs.backup_name }}"
               else
                 echo "❌ Backup name required for restore action"
                 exit 1
               fi
               ;;
             "seed")
-              echo "🌱 Seeding database..."
-              npm run db:seed
+              echo "🌱 Seeding database with error handling..."
+              npm run db:seed:safe
               ;;
             "reset")
               if [ "${{ github.event.inputs.environment }}" = "production" ]; then
                 echo "❌ Database reset not allowed in production!"
                 exit 1
               fi
-              echo "🔄 Resetting database..."
-              npm run db:reset
+              echo "🔄 Resetting database with error handling..."
+              npm run db:reset:safe -- --force
               ;;
             *)
               echo "❌ Unknown action: ${{ github.event.inputs.action }}"
@@ -124,6 +122,23 @@ jobs:
           if [ "${{ github.event.inputs.action }}" = "backup" ]; then
             echo "Backup Name: backup-$(date +%Y%m%d-%H%M%S)"
           fi
+          
+          # Display detailed report if available
+          if [ -f "database-operation-report.json" ]; then
+            echo ""
+            echo "📄 Detailed Operation Report:"
+            cat database-operation-report.json
+          fi
+
+      - name: 📤 Upload database operation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-report-${{ github.event.inputs.action }}-${{ github.event.inputs.environment }}-${{ github.run_number }}
+          path: |
+            database-operation-report.json
+            *.log
+          retention-days: 30
 
       - name: 📢 Notify completion
         run: |
