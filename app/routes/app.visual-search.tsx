@@ -1,6 +1,17 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useActionData, Form } from "@remix-run/react";
+import { 
+  Page, 
+  Card, 
+  BlockStack, 
+  Text, 
+  Button, 
+  Banner,
+  Box,
+  InlineStack
+} from "@shopify/polaris";
+import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { ScriptInjectionService } from "../services/script-injection.service";
 
@@ -97,168 +108,146 @@ export default function VisualSearchSettings() {
   const errorMessage = ('error' in data) && data.error && typeof data.error === 'string' ? data.error : null;
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4", padding: "20px", maxWidth: "800px" }}>
-      <h1 style={{ color: "#333", margin: "0 0 20px 0" }}>Visual Search Settings</h1>
+    <Page>
+      <TitleBar title="Visual Search Settings" />
       
-      {errorMessage && (
-          <div style={{ 
-            backgroundColor: "#f8d7da",
-            color: "#721c24",
-            padding: "15px",
-            borderRadius: "6px",
-            marginBottom: "20px",
-            border: "1px solid #f5c6cb"
-          }}>
-            <strong>❌ Error:</strong> {errorMessage}
-          </div>
+      <BlockStack gap="500">
+        {errorMessage && (
+          <Banner tone="critical" title="Error">
+            {errorMessage}
+          </Banner>
         )}
       
-      <div style={{ 
-        backgroundColor: "#f8f9fa", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        marginBottom: "20px",
-        border: "1px solid #e9ecef"
-      }}>
-        <h2 style={{ color: "#495057", marginTop: "0" }}>Current Status</h2>
-        <p><strong>Shop:</strong> {data.shop}</p>
-        <p>
-          <strong>Visual Search Script:</strong>{" "}
-          <span style={{ 
-            color: data.isScriptInjected ? "#28a745" : "#dc3545",
-            fontWeight: "bold"
-          }}>
-            {data.isScriptInjected ? "✅ Active" : "❌ Not Active"}
-          </span>
-        </p>
-        
-        {data.scriptData && (
-          <div style={{ marginTop: "10px", fontSize: "14px", color: "#6c757d" }}>
-            <p><strong>Script ID:</strong> {data.scriptData.id}</p>
-            <p><strong>Created:</strong> {new Date(data.scriptData.createdAt).toLocaleString()}</p>
-            <p><strong>Source:</strong> {data.scriptData.src}</p>
-          </div>
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">Current Status</Text>
+            
+            <BlockStack gap="200">
+              <Text as="p" variant="bodyMd">
+                <Text as="span" fontWeight="semibold">Shop:</Text> {data.shop}
+              </Text>
+              
+              <InlineStack gap="200" align="start">
+                <Text as="span" variant="bodyMd" fontWeight="semibold">Visual Search Script:</Text>
+                <Text 
+                  as="span" 
+                  variant="bodyMd" 
+                  tone={data.isScriptInjected ? "success" : "critical"}
+                  fontWeight="semibold"
+                >
+                  {data.isScriptInjected ? "✅ Active" : "❌ Not Active"}
+                </Text>
+              </InlineStack>
+              
+              {data.scriptData && (
+                <Box paddingBlockStart="300">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      <Text as="span" fontWeight="semibold">Script ID:</Text> {data.scriptData.id}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      <Text as="span" fontWeight="semibold">Created:</Text> {new Date(data.scriptData.createdAt).toLocaleString()}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      <Text as="span" fontWeight="semibold">Source:</Text> {data.scriptData.src}
+                    </Text>
+                  </BlockStack>
+                </Box>
+              )}
+            </BlockStack>
+          </BlockStack>
+        </Card>
+
+        {actionData && (
+          <Banner 
+            tone={actionData.success ? "success" : "critical"} 
+            title={actionData.success ? "Success" : "Error"}
+          >
+            {('message' in actionData) ? actionData.message : 
+             ('error' in actionData) ? actionData.error : 
+             'Operation completed'}
+          </Banner>
         )}
-      </div>
 
-      {actionData && (
-        <div style={{ 
-          backgroundColor: actionData.success ? "#d4edda" : "#f8d7da",
-          color: actionData.success ? "#155724" : "#721c24",
-          padding: "15px",
-          borderRadius: "6px",
-          marginBottom: "20px",
-          border: `1px solid ${actionData.success ? "#c3e6cb" : "#f5c6cb"}`
-        }}>
-          {actionData.success ? "✅" : "❌"} {
-            ('message' in actionData) ? actionData.message : 
-            ('error' in actionData) ? actionData.error : 
-            'Operation completed'
-          }
-        </div>
-      )}
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">Actions</Text>
+            
+            <InlineStack gap="300" wrap>
+              <Form method="post">
+                <input type="hidden" name="action" value="inject" />
+                <Button
+                  submit
+                  variant="primary"
+                  disabled={data.isScriptInjected}
+                >
+                  {data.isScriptInjected ? "Already Active" : "Activate Visual Search"}
+                </Button>
+              </Form>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "30px", flexWrap: "wrap" }}>
-        <Form method="post">
-          <input type="hidden" name="action" value="inject" />
-          <button
-            type="submit"
-            disabled={data.isScriptInjected}
-            style={{
-              backgroundColor: data.isScriptInjected ? "#6c757d" : "#007bff",
-              color: "white",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "6px",
-              cursor: data.isScriptInjected ? "not-allowed" : "pointer",
-              fontWeight: "500"
-            }}
-          >
-            {data.isScriptInjected ? "Already Active" : "Activate Visual Search"}
-          </button>
-        </Form>
+              <Form method="post">
+                <input type="hidden" name="action" value="remove" />
+                <Button
+                  submit
+                  variant="primary"
+                  tone="critical"
+                  disabled={!data.isScriptInjected}
+                >
+                  {!data.isScriptInjected ? "Not Active" : "Deactivate Visual Search"}
+                </Button>
+              </Form>
 
-        <Form method="post">
-          <input type="hidden" name="action" value="remove" />
-          <button
-            type="submit"
-            disabled={!data.isScriptInjected}
-            style={{
-              backgroundColor: !data.isScriptInjected ? "#6c757d" : "#dc3545",
-              color: "white",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "6px",
-              cursor: !data.isScriptInjected ? "not-allowed" : "pointer",
-              fontWeight: "500"
-            }}
-          >
-            {!data.isScriptInjected ? "Not Active" : "Deactivate Visual Search"}
-          </button>
-        </Form>
+              <Form method="post">
+                <input type="hidden" name="action" value="cleanup" />
+                <Button
+                  submit
+                  variant="secondary"
+                >
+                  🔧 Fix Script Issues
+                </Button>
+              </Form>
 
-        <Form method="post">
-          <input type="hidden" name="action" value="cleanup" />
-          <button
-            type="submit"
-            style={{
-              backgroundColor: "#ffc107",
-              color: "#212529",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: "500"
-            }}
-          >
-            🔧 Fix Script Issues
-          </button>
-        </Form>
+              <Button
+                url="/app/preview"
+                variant="secondary"
+              >
+                🎨 Preview & Customize
+              </Button>
+            </InlineStack>
+          </BlockStack>
+        </Card>
 
-        <a
-          href="/app/preview"
-          style={{
-            backgroundColor: "#17a2b8",
-            color: "white",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "500",
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px"
-          }}
-        >
-          🎨 Preview & Customize
-        </a>
-      </div>
-
-      <div style={{ 
-        backgroundColor: "#e7f3ff", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        border: "1px solid #b8daff"
-      }}>
-        <h3 style={{ color: "#004085", marginTop: "0" }}>How Visual Search Works</h3>
-        <ul style={{ color: "#004085", paddingLeft: "20px" }}>
-          <li>Automatically adds a camera icon to all search bars in your store</li>
-          <li>Works with any theme - no manual configuration required</li>
-          <li>Customers can click the icon to upload an image</li>
-          <li>AI analyzes the image and generates search terms</li>
-          <li>Automatically searches your store for matching products</li>
-          <li>Completely invisible to customers when not in use</li>
-        </ul>
-        
-        <h4 style={{ color: "#004085", marginTop: "20px" }}>Supported Themes:</h4>
-        <p style={{ color: "#004085", margin: "5px 0" }}>
-          ✅ All Shopify themes (Dawn, Debut, Brooklyn, Venture, etc.)<br/>
-          ✅ Custom themes<br/>
-          ✅ Third-party themes<br/>
-          ✅ Mobile and desktop
-        </p>
-      </div>
-    </div>
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h3" variant="headingMd">How Visual Search Works</Text>
+            
+            <BlockStack gap="200">
+              <Box paddingInlineStart="400">
+                <BlockStack gap="100">
+                  <Text as="p" variant="bodyMd">• Automatically adds a camera icon to all search bars in your store</Text>
+                  <Text as="p" variant="bodyMd">• Works with any theme - no manual configuration required</Text>
+                  <Text as="p" variant="bodyMd">• Customers can click the icon to upload an image</Text>
+                  <Text as="p" variant="bodyMd">• AI analyzes the image and generates search terms</Text>
+                  <Text as="p" variant="bodyMd">• Automatically searches your store for matching products</Text>
+                  <Text as="p" variant="bodyMd">• Completely invisible to customers when not in use</Text>
+                </BlockStack>
+              </Box>
+              
+              <BlockStack gap="200">
+                <Text as="h4" variant="headingSm">Supported Themes:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ All Shopify themes (Dawn, Debut, Brooklyn, Venture, etc.)</Text>
+                    <Text as="p" variant="bodyMd">✅ Custom themes</Text>
+                    <Text as="p" variant="bodyMd">✅ Third-party themes</Text>
+                    <Text as="p" variant="bodyMd">✅ Mobile and desktop</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
+            </BlockStack>
+          </BlockStack>
+        </Card>
+      </BlockStack>
+    </Page>
   );
 }

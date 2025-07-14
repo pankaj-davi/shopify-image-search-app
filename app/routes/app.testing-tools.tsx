@@ -1,5 +1,16 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import {
+  Page,
+  Card,
+  BlockStack,
+  InlineStack,
+  Text,
+  Button,
+  Banner,
+  Box
+} from "@shopify/polaris";
+import { TitleBar } from "@shopify/app-bridge-react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // Get the actual app URL from the request or environment
@@ -29,260 +40,267 @@ export default function TestingTools() {
   const { appUrl, bookmarkletCode } = useLoaderData<typeof loader>();
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", padding: "20px", maxWidth: "1000px" }}>
-      <h1 style={{ color: "#333", marginBottom: "20px" }}>🛠️ Visual Search Testing Tools</h1>
+    <Page>
+      <TitleBar title="Visual Search Testing Tools" />
       
-      {/* Quick Tests */}
-      <div style={{ 
-        backgroundColor: "#f8f9fa", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        marginBottom: "20px",
-        border: "1px solid #e9ecef"
-      }}>
-        <h2 style={{ color: "#495057", marginTop: "0" }}>Quick Tests</h2>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <a 
-            href="/api/test-integration?type=script" 
-            target="_blank"
-            style={{
-              backgroundColor: "#007bff",
-              color: "white",
-              padding: "10px 15px",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontSize: "14px"
-            }}
-          >
-            📄 Test Script Access
-          </a>
-          <a 
-            href="/api/test-integration?type=api" 
-            target="_blank"
-            style={{
-              backgroundColor: "#28a745",
-              color: "white",
-              padding: "10px 15px",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontSize: "14px"
-            }}
-          >
-            🔌 Test API Endpoint
-          </a>
-          <a 
-            href="/api/test-integration?type=config" 
-            target="_blank"
-            style={{
-              backgroundColor: "#6f42c1",
-              color: "white",
-              padding: "10px 15px",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontSize: "14px"
-            }}
-          >
-            ⚙️ Check Configuration
-          </a>
-        </div>
-      </div>
+      <BlockStack gap="500">
+        {/* Quick Tests */}
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">Quick Tests</Text>
+            <InlineStack gap="300" wrap>
+              <Button
+                url="/api/test-integration?type=script"
+                external
+                variant="secondary"
+                icon="📄"
+              >
+                Test Script Access
+              </Button>
+              <Button
+                url="/api/test-integration?type=api"
+                external
+                variant="secondary"
+                icon="🔌"
+              >
+                Test API Endpoint
+              </Button>
+              <Button
+                url="/api/test-integration?type=config"
+                external
+                variant="secondary"
+                icon="⚙️"
+              >
+                Check Configuration
+              </Button>
+            </InlineStack>
+          </BlockStack>
+        </Card>
 
-      {/* Bookmarklet */}
-      <div style={{ 
-        backgroundColor: "#fff3cd", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        marginBottom: "20px",
-        border: "1px solid #ffeaa7"
-      }}>
-        <h2 style={{ color: "#856404", marginTop: "0" }}>📌 Test Bookmarklet</h2>
-        <p style={{ color: "#856404", marginBottom: "15px" }}>
-          Drag this button to your bookmarks bar, then click it on ANY Shopify store to test visual search:
-        </p>
-        <div style={{ 
-          backgroundColor: "white", 
-          padding: "15px", 
-          borderRadius: "6px",
-          border: "1px solid #ffeaa7",
-          textAlign: "center"
-        }}>
-          <a 
-            href={bookmarkletCode}
-            style={{
-              backgroundColor: "#ffc107",
-              color: "#212529",
-              padding: "12px 20px",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontWeight: "bold",
-              fontSize: "16px",
-              display: "inline-block"
-            }}
-          >
-            🔍 Test Visual Search
-          </a>
-        </div>
-        <p style={{ color: "#856404", fontSize: "14px", marginTop: "10px" }}>
-          <strong>How to use:</strong>
-          <br />1. Drag the yellow button above to your browser's bookmarks bar
-          <br />2. Visit any Shopify store (or your test store)
-          <br />3. Click the bookmark to inject visual search
-          <br />4. Look for camera icons in search bars
-        </p>
-      </div>
+        {/* Bookmarklet */}
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">📌 Test Bookmarklet</Text>
+            <Banner tone="warning">
+              <Text as="p" variant="bodyMd">
+                Drag this button to your bookmarks bar, then click it on ANY Shopify store to test visual search:
+              </Text>
+            </Banner>
+            <Box 
+              background="bg-surface-secondary" 
+              padding="400" 
+              borderRadius="200"
+            >
+              <InlineStack align="center">
+                <Button
+                  url={bookmarkletCode}
+                  variant="primary"
+                  size="large"
+                >
+                  🔍 Test Visual Search
+                </Button>
+              </InlineStack>
+            </Box>
+            <Text as="p" variant="bodyMd" tone="subdued">
+              <Text as="span" fontWeight="semibold">How to use:</Text><br />
+              1. Drag the button above to your browser's bookmarks bar<br />
+              2. Visit any Shopify store (or your test store)<br />
+              3. Click the bookmark to inject visual search<br />
+              4. Look for camera icons in search bars
+            </Text>
+          </BlockStack>
+        </Card>
 
-      {/* Manual Testing Steps */}
-      <div style={{ 
-        backgroundColor: "#e7f3ff", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        marginBottom: "20px",
-        border: "1px solid #b8daff"
-      }}>
-        <h2 style={{ color: "#004085", marginTop: "0" }}>✅ Manual Testing Checklist</h2>
-        <div style={{ color: "#004085" }}>
-          <h4>1. Pre-Installation Testing:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ App builds without errors</li>
-            <li>✅ All environment variables are set</li>
-            <li>✅ Script endpoint is accessible: <code>{appUrl}/visual-search-script.js</code></li>
-            <li>✅ API endpoint responds: <code>{appUrl}/api/visual-search</code></li>
-          </ul>
+        {/* Manual Testing Steps */}
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">✅ Manual Testing Checklist</Text>
+            
+            <BlockStack gap="300">
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">1. Pre-Installation Testing:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ App builds without errors</Text>
+                    <Text as="p" variant="bodyMd">✅ All environment variables are set</Text>
+                    <Text as="p" variant="bodyMd">✅ Script endpoint is accessible: <code>{appUrl}/visual-search-script.js</code></Text>
+                    <Text as="p" variant="bodyMd">✅ API endpoint responds: <code>{appUrl}/api/visual-search</code></Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
 
-          <h4>2. Installation Testing:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ App installs successfully on test store</li>
-            <li>✅ Script tag appears in Shopify admin (Online Store → Themes → Actions → Edit code → Templates)</li>
-            <li>✅ No errors in app logs during installation</li>
-            <li>✅ Webhook endpoints are configured</li>
-          </ul>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">2. Installation Testing:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ App installs successfully on test store</Text>
+                    <Text as="p" variant="bodyMd">✅ Script tag appears in Shopify admin (Online Store → Themes → Actions → Edit code → Templates)</Text>
+                    <Text as="p" variant="bodyMd">✅ No errors in app logs during installation</Text>
+                    <Text as="p" variant="bodyMd">✅ Webhook endpoints are configured</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
 
-          <h4>3. Frontend Testing:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ Camera icons appear in search bars</li>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">3. Frontend Testing:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ Camera icons appear in search bars</Text>
             <li>✅ Icons are positioned correctly (not overlapping text)</li>
-            <li>✅ Icons work on mobile devices</li>
-            <li>✅ File picker opens when clicking camera icon</li>
-            <li>✅ Image upload works (check browser network tab)</li>
-            <li>✅ Search terms are generated and filled</li>
-            <li>✅ Search is triggered automatically</li>
-            <li>✅ Error handling works (try invalid files)</li>
-          </ul>
+                    <Text as="p" variant="bodyMd">✅ Icons work on mobile devices</Text>
+                    <Text as="p" variant="bodyMd">✅ File picker opens when clicking camera icon</Text>
+                    <Text as="p" variant="bodyMd">✅ Image upload works (check browser network tab)</Text>
+                    <Text as="p" variant="bodyMd">✅ Search terms are generated and filled</Text>
+                    <Text as="p" variant="bodyMd">✅ Search is triggered automatically</Text>
+                    <Text as="p" variant="bodyMd">✅ Error handling works (try invalid files)</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
 
-          <h4>4. Cross-Theme Testing:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ Test with Dawn theme</li>
-            <li>✅ Test with Debut theme</li>
-            <li>✅ Test with at least one custom theme</li>
-            <li>✅ Test on stores with multiple search bars</li>
-            <li>✅ Test on stores with AJAX/SPA navigation</li>
-          </ul>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">4. Cross-Theme Testing:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ Test with Dawn theme</Text>
+                    <Text as="p" variant="bodyMd">✅ Test with Debut theme</Text>
+                    <Text as="p" variant="bodyMd">✅ Test with at least one custom theme</Text>
+                    <Text as="p" variant="bodyMd">✅ Test on stores with multiple search bars</Text>
+                    <Text as="p" variant="bodyMd">✅ Test on stores with AJAX/SPA navigation</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
 
-          <h4>5. Uninstallation Testing:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ Script tags are removed when app is uninstalled</li>
-            <li>✅ No orphaned scripts remain</li>
-            <li>✅ Uninstall webhook fires correctly</li>
-          </ul>
-        </div>
-      </div>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">5. Uninstallation Testing:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ Script tags are removed when app is uninstalled</Text>
+                    <Text as="p" variant="bodyMd">✅ No orphaned scripts remain</Text>
+                    <Text as="p" variant="bodyMd">✅ Uninstall webhook fires correctly</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
+            </BlockStack>
+          </BlockStack>
+        </Card>
 
-      {/* Browser Testing */}
-      <div style={{ 
-        backgroundColor: "#f8d7da", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        marginBottom: "20px",
-        border: "1px solid #f5c6cb"
-      }}>
-        <h2 style={{ color: "#721c24", marginTop: "0" }}>🌐 Browser Compatibility Testing</h2>
-        <div style={{ color: "#721c24" }}>
-          <h4>Desktop Browsers:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ Chrome (latest)</li>
-            <li>✅ Firefox (latest)</li>
-            <li>✅ Safari (latest)</li>
-            <li>✅ Edge (latest)</li>
-          </ul>
+        {/* Browser Testing */}
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">🌐 Browser Compatibility Testing</Text>
+            
+            <BlockStack gap="300">
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Desktop Browsers:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ Chrome (latest)</Text>
+                    <Text as="p" variant="bodyMd">✅ Firefox (latest)</Text>
+                    <Text as="p" variant="bodyMd">✅ Safari (latest)</Text>
+                    <Text as="p" variant="bodyMd">✅ Edge (latest)</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
 
-          <h4>Mobile Browsers:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ Chrome Mobile</li>
-            <li>✅ Safari iOS</li>
-            <li>✅ Samsung Internet</li>
-            <li>✅ Firefox Mobile</li>
-          </ul>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Mobile Browsers:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ Chrome Mobile</Text>
+                    <Text as="p" variant="bodyMd">✅ Safari iOS</Text>
+                    <Text as="p" variant="bodyMd">✅ Samsung Internet</Text>
+                    <Text as="p" variant="bodyMd">✅ Firefox Mobile</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
 
-          <h4>Test Cases:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>✅ File picker opens on mobile</li>
-            <li>✅ Camera access works (mobile only)</li>
-            <li>✅ Touch events work properly</li>
-            <li>✅ Icons scale correctly on different screen sizes</li>
-            <li>✅ No JavaScript errors in console</li>
-          </ul>
-        </div>
-      </div>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Test Cases:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">✅ File picker opens on mobile</Text>
+                    <Text as="p" variant="bodyMd">✅ Camera access works (mobile only)</Text>
+                    <Text as="p" variant="bodyMd">✅ Touch events work properly</Text>
+                    <Text as="p" variant="bodyMd">✅ Icons scale correctly on different screen sizes</Text>
+                    <Text as="p" variant="bodyMd">✅ No JavaScript errors in console</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
+            </BlockStack>
+          </BlockStack>
+        </Card>
 
-      {/* Debugging Tools */}
-      <div style={{ 
-        backgroundColor: "#d1ecf1", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        marginBottom: "20px",
-        border: "1px solid #bee5eb"
-      }}>
-        <h2 style={{ color: "#0c5460", marginTop: "0" }}>🐛 Debugging Tools</h2>
-        <div style={{ color: "#0c5460" }}>
-          <h4>Browser Console Commands:</h4>
-          <div style={{ backgroundColor: "white", padding: "10px", borderRadius: "4px", marginBottom: "10px" }}>
-            <code style={{ display: "block", marginBottom: "5px" }}>
-              {`// Check if visual search is loaded`}<br />
-              {`console.log(window.injectVisualSearchIcon ? 'Visual search loaded' : 'Visual search not found');`}
-            </code>
-          </div>
-          
-          <div style={{ backgroundColor: "white", padding: "10px", borderRadius: "4px", marginBottom: "10px" }}>
-            <code style={{ display: "block", marginBottom: "5px" }}>
-              {`// Manually trigger visual search injection`}<br />
-              {`if (window.injectVisualSearchIcon) window.injectVisualSearchIcon();`}
-            </code>
-          </div>
+        {/* Debugging Tools */}
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">🐛 Debugging Tools</Text>
+            
+            <BlockStack gap="300">
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Browser Console Commands:</Text>
+                
+                <Box 
+                  background="bg-surface-secondary" 
+                  padding="300" 
+                  borderRadius="200"
+                >
+                  <Text as="p" variant="bodyMd">
+                    <code>console.log(window.injectVisualSearchIcon ? 'Visual search loaded' : 'Visual search not found');</code>
+                  </Text>
+                </Box>
 
-          <div style={{ backgroundColor: "white", padding: "10px", borderRadius: "4px", marginBottom: "10px" }}>
-            <code style={{ display: "block", marginBottom: "5px" }}>
-              {`// Check for search inputs`}<br />
-              {`document.querySelectorAll('input[type="search"], input[name*="search"]')`}
-            </code>
-          </div>
+                <Box 
+                  background="bg-surface-secondary" 
+                  padding="300" 
+                  borderRadius="200"
+                >
+                  <Text as="p" variant="bodyMd">
+                    <code>if (window.injectVisualSearchIcon) window.injectVisualSearchIcon();</code>
+                  </Text>
+                </Box>
 
-          <div style={{ backgroundColor: "white", padding: "10px", borderRadius: "4px", marginBottom: "15px" }}>
-            <code style={{ display: "block", marginBottom: "5px" }}>
-              {`// Check for visual search icons`}<br />
-              {`document.querySelectorAll('.visual-search-icon')`}
-            </code>
-          </div>
+                <Box 
+                  background="bg-surface-secondary" 
+                  padding="300" 
+                  borderRadius="200"
+                >
+                  <Text as="p" variant="bodyMd">
+                    <code>document.querySelectorAll('input[type="search"], input[name*="search"]')</code>
+                  </Text>
+                </Box>
 
-          <h4>Network Tab Checks:</h4>
-          <ul style={{ paddingLeft: "20px" }}>
-            <li>Script loads successfully (200 status)</li>
-            <li>API requests go to correct endpoint</li>
-            <li>Image uploads have proper Content-Type</li>
-            <li>No CORS errors</li>
-          </ul>
-        </div>
-      </div>
+                <Box 
+                  background="bg-surface-secondary" 
+                  padding="300" 
+                  borderRadius="200"
+                >
+                  <Text as="p" variant="bodyMd">
+                    <code>document.querySelectorAll('.visual-search-icon')</code>
+                  </Text>
+                </Box>
+              </BlockStack>
 
-      <div style={{ 
-        fontSize: "12px", 
-        color: "#666", 
-        textAlign: "center", 
-        marginTop: "20px",
-        padding: "10px",
-        borderTop: "1px solid #e9ecef"
-      }}>
-        Testing tools generated for: {appUrl}
-      </div>
-    </div>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Network Tab Checks:</Text>
+                <Box paddingInlineStart="400">
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodyMd">Script loads successfully (200 status)</Text>
+                    <Text as="p" variant="bodyMd">API requests go to correct endpoint</Text>
+                    <Text as="p" variant="bodyMd">Image uploads have proper Content-Type</Text>
+                    <Text as="p" variant="bodyMd">No CORS errors</Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
+            </BlockStack>
+          </BlockStack>
+        </Card>
+
+        <Box borderBlockStartWidth="025" borderColor="border" paddingBlockStart="300">
+          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+            Testing tools generated for: {appUrl}
+          </Text>
+        </Box>
+      </BlockStack>
+    </Page>
   );
 }

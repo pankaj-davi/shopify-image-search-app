@@ -1,4 +1,4 @@
-import { InlineStack, Text } from "@shopify/polaris";
+import { InlineStack, Text, Link } from "@shopify/polaris";
 
 interface BreadcrumbItem {
   label: string;
@@ -16,23 +16,14 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
       {items.map((item, index) => (
         <InlineStack key={index} gap="100" align="center">
           {item.url && !item.current ? (
-            <a 
-              href={item.url}
-              style={{
-                color: "#6366f1",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "400"
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.textDecoration = "underline";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.textDecoration = "none";
-              }}
+            <Link
+              url={item.url}
+              monochrome
             >
-              {item.label}
-            </a>
+              <Text variant="bodySm" as="span">
+                {item.label}
+              </Text>
+            </Link>
           ) : (
             <Text 
               variant="bodySm" 

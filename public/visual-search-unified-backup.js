@@ -29,14 +29,14 @@
     
     // Theme customization (can be overridden by store owners)
     THEME: {
-      // Icon colors
-      ICON_COLOR: window.VISUAL_SEARCH_CONFIG?.theme?.iconColor || '#5f6368',
-      ICON_COLOR_HOVER: window.VISUAL_SEARCH_CONFIG?.theme?.iconColorHover || '#202124',
-      ICON_BACKGROUND_HOVER: window.VISUAL_SEARCH_CONFIG?.theme?.iconBackgroundHover || 'rgba(95, 99, 104, 0.08)',
+      // Icon colors - use CSS variables for theme compatibility
+      ICON_COLOR: window.VISUAL_SEARCH_CONFIG?.theme?.iconColor || 'var(--visual-search-text-secondary, #5f6368)',
+      ICON_COLOR_HOVER: window.VISUAL_SEARCH_CONFIG?.theme?.iconColorHover || 'var(--visual-search-text-primary, #202124)',
+      ICON_BACKGROUND_HOVER: window.VISUAL_SEARCH_CONFIG?.theme?.iconBackgroundHover || 'var(--visual-search-bg-surface-hover, rgba(95, 99, 104, 0.08))',
       
-      // Brand colors  
-      PRIMARY_COLOR: window.VISUAL_SEARCH_CONFIG?.theme?.primaryColor || '#E60023',
-      PRIMARY_COLOR_DARK: window.VISUAL_SEARCH_CONFIG?.theme?.primaryColorDark || '#BD081C',
+      // Brand colors - use CSS variables for theme compatibility
+      PRIMARY_COLOR: window.VISUAL_SEARCH_CONFIG?.theme?.primaryColor || 'var(--visual-search-brand-primary, #008060)',
+      PRIMARY_COLOR_DARK: window.VISUAL_SEARCH_CONFIG?.theme?.primaryColorDark || 'var(--visual-search-brand-active, #004C3F)',
       
       // Icon style
       ICON_STYLE: window.VISUAL_SEARCH_CONFIG?.theme?.iconStyle || 'google', // 'google', 'minimal', 'branded'
@@ -124,8 +124,8 @@
     spinner: `
       width: 16px;
       height: 16px;
-      border: 2px solid #ccc;
-      border-top: 2px solid #666;
+      border: 2px solid var(--visual-search-border, #ccc);
+      border-top: 2px solid var(--visual-search-text-secondary, #666);
       border-radius: 50%;
       animation: visual-search-spin 1s linear infinite;
     `,
@@ -137,7 +137,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.4);
+      background: var(--visual-search-overlay, rgba(0, 0, 0, 0.4));
       z-index: 10000;
       display: flex;
       align-items: center;
@@ -149,27 +149,27 @@
     
     // Drawer content
     drawerContent: (isMobile) => `
-      background: #ffffff;
+      background: var(--visual-search-bg-surface, #ffffff);
       border-radius: ${isMobile ? '20px' : '24px'};
       padding: 0;
       max-width: ${isMobile ? '400px' : '520px'};
       width: ${isMobile ? '95%' : '90%'};
       max-height: 85vh;
       overflow: hidden;
-      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 32px 64px var(--visual-search-shadow-large, rgba(0, 0, 0, 0.12)), 0 16px 32px var(--visual-search-shadow-medium, rgba(0, 0, 0, 0.08));
       transform: translateY(${isMobile ? '24px' : '32px'}) scale(${isMobile ? '0.98' : '0.96'});
       transition: all ${CONFIG.ANIMATION_DURATION}ms ${CONFIG.ANIMATION_EASING};
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       position: relative;
-      border: 1px solid rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--visual-search-border, rgba(0, 0, 0, 0.04));
     `,
     
     // Notification toast
     notification: (type) => {
       const colors = {
-        success: { bg: '#4CAF50', text: '#fff' },
-        error: { bg: '#f44336', text: '#fff' },
-        info: { bg: '#2196F3', text: '#fff' }
+        success: { bg: 'var(--visual-search-success, #059669)', text: '#fff' },
+        error: { bg: 'var(--visual-search-critical, #DC2626)', text: '#fff' },
+        info: { bg: 'var(--visual-search-brand-primary, #008060)', text: '#fff' }
       };
       return `
         position: fixed;
@@ -182,7 +182,7 @@
         z-index: 10000;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px var(--visual-search-shadow-medium, rgba(0,0,0,0.15));
         max-width: 300px;
         word-wrap: break-word;
         transform: translateX(100%);
@@ -199,7 +199,7 @@
     <!-- Header Section -->
     <div style="
       padding: 32px 32px 24px;
-      background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+      background: linear-gradient(180deg, var(--visual-search-bg-surface-secondary, #fafafa) 0%, var(--visual-search-bg-surface, #ffffff) 100%);
       border-bottom: 1px solid rgba(0, 0, 0, 0.08);
       text-align: center;
       position: relative;

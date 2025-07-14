@@ -4,6 +4,19 @@ import { useLoaderData, useActionData, Form } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { useState, useEffect } from "react";
 import { appDatabase } from "../services/app.database.service";
+import { 
+  Page, 
+  Card, 
+  BlockStack, 
+  Text, 
+  Button, 
+  InlineStack,
+  Box,
+  Banner,
+  RangeSlider
+} from "@shopify/polaris";
+import { TitleBar } from "@shopify/app-bridge-react";
+import { POLARIS_THEME_PRESETS } from "../utils/theme-presets";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
@@ -170,50 +183,16 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
-const THEME_PRESETS = {
-  google: {
-    name: "Google Style",
-    iconColor: "#5f6368",
-    iconColorHover: "#202124",
-    iconBackgroundHover: "rgba(95, 99, 104, 0.08)",
-    primaryColor: "#4285f4",
-    primaryColorDark: "#1a73e8"
-  },
-  pinterest: {
-    name: "Pinterest Style", 
-    iconColor: "#767676",
-    iconColorHover: "#E60023",
-    iconBackgroundHover: "rgba(230, 0, 35, 0.08)",
-    primaryColor: "#E60023",
-    primaryColorDark: "#BD081C"
-  },
-  minimal: {
-    name: "Minimal",
-    iconColor: "#999999",
-    iconColorHover: "#333333", 
-    iconBackgroundHover: "rgba(0, 0, 0, 0.05)",
-    primaryColor: "#333333",
-    primaryColorDark: "#000000"
-  },
-  brand: {
-    name: "Your Brand",
-    iconColor: "#666666",
-    iconColorHover: "#000000",
-    iconBackgroundHover: "rgba(0, 0, 0, 0.08)", 
-    primaryColor: "#007bff",
-    primaryColorDark: "#0056b3"
-  }
-};
-
 export default function PreviewPage() {
   const data = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   
-  const [currentTheme, setCurrentTheme] = useState(THEME_PRESETS.pinterest);
-  const [customTheme, setCustomTheme] = useState(THEME_PRESETS.pinterest);
+  const [currentTheme, setCurrentTheme] = useState(POLARIS_THEME_PRESETS.pinterest);
+  const [customTheme, setCustomTheme] = useState(POLARIS_THEME_PRESETS.pinterest);
   const [iconPosition, setIconPosition] = useState<'left' | 'right'>('right');
   const [iconOffset, setIconOffset] = useState(8);
   const [iconSize, setIconSize] = useState(1.0);
+  const [showColorPickers, setShowColorPickers] = useState(false);
 
   // Initialize state with loaded theme configuration
   useEffect(() => {
@@ -234,11 +213,11 @@ export default function PreviewPage() {
       // Update theme values if they exist
       const savedTheme = {
         name: "Saved Theme",
-        iconColor: config.iconColor || THEME_PRESETS.pinterest.iconColor,
-        iconColorHover: config.iconColorHover || THEME_PRESETS.pinterest.iconColorHover,
-        iconBackgroundHover: config.iconBackgroundHover || THEME_PRESETS.pinterest.iconBackgroundHover,
-        primaryColor: config.primaryColor || THEME_PRESETS.pinterest.primaryColor,
-        primaryColorDark: config.primaryColorDark || THEME_PRESETS.pinterest.primaryColorDark
+        iconColor: config.iconColor || POLARIS_THEME_PRESETS.pinterest.iconColor,
+        iconColorHover: config.iconColorHover || POLARIS_THEME_PRESETS.pinterest.iconColorHover,
+        iconBackgroundHover: config.iconBackgroundHover || POLARIS_THEME_PRESETS.pinterest.iconBackgroundHover,
+        primaryColor: config.primaryColor || POLARIS_THEME_PRESETS.pinterest.primaryColor,
+        primaryColorDark: config.primaryColorDark || POLARIS_THEME_PRESETS.pinterest.primaryColorDark
       };
       
       setCurrentTheme(savedTheme);
@@ -255,16 +234,20 @@ export default function PreviewPage() {
     console.log("[Preview] Reset positioning to defaults");
   };
 
-  const handlePresetChange = (preset: keyof typeof THEME_PRESETS) => {
-    const theme = THEME_PRESETS[preset];
+  const handlePresetChange = (preset: keyof typeof POLARIS_THEME_PRESETS) => {
+    const theme = POLARIS_THEME_PRESETS[preset];
     setCurrentTheme(theme);
     setCustomTheme(theme);
   };
 
-  const handleCustomChange = (field: string, value: string) => {
-    const updated = { ...customTheme, [field]: value };
-    setCustomTheme(updated);
-    setCurrentTheme(updated);
+  const handleCustomColorChange = (colorType: 'iconColor' | 'iconColorHover' | 'primaryColor', newColor: string) => {
+    const updatedTheme = {
+      ...customTheme,
+      [colorType]: newColor,
+      name: "Custom Theme"
+    };
+    setCustomTheme(updatedTheme);
+    setCurrentTheme(updatedTheme);
   };
 
   const generateScriptConfig = () => {
@@ -289,472 +272,451 @@ export default function PreviewPage() {
   };
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4", padding: "20px", maxWidth: "1200px" }}>
-      <h1 style={{ color: "#333", margin: "0 0 20px 0" }}>Visual Search Preview & Customization</h1>
+    <Page>
+      <TitleBar title="Visual Search Preview & Customization" />
       
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px", marginBottom: "40px" }}>
-        
-        {/* Live Preview Section */}
-        <div style={{ 
-          backgroundColor: "#f8f9fa", 
-          padding: "30px", 
-          borderRadius: "12px", 
-          border: "1px solid #e9ecef"
-        }}>
-          <h2 style={{ color: "#495057", marginTop: "0", marginBottom: "20px" }}>Live Preview</h2>
+      <BlockStack gap="500">
+        {/* Action Result Banner */}
+        {actionData && (
+          <Banner
+            tone={actionData.success ? "success" : "critical"}
+            title={actionData.success ? "Configuration Saved!" : "Error"}
+          >
+            {(actionData as any).message || (actionData as any).error}
+          </Banner>
+        )}
+
+        <InlineStack gap="500" align="start" wrap={false}>
+          {/* Live Preview Section */}
+          <Box width="50%" minWidth="400px">
+            <Card>
+              <BlockStack gap="400">
+                <Text as="h2" variant="headingMd">Live Preview</Text>
+                
+                {/* Desktop Search Bar Demo */}
+                <BlockStack gap="200">
+                  <Text as="h3" variant="headingSm" tone="subdued">Desktop Search Bar</Text>
+                  <Box position="relative">
+                    <input 
+                      type="search" 
+                      placeholder="Search products..." 
+                      style={{
+                        width: "100%",
+                        padding: iconPosition === 'left' 
+                          ? `12px 16px 12px ${50 + iconOffset}px`
+                          : `12px ${50 + iconOffset}px 12px 16px`,
+                        border: "var(--p-border-width-025) solid var(--p-color-border)",
+                        borderRadius: "var(--p-border-radius-400)",
+                        fontSize: "16px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                        backgroundColor: "var(--p-color-bg-surface)"
+                      }}
+                    />
+                    <div 
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        [iconPosition]: `${iconOffset + 4}px`,
+                        [iconPosition === 'left' ? 'right' : 'left']: 'auto',
+                        transform: "translateY(-50%)",
+                        width: `${24 * iconSize}px`,
+                        height: `${24 * iconSize}px`,
+                        cursor: "pointer",
+                        opacity: "0.7",
+                        color: currentTheme.iconColor,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "var(--p-border-radius-050)",
+                        transition: "all 0.15s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = "1";
+                        e.currentTarget.style.backgroundColor = currentTheme.iconBackgroundHover;
+                        e.currentTarget.style.borderRadius = "50%";
+                        e.currentTarget.style.color = currentTheme.iconColorHover;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = "0.7";
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.borderRadius = "var(--p-border-radius-050)";
+                        e.currentTarget.style.color = currentTheme.iconColor;
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width={`${20 * iconSize}`} height={`${20 * iconSize}`}>
+                        <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
+                        <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
+                        <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
+                        <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.8"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
+                        <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
+                      </svg>
+                    </div>
+                  </Box>
+                </BlockStack>
+
+                {/* Mobile Search Demo */}
+                <BlockStack gap="200">
+                  <Text as="h3" variant="headingSm" tone="subdued">Mobile Search Bar</Text>
+                  <Box position="relative" maxWidth="300px">
+                    <input 
+                      type="search" 
+                      placeholder="Search..." 
+                      style={{
+                        width: "100%",
+                        padding: iconPosition === 'left' 
+                          ? `10px 12px 10px ${40 + iconOffset}px`
+                          : `10px ${40 + iconOffset}px 10px 12px`,
+                        border: "var(--p-border-width-025) solid var(--p-color-border)",
+                        borderRadius: "var(--p-border-radius-400)",
+                        fontSize: "14px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                        backgroundColor: "var(--p-color-bg-surface)"
+                      }}
+                    />
+                    <div 
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        [iconPosition]: `${iconOffset}px`,
+                        transform: "translateY(-50%)",
+                        width: `${20 * iconSize}px`,
+                        height: `${20 * iconSize}px`,
+                        cursor: "pointer",
+                        opacity: "0.7",
+                        color: currentTheme.iconColor,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width={`${16 * iconSize}`} height={`${16 * iconSize}`}>
+                        <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
+                        <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
+                        <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.8"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
+                        <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
+                      </svg>
+                    </div>
+                  </Box>
+                </BlockStack>
+
+                {/* Preview Info */}
+                <Card background="bg-surface-secondary">
+                  <BlockStack gap="200">
+                    <Text as="h4" variant="headingSm">
+                      Theme Preview
+                    </Text>
+                    <BlockStack gap="200">
+                      <InlineStack gap="200" align="space-between">
+                        <Text as="p" variant="bodyMd">
+                          <Text as="span" fontWeight="semibold">Icon Color:</Text>
+                        </Text>
+                        <InlineStack gap="100" align="center">
+                          <div
+                            style={{
+                              backgroundColor: currentTheme.iconColor,
+                              border: "var(--p-border-width-025) solid var(--p-color-border)",
+                              borderRadius: "var(--p-border-radius-050)",
+                              width: "40px",
+                              height: "20px",
+                              minWidth: "40px",
+                              minHeight: "20px"
+                            }}
+                          />
+                          <Text as="span" variant="bodySm" tone="subdued">
+                            {currentTheme.iconColor}
+                          </Text>
+                        </InlineStack>
+                      </InlineStack>
+                      
+                      <InlineStack gap="200" align="space-between">
+                        <Text as="p" variant="bodyMd">
+                          <Text as="span" fontWeight="semibold">Hover Color:</Text>
+                        </Text>
+                        <InlineStack gap="100" align="center">
+                          <div
+                            style={{
+                              backgroundColor: currentTheme.iconColorHover,
+                              border: "var(--p-border-width-025) solid var(--p-color-border)",
+                              borderRadius: "var(--p-border-radius-050)",
+                              width: "40px",
+                              height: "20px",
+                              minWidth: "40px",
+                              minHeight: "20px"
+                            }}
+                          />
+                          <Text as="span" variant="bodySm" tone="subdued">
+                            {currentTheme.iconColorHover}
+                          </Text>
+                        </InlineStack>
+                      </InlineStack>
+                      
+                      <InlineStack gap="200" align="space-between">
+                        <Text as="p" variant="bodyMd">
+                          <Text as="span" fontWeight="semibold">Brand Color:</Text>
+                        </Text>
+                        <InlineStack gap="100" align="center">
+                          <div
+                            style={{
+                              backgroundColor: currentTheme.primaryColor,
+                              border: "var(--p-border-width-025) solid var(--p-color-border)",
+                              borderRadius: "var(--p-border-radius-050)",
+                              width: "40px",
+                              height: "20px",
+                              minWidth: "40px",
+                              minHeight: "20px"
+                            }}
+                          />
+                          <Text as="span" variant="bodySm" tone="subdued">
+                            {currentTheme.primaryColor}
+                          </Text>
+                        </InlineStack>
+                      </InlineStack>
+                      
+                      <Text as="p" variant="bodyMd">
+                        <Text as="span" fontWeight="semibold">Position:</Text> {iconPosition} side, {iconOffset}px from edge
+                      </Text>
+                      <Text as="p" variant="bodyMd">
+                        <Text as="span" fontWeight="semibold">Size:</Text> {(iconSize * 100).toFixed(0)}% of normal
+                      </Text>
+                    </BlockStack>
+                  </BlockStack>
+                </Card>
+              </BlockStack>
+            </Card>
+          </Box>
           
-          {/* Search Bar Demo */}
-          <div style={{ marginBottom: "30px" }}>
-            <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#666" }}>Desktop Search Bar</h3>
-            <div style={{ position: "relative", marginBottom: "20px" }}>
-              <input 
-                type="search" 
-                placeholder="Search products..." 
-                style={{
-                  width: "100%",
-                  padding: iconPosition === 'left' 
-                    ? `12px 16px 12px ${50 + iconOffset}px`
-                    : `12px ${50 + iconOffset}px 12px 16px`,
-                  border: "2px solid #e0e0e0",
-                  borderRadius: "25px",
-                  fontSize: "16px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  backgroundColor: "white"
-                }}
-              />
-              <div 
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  [iconPosition]: `${iconOffset + 4}px`,
-                  [iconPosition === 'left' ? 'right' : 'left']: 'auto',
-                  transform: "translateY(-50%)",
-                  width: `${24 * iconSize}px`,
-                  height: `${24 * iconSize}px`,
-                  cursor: "pointer",
-                  opacity: "0.7",
-                  color: currentTheme.iconColor,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "3px",
-                  transition: "all 0.15s ease"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.backgroundColor = currentTheme.iconBackgroundHover;
-                  e.currentTarget.style.borderRadius = "50%";
-                  e.currentTarget.style.color = currentTheme.iconColorHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.7";
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.borderRadius = "3px";
-                  e.currentTarget.style.color = currentTheme.iconColor;
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width={`${20 * iconSize}`} height={`${20 * iconSize}`}>
-                  <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
-                  <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
-                  <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
-                  <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.8"/>
-                  <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
-                  <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
-                </svg>
-              </div>
-            </div>
-          </div>
+          {/* Customization Section */}
+          <Box width="50%" minWidth="400px">
+            <Card>
+              <BlockStack gap="400">
+                <Text as="h2" variant="headingMd">Theme Customization</Text>
+                
+                {/* Preset Themes */}
+                <BlockStack gap="200">
+                  <Text as="h3" variant="headingSm">Quick Presets</Text>
+                  <InlineStack gap="200" wrap>
+                    {Object.entries(POLARIS_THEME_PRESETS).map(([key, preset]) => (
+                      <Button
+                        key={key}
+                        onClick={() => handlePresetChange(key as keyof typeof POLARIS_THEME_PRESETS)}
+                        variant={currentTheme.name === preset.name ? "primary" : "secondary"}
+                        size="medium"
+                      >
+                        {preset.name}
+                      </Button>
+                    ))}
+                  </InlineStack>
+                </BlockStack>
 
-          {/* Mobile Search Demo */}
-          <div>
-            <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#666" }}>Mobile Search Bar</h3>
-            <div style={{ position: "relative", maxWidth: "300px" }}>
-              <input 
-                type="search" 
-                placeholder="Search..." 
-                style={{
-                  width: "100%",
-                  padding: iconPosition === 'left' 
-                    ? `10px 12px 10px ${40 + iconOffset}px`
-                    : `10px ${40 + iconOffset}px 10px 12px`,
-                  border: "1px solid #ccc",
-                  borderRadius: "20px",
-                  fontSize: "14px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  backgroundColor: "white"
-                }}
-              />
-              <div 
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  [iconPosition]: `${iconOffset}px`,
-                  transform: "translateY(-50%)",
-                  width: `${20 * iconSize}px`,
-                  height: `${20 * iconSize}px`,
-                  cursor: "pointer",
-                  opacity: "0.7",
-                  color: currentTheme.iconColor,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width={`${16 * iconSize}`} height={`${16 * iconSize}`}>
-                  <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
-                  <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.8"/>
-                  <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.8"/>
-                  <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
-                  <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
-                </svg>
-              </div>
-            </div>
-          </div>
+                {/* Custom Colors */}
+                <BlockStack gap="300">
+                  <Text as="h3" variant="headingSm">Custom Colors</Text>
+                  
+                  <BlockStack gap="200">
+                    <Text as="h4" variant="headingXs">Icon Color</Text>
+                    <InlineStack gap="200" align="center">
+                      <div
+                        style={{
+                          backgroundColor: customTheme.iconColor,
+                          border: "var(--p-border-width-025) solid var(--p-color-border)",
+                          borderRadius: "var(--p-border-radius-100)",
+                          width: "30px",
+                          height: "30px",
+                          cursor: "pointer"
+                        }}
+                        onClick={() => setShowColorPickers(!showColorPickers)}
+                      />
+                      <input
+                        type="color"
+                        value={customTheme.iconColor}
+                        onChange={(e) => handleCustomColorChange('iconColor', e.target.value)}
+                        style={{
+                          border: "var(--p-border-width-025) solid var(--p-color-border)",
+                          borderRadius: "var(--p-border-radius-100)",
+                          padding: "var(--p-space-100)",
+                          backgroundColor: "var(--p-color-bg-surface)",
+                          cursor: "pointer"
+                        }}
+                      />
+                      <Text as="span" variant="bodySm" tone="subdued">
+                        {customTheme.iconColor}
+                      </Text>
+                    </InlineStack>
+                  </BlockStack>
 
-          {/* Preview Info */}
-          <div style={{ 
-            marginTop: "20px", 
-            padding: "15px", 
-            backgroundColor: "white", 
-            borderRadius: "8px",
-            border: "1px solid #e0e0e0"
-          }}>
-            <h4 style={{ margin: "0 0 10px", color: currentTheme.primaryColor }}>Theme Preview</h4>
-            <div style={{ fontSize: "14px", color: "#666" }}>
-              <p style={{ margin: "5px 0" }}><strong>Icon Color:</strong> {currentTheme.iconColor}</p>
-              <p style={{ margin: "5px 0" }}><strong>Hover Color:</strong> {currentTheme.iconColorHover}</p>
-              <p style={{ margin: "5px 0" }}><strong>Brand Color:</strong> {currentTheme.primaryColor}</p>
-              <p style={{ margin: "5px 0" }}><strong>Position:</strong> {iconPosition} side, {iconOffset}px from edge</p>
-              <p style={{ margin: "5px 0" }}><strong>Size:</strong> {(iconSize * 100).toFixed(0)}% of normal</p>
-            </div>
-          </div>
-        </div>
+                  <BlockStack gap="200">
+                    <Text as="h4" variant="headingXs">Hover Color</Text>
+                    <InlineStack gap="200" align="center">
+                      <div
+                        style={{
+                          backgroundColor: customTheme.iconColorHover,
+                          border: "var(--p-border-width-025) solid var(--p-color-border)",
+                          borderRadius: "var(--p-border-radius-100)",
+                          width: "30px",
+                          height: "30px",
+                          cursor: "pointer"
+                        }}
+                      />
+                      <input
+                        type="color"
+                        value={customTheme.iconColorHover}
+                        onChange={(e) => handleCustomColorChange('iconColorHover', e.target.value)}
+                        style={{
+                          border: "var(--p-border-width-025) solid var(--p-color-border)",
+                          borderRadius: "var(--p-border-radius-100)",
+                          padding: "var(--p-space-100)",
+                          backgroundColor: "var(--p-color-bg-surface)",
+                          cursor: "pointer"
+                        }}
+                      />
+                      <Text as="span" variant="bodySm" tone="subdued">
+                        {customTheme.iconColorHover}
+                      </Text>
+                    </InlineStack>
+                  </BlockStack>
 
-        {/* Theme Customization Section */}
-        <div style={{ 
-          backgroundColor: "#ffffff", 
-          padding: "30px", 
-          borderRadius: "12px", 
-          border: "1px solid #e9ecef"
-        }}>
-          <h2 style={{ color: "#495057", marginTop: "0", marginBottom: "20px" }}>Theme Customization</h2>
-          
-          {/* Preset Themes */}
-          <div style={{ marginBottom: "30px" }}>
-            <h3 style={{ fontSize: "16px", marginBottom: "15px", color: "#333" }}>Quick Presets</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              {Object.entries(THEME_PRESETS).map(([key, preset]) => (
-                <button
-                  key={key}
-                  onClick={() => handlePresetChange(key as keyof typeof THEME_PRESETS)}
-                  style={{
-                    padding: "10px 15px",
-                    border: currentTheme.name === preset.name ? `2px solid ${preset.primaryColor}` : "1px solid #ddd",
-                    borderRadius: "8px",
-                    backgroundColor: currentTheme.name === preset.name ? `${preset.primaryColor}15` : "white",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    color: currentTheme.name === preset.name ? preset.primaryColor : "#333",
-                    fontWeight: currentTheme.name === preset.name ? "600" : "normal"
-                  }}
-                >
-                  {preset.name}
-                </button>
-              ))}
-            </div>
-          </div>
+                  <BlockStack gap="200">
+                    <Text as="h4" variant="headingXs">Brand Color</Text>
+                    <InlineStack gap="200" align="center">
+                      <div
+                        style={{
+                          backgroundColor: customTheme.primaryColor,
+                          border: "var(--p-border-width-025) solid var(--p-color-border)",
+                          borderRadius: "var(--p-border-radius-100)",
+                          width: "30px",
+                          height: "30px",
+                          cursor: "pointer"
+                        }}
+                      />
+                      <input
+                        type="color"
+                        value={customTheme.primaryColor}
+                        onChange={(e) => handleCustomColorChange('primaryColor', e.target.value)}
+                        style={{
+                          border: "var(--p-border-width-025) solid var(--p-color-border)",
+                          borderRadius: "var(--p-border-radius-100)",
+                          padding: "var(--p-space-100)",
+                          backgroundColor: "var(--p-color-bg-surface)",
+                          cursor: "pointer"
+                        }}
+                      />
+                      <Text as="span" variant="bodySm" tone="subdued">
+                        {customTheme.primaryColor}
+                      </Text>
+                    </InlineStack>
+                  </BlockStack>
+                </BlockStack>
 
-          {/* Custom Colors */}
-          <div style={{ marginBottom: "30px" }}>
-            <h3 style={{ fontSize: "16px", marginBottom: "15px", color: "#333" }}>Custom Colors</h3>
+                {/* Position & Size Controls */}
+                <BlockStack gap="300">
+                  <Text as="h3" variant="headingSm">Position & Size</Text>
+                  
+                  <InlineStack gap="200">
+                    <Button
+                      onClick={() => setIconPosition('left')}
+                      variant={iconPosition === 'left' ? "primary" : "secondary"}
+                      size="medium"
+                    >
+                      Left Side
+                    </Button>
+                    <Button
+                      onClick={() => setIconPosition('right')}
+                      variant={iconPosition === 'right' ? "primary" : "secondary"}
+                      size="medium"
+                    >
+                      Right Side
+                    </Button>
+                  </InlineStack>
+
+                  <div>
+                    <Text as="p" variant="bodyMd">Icon Distance from Edge: {iconOffset}px</Text>
+                    <RangeSlider
+                      label=""
+                      value={iconOffset}
+                      min={4}
+                      max={20}
+                      onChange={(value) => setIconOffset(Array.isArray(value) ? value[0] : value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Text as="p" variant="bodyMd">Icon Size: {(iconSize * 100).toFixed(0)}%</Text>
+                    <RangeSlider
+                      label=""
+                      value={iconSize}
+                      min={0.8}
+                      max={1.4}
+                      step={0.1}
+                      onChange={(value) => setIconSize(Array.isArray(value) ? value[0] : value)}
+                    />
+                  </div>
+
+                  <Button
+                    onClick={resetPositioning}
+                    variant="tertiary"
+                    tone="critical"
+                  >
+                    🔄 Reset Positioning to Defaults
+                  </Button>
+                </BlockStack>
+
+                {/* Save Configuration */}
+                <Form method="post">
+                  <input type="hidden" name="actionType" value="saveConfiguration" />
+                  <input type="hidden" name="themeConfig" value={JSON.stringify(customTheme)} />
+                  <input type="hidden" name="iconPosition" value={iconPosition} />
+                  <input type="hidden" name="iconOffset" value={iconOffset} />
+                  <input type="hidden" name="iconSize" value={iconSize} />
+                  <Button
+                    submit
+                    variant="primary"
+                    size="large"
+                    fullWidth
+                  >
+                    Save Theme Configuration
+                  </Button>
+                </Form>
+              </BlockStack>
+            </Card>
+          </Box>
+        </InlineStack>
+
+        {/* Implementation Guide */}
+        <Card>
+          <BlockStack gap="300">
+            <Text as="h3" variant="headingMd">How to Apply Your Custom Theme</Text>
             
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#666" }}>
-                Icon Color
-              </label>
-              <input
-                type="color"
-                value={customTheme.iconColor}
-                onChange={(e) => handleCustomChange('iconColor', e.target.value)}
-                style={{ width: "100%", height: "40px", border: "1px solid #ddd", borderRadius: "4px" }}
-              />
-            </div>
+            <BlockStack gap="200">
+              <Text as="h4" variant="headingSm">Option 1: Automatic (Recommended)</Text>
+              <Text as="p" variant="bodyMd" tone="subdued">
+                Your theme settings are automatically applied when you activate visual search. No additional steps needed!
+              </Text>
+            </BlockStack>
 
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#666" }}>
-                Icon Hover Color
-              </label>
-              <input
-                type="color"
-                value={customTheme.iconColorHover}
-                onChange={(e) => handleCustomChange('iconColorHover', e.target.value)}
-                style={{ width: "100%", height: "40px", border: "1px solid #ddd", borderRadius: "4px" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#666" }}>
-                Brand Color
-              </label>
-              <input
-                type="color"
-                value={customTheme.primaryColor}
-                onChange={(e) => handleCustomChange('primaryColor', e.target.value)}
-                style={{ width: "100%", height: "40px", border: "1px solid #ddd", borderRadius: "4px" }}
-              />
-            </div>
-          </div>
-
-          {/* Positioning & Size Controls */}
-          <div style={{ marginBottom: "30px" }}>
-            <h3 style={{ fontSize: "16px", marginBottom: "15px", color: "#333" }}>Position & Size</h3>
-            
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", color: "#666" }}>
-                Icon Position
-              </label>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button
-                  type="button"
-                  onClick={() => setIconPosition('left')}
-                  style={{
-                    flex: 1,
-                    padding: "8px 12px",
-                    border: iconPosition === 'left' ? `2px solid ${currentTheme.primaryColor}` : "1px solid #ddd",
-                    borderRadius: "6px",
-                    backgroundColor: iconPosition === 'left' ? `${currentTheme.primaryColor}15` : "white",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    color: iconPosition === 'left' ? currentTheme.primaryColor : "#333",
-                    fontWeight: iconPosition === 'left' ? "600" : "normal"
-                  }}
-                >
-                  Left Side
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIconPosition('right')}
-                  style={{
-                    flex: 1,
-                    padding: "8px 12px",
-                    border: iconPosition === 'right' ? `2px solid ${currentTheme.primaryColor}` : "1px solid #ddd",
-                    borderRadius: "6px",
-                    backgroundColor: iconPosition === 'right' ? `${currentTheme.primaryColor}15` : "white",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    color: iconPosition === 'right' ? currentTheme.primaryColor : "#333",
-                    fontWeight: iconPosition === 'right' ? "600" : "normal"
-                  }}
-                >
-                  Right Side
-                </button>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#666" }}>
-                Icon Distance from Edge: {iconOffset}px
-              </label>
-              <input
-                type="range"
-                min="4"
-                max="20"
-                value={iconOffset}
-                onChange={(e) => setIconOffset(Number(e.target.value))}
-                style={{ 
-                  width: "100%", 
-                  height: "6px",
-                  borderRadius: "3px",
-                  background: `linear-gradient(to right, ${currentTheme.primaryColor} 0%, ${currentTheme.primaryColor} ${((iconOffset - 4) / 16) * 100}%, #ddd ${((iconOffset - 4) / 16) * 100}%, #ddd 100%)`,
-                  outline: "none",
-                  appearance: "none"
-                }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#999", marginTop: "5px" }}>
-                <span>Close (4px)</span>
-                <span>Far (20px)</span>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#666" }}>
-                Icon Size: {(iconSize * 100).toFixed(0)}%
-              </label>
-              <input
-                type="range"
-                min="0.8"
-                max="1.4"
-                step="0.1"
-                value={iconSize}
-                onChange={(e) => setIconSize(Number(e.target.value))}
-                style={{ 
-                  width: "100%", 
-                  height: "6px",
-                  borderRadius: "3px",
-                  background: `linear-gradient(to right, ${currentTheme.primaryColor} 0%, ${currentTheme.primaryColor} ${((iconSize - 0.8) / 0.6) * 100}%, #ddd ${((iconSize - 0.8) / 0.6) * 100}%, #ddd 100%)`,
-                  outline: "none",
-                  appearance: "none"
-                }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#999", marginTop: "5px" }}>
-                <span>Small (80%)</span>
-                <span>Large (140%)</span>
-              </div>
-            </div>
-
-            {/* Reset Positioning Button */}
-            <div style={{ marginBottom: "20px", textAlign: "center" }}>
-              <button
-                type="button"
-                onClick={resetPositioning}
-                style={{
-                  backgroundColor: "#f8f9fa",
-                  border: "1px solid #e9ecef",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
-                  fontSize: "13px",
-                  color: "#6c757d",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease"
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#e9ecef";
-                  e.currentTarget.style.color = "#495057";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f8f9fa";
-                  e.currentTarget.style.color = "#6c757d";
-                }}
+            <BlockStack gap="200">
+              <Text as="h4" variant="headingSm">Option 2: Manual Theme Override</Text>
+              <Text as="p" variant="bodyMd" tone="subdued">
+                Add this code to your theme.liquid file to override the default styling:
+              </Text>
+              <Box 
+                background="bg-surface-secondary" 
+                padding="400" 
+                borderRadius="200"
+                borderWidth="025"
+                borderColor="border"
               >
-                🔄 Reset Positioning to Defaults
-              </button>
-            </div>
-          </div>
-
-          {/* Save Configuration */}
-          <Form method="post">
-            <input type="hidden" name="actionType" value="saveConfiguration" />
-            <input type="hidden" name="themeConfig" value={JSON.stringify(customTheme)} />
-            <input type="hidden" name="iconPosition" value={iconPosition} />
-            <input type="hidden" name="iconOffset" value={iconOffset} />
-            <input type="hidden" name="iconSize" value={iconSize} />
-            <button
-              type="submit"
-              style={{
-                width: "100%",
-                padding: "12px 20px",
-                backgroundColor: currentTheme.primaryColor,
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: "pointer"
-              }}
-            >
-              Save Theme Configuration
-            </button>
-          </Form>
-        </div>
-      </div>
-
-      {/* Action Result */}
-      {actionData && (
-        <div style={{ 
-          backgroundColor: actionData.success ? "#d4edda" : "#f8d7da",
-          color: actionData.success ? "#155724" : "#721c24",
-          padding: "15px",
-          borderRadius: "6px",
-          marginBottom: "20px",
-          border: `1px solid ${actionData.success ? "#c3e6cb" : "#f5c6cb"}`
-        }}>
-          {actionData.success ? "✅" : "❌"} {(actionData as any).message || (actionData as any).error}
-        </div>
-      )}
-
-      {/* Implementation Guide */}
-      <div style={{ 
-        backgroundColor: "#e7f3ff", 
-        padding: "20px", 
-        borderRadius: "8px", 
-        border: "1px solid #b8daff"
-      }}>
-        <h3 style={{ color: "#004085", marginTop: "0" }}>How to Apply Your Custom Theme</h3>
-        
-        <div style={{ marginBottom: "20px" }}>
-          <h4 style={{ color: "#004085", fontSize: "16px", marginBottom: "10px" }}>Option 1: Automatic (Recommended)</h4>
-          <p style={{ color: "#004085", margin: "0 0 10px" }}>
-            Your theme settings are automatically applied when you activate visual search. No additional steps needed!
-          </p>
-        </div>
-
-        <div style={{ marginBottom: "20px" }}>
-          <h4 style={{ color: "#004085", fontSize: "16px", marginBottom: "10px" }}>Option 2: Manual Theme Override</h4>
-          <p style={{ color: "#004085", margin: "0 0 10px" }}>
-            Add this code to your theme.liquid file (before the closing &lt;/head&gt; tag):
-          </p>
-          <pre style={{ 
-            backgroundColor: "#f8f9fa", 
-            padding: "15px", 
-            borderRadius: "4px",
-            fontSize: "12px",
-            overflow: "auto",
-            border: "1px solid #dee2e6"
-          }}>
-            {generateScriptConfig()}
-          </pre>
-          
-          {/* Update Live Script Button */}
-          <div style={{ marginTop: "15px" }}>
-            <Form method="post" style={{ display: "inline-block" }}>
-              <input type="hidden" name="actionType" value="updateLiveScript" />
-              <input type="hidden" name="themeConfig" value={JSON.stringify(customTheme)} />
-              <input type="hidden" name="iconPosition" value={iconPosition} />
-              <input type="hidden" name="iconOffset" value={iconOffset} />
-              <input type="hidden" name="iconSize" value={iconSize} />
-              <button
-                type="submit"
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px"
-                }}
-              >
-                🚀 Update Live Script with Current Settings
-              </button>
-            </Form>
-            <p style={{ 
-              color: "#666", 
-              fontSize: "12px", 
-              margin: "8px 0 0 0", 
-              fontStyle: "italic" 
-            }}>
-              This will immediately apply your current preview settings to your live storefront
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <h4 style={{ color: "#004085", fontSize: "16px", marginBottom: "10px" }}>Features:</h4>
-          <ul style={{ color: "#004085", paddingLeft: "20px", margin: "0" }}>
-            <li>Smart positioning to avoid overlapping with existing search icons</li>
-            <li>Responsive design that adapts to different input sizes</li>
-            <li>Google-style hover animations and interactions</li>
-            <li>Accessibility support with keyboard navigation</li>
-            <li>Works with all Shopify themes automatically</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+                <pre style={{ fontSize: "12px", fontFamily: "monospace", overflow: "auto", margin: 0 }}>
+                  {generateScriptConfig()}
+                </pre>
+              </Box>
+            </BlockStack>
+          </BlockStack>
+        </Card>
+      </BlockStack>
+    </Page>
   );
 }

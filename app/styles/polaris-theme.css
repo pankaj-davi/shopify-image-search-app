@@ -1,0 +1,121 @@
+/**
+ * Polaris Theme Compatibility CSS
+ * Provides fallback colors for visual search components
+ * Automatically adapts to light and dark themes
+ */
+
+:root {
+  /* Light theme colors (default) */
+  --visual-search-text-primary: var(--p-color-text, #202223);
+  --visual-search-text-secondary: var(--p-color-text-secondary, #6D7175);
+  --visual-search-text-subdued: var(--p-color-text-subdued, #8C9196);
+  --visual-search-bg-surface: var(--p-color-bg-surface, #FFFFFF);
+  --visual-search-bg-surface-hover: var(--p-color-bg-surface-hover, #F6F6F7);
+  --visual-search-bg-surface-secondary: var(--p-color-bg-surface-secondary, #F6F6F7);
+  --visual-search-border: var(--p-color-border, #D1D5DB);
+  --visual-search-brand-primary: var(--p-color-bg-fill-brand, #008060);
+  --visual-search-brand-active: var(--p-color-bg-fill-brand-active, #004C3F);
+  --visual-search-critical: var(--p-color-bg-fill-critical, #DC2626);
+  --visual-search-success: var(--p-color-bg-fill-success, #059669);
+  --visual-search-warning: var(--p-color-bg-fill-warning, #D97706);
+}
+
+/* Dark theme overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --visual-search-text-primary: var(--p-color-text, #E3E3E3);
+    --visual-search-text-secondary: var(--p-color-text-secondary, #B5B5B5);
+    --visual-search-text-subdued: var(--p-color-text-subdued, #8C9196);
+    --visual-search-bg-surface: var(--p-color-bg-surface, #1A1A1A);
+    --visual-search-bg-surface-hover: var(--p-color-bg-surface-hover, #262626);
+    --visual-search-bg-surface-secondary: var(--p-color-bg-surface-secondary, #262626);
+    --visual-search-border: var(--p-color-border, #3F3F46);
+    --visual-search-brand-primary: var(--p-color-bg-fill-brand, #00A47C);
+    --visual-search-brand-active: var(--p-color-bg-fill-brand-active, #00D9A7);
+  }
+}
+
+/* Visual search component theme compatibility */
+.visual-search-icon {
+  color: var(--visual-search-text-secondary) !important;
+  transition: all 0.2s ease;
+}
+
+.visual-search-icon:hover {
+  color: var(--visual-search-text-primary) !important;
+  background-color: var(--visual-search-bg-surface-hover) !important;
+}
+
+.visual-search-drawer {
+  background: var(--visual-search-bg-surface) !important;
+  border: 1px solid var(--visual-search-border) !important;
+  color: var(--visual-search-text-primary) !important;
+}
+
+.visual-search-drawer h1,
+.visual-search-drawer h2,
+.visual-search-drawer h3 {
+  color: var(--visual-search-text-primary) !important;
+}
+
+.visual-search-drawer p {
+  color: var(--visual-search-text-secondary) !important;
+}
+
+.visual-search-button-primary {
+  background: var(--visual-search-brand-primary) !important;
+  border-color: var(--visual-search-brand-primary) !important;
+}
+
+.visual-search-button-primary:hover {
+  background: var(--visual-search-brand-active) !important;
+  border-color: var(--visual-search-brand-active) !important;
+}
+
+.visual-search-error {
+  background: var(--visual-search-critical) !important;
+  color: white !important;
+}
+
+.visual-search-success {
+  background: var(--visual-search-success) !important;
+  color: white !important;
+}
+
+/* Ensure proper contrast in both themes */
+.visual-search-text-primary {
+  color: var(--visual-search-text-primary) !important;
+}
+
+.visual-search-text-secondary {
+  color: var(--visual-search-text-secondary) !important;
+}
+
+.visual-search-text-subdued {
+  color: var(--visual-search-text-subdued) !important;
+}
+
+/* Shopify admin theme detection */
+[data-theme="dark"] {
+  --visual-search-text-primary: #E3E3E3;
+  --visual-search-text-secondary: #B5B5B5;
+  --visual-search-text-subdued: #8C9196;
+  --visual-search-bg-surface: #1A1A1A;
+  --visual-search-bg-surface-hover: #262626;
+  --visual-search-bg-surface-secondary: #262626;
+  --visual-search-border: #3F3F46;
+  --visual-search-brand-primary: #00A47C;
+  --visual-search-brand-active: #00D9A7;
+}
+
+[data-theme="light"] {
+  --visual-search-text-primary: #202223;
+  --visual-search-text-secondary: #6D7175;
+  --visual-search-text-subdued: #8C9196;
+  --visual-search-bg-surface: #FFFFFF;
+  --visual-search-bg-surface-hover: #F6F6F7;
+  --visual-search-bg-surface-secondary: #F6F6F7;
+  --visual-search-border: #D1D5DB;
+  --visual-search-brand-primary: #008060;
+  --visual-search-brand-active: #004C3F;
+}

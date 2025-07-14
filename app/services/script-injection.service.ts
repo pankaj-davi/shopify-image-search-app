@@ -422,12 +422,12 @@ export class ScriptInjectionService {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: #f44336;
-      color: white;
+      background: var(--p-color-bg-fill-critical, #DC2626);
+      color: var(--p-color-text-on-color, #FFFFFF);
       padding: 12px 20px;
       border-radius: 4px;
       z-index: 10000;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: var(--p-font-family-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
       font-size: 14px;
     \`;
     toast.textContent = message;

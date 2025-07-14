@@ -1,15 +1,17 @@
-import { Button } from "@shopify/polaris";
+import { Button, Box, InlineStack } from "@shopify/polaris";
 
 interface BackToHomeProps {
   variant?: "primary" | "secondary" | "tertiary";
   size?: "micro" | "slim" | "medium" | "large";
+  style?: "floating" | "inline" | "header";
 }
 
 export default function BackToHome({ 
   variant = "secondary",
-  size = "medium"
+  size = "medium",
+  style = "inline"
 }: BackToHomeProps) {
-  return (
+  const button = (
     <Button
       url="/app"
       variant={variant}
@@ -18,28 +20,53 @@ export default function BackToHome({
       🏠 Back to Home
     </Button>
   );
+
+  if (style === "floating") {
+    return (
+      <Box 
+        position="fixed" 
+        insetBlockStart="400" 
+        insetInlineEnd="400" 
+        zIndex="1000"
+      >
+        <Box 
+          background="bg-surface" 
+          borderRadius="200" 
+          shadow="300"
+          padding="200"
+        >
+          {button}
+        </Box>
+      </Box>
+    );
+  }
+
+  if (style === "header") {
+    return (
+      <InlineStack align="space-between" blockAlign="center">
+        {button}
+      </InlineStack>
+    );
+  }
+
+  return (
+    <Box paddingBlockEnd="500">
+      {button}
+    </Box>
+  );
 }
 
-// Quick styles for consistent styling
+// Updated styles using Polaris tokens
 export const BACK_TO_HOME_STYLES = {
-  floatingTopRight: {
-    position: "fixed" as const,
-    top: "20px",
-    right: "20px",
-    zIndex: 1000,
-    background: "white",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-  },
-  
+  // Use Polaris spacing tokens instead of hardcoded values
   inlineTop: {
-    marginBottom: "20px"
+    marginBottom: "var(--p-space-500)" // 20px equivalent in Polaris
   },
   
   cardHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "16px"
+    marginBottom: "var(--p-space-400)" // 16px equivalent in Polaris
   }
 };

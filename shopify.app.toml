@@ -3,7 +3,7 @@
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
 handle = "newp"
-application_url = "https://anne-oriented-sport-cry.trycloudflare.com"
+application_url = "https://breakfast-defence-hollow-instantly.trycloudflare.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-07"
 scopes = "write_products,write_script_tags"
 
 [auth]
-redirect_urls = ["https://anne-oriented-sport-cry.trycloudflare.com/auth/callback", "https://anne-oriented-sport-cry.trycloudflare.com/auth/shopify/callback", "https://anne-oriented-sport-cry.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://breakfast-defence-hollow-instantly.trycloudflare.com/auth/callback", "https://breakfast-defence-hollow-instantly.trycloudflare.com/auth/shopify/callback", "https://breakfast-defence-hollow-instantly.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false

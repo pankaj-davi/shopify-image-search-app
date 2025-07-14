@@ -4,6 +4,7 @@ import {
   Text,
   Card,
   BlockStack,
+  InlineStack,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
@@ -30,24 +31,24 @@ export default function Index() {
               <Text variant="bodyMd" as="p" tone="subdued">
                 Store domain: {store.myshopifyDomain}
               </Text>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginTop: "20px" }}>
-                <div>
+              <InlineStack gap="500" align="start">
+                <BlockStack gap="200" align="start">
                   <Text variant="bodyMd" as="p">
                     <Text as="span" fontWeight="semibold">Products:</Text>
                   </Text>
                   <Text variant="headingLg" as="p" tone="success">
                     {products?.length || 0}
                   </Text>
-                </div>
-                <div>
+                </BlockStack>
+                <BlockStack gap="200" align="start">
                   <Text variant="bodyMd" as="p">
                     <Text as="span" fontWeight="semibold">Status:</Text>
                   </Text>
                   <Text variant="headingLg" as="p" tone="success">
                     ✅ Active
                   </Text>
-                </div>
-              </div>
+                </BlockStack>
+              </InlineStack>
             </BlockStack>
           </Card>
 

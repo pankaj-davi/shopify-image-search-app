@@ -3,6 +3,8 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { appDatabase } from "../services/app.database.service";
+import { Page, Card, BlockStack, Text, Link, Box } from "@shopify/polaris";
+import { TitleBar } from "@shopify/app-bridge-react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
@@ -32,53 +34,82 @@ export default function DebugConfig() {
   const data = useLoaderData<typeof loader>();
   
   return (
-    <div style={{ fontFamily: "monospace", padding: "20px", backgroundColor: "#f5f5f5" }}>
-      <h1>🔧 Debug Configuration</h1>
-      
-      <div style={{ marginBottom: "20px" }}>
-        <h2>URLs</h2>
-        <p><strong>Environment SHOPIFY_APP_URL:</strong> {data.envAppUrl || 'Not set'}</p>
-        <p><strong>Request URL:</strong> {data.requestAppUrl}</p>
-        <p><strong>Final App URL:</strong> {data.envAppUrl || data.requestAppUrl}</p>
-      </div>
-      
-      <div style={{ marginBottom: "20px" }}>
-        <h2>Shop Information</h2>
-        <p><strong>Shop Domain:</strong> {data.shop}</p>
-        <p><strong>Timestamp:</strong> {data.timestamp}</p>
-      </div>
-      
-      <div style={{ marginBottom: "20px" }}>
-        <h2>Database Configuration</h2>
-        <pre style={{ backgroundColor: "white", padding: "10px", border: "1px solid #ccc", overflow: "auto" }}>
-          {JSON.stringify(data.shopData, null, 2)}
-        </pre>
-      </div>
-      
-      <div style={{ marginBottom: "20px" }}>
-        <h2>Test Script URL</h2>
-        <p>
-          <a 
-            href={`${data.envAppUrl || data.requestAppUrl}/visual-search-unified.js?shop=${data.shop}&t=${Date.now()}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ color: "blue", textDecoration: "underline" }}
-          >
-            Open Visual Search Script (New Tab)
-          </a>
-        </p>
-      </div>
-      
-      <div>
-        <h2>Expected Script Configuration</h2>
-        <pre style={{ backgroundColor: "white", padding: "10px", border: "1px solid #ccc", overflow: "auto" }}>
+    <Page>
+      <TitleBar title="🔧 Debug Configuration" />
+      <BlockStack gap="500">
+        <Card>
+          <BlockStack gap="300">
+            <Text as="h2" variant="headingMd">URLs</Text>
+            <Box>
+              <Text as="p"><Text as="span" fontWeight="semibold">Environment SHOPIFY_APP_URL:</Text> {data.envAppUrl || 'Not set'}</Text>
+              <Text as="p"><Text as="span" fontWeight="semibold">Request URL:</Text> {data.requestAppUrl}</Text>
+              <Text as="p"><Text as="span" fontWeight="semibold">Final App URL:</Text> {data.envAppUrl || data.requestAppUrl}</Text>
+            </Box>
+          </BlockStack>
+        </Card>
+
+        <Card>
+          <BlockStack gap="300">
+            <Text as="h2" variant="headingMd">Shop Information</Text>
+            <Box>
+              <Text as="p"><Text as="span" fontWeight="semibold">Shop Domain:</Text> {data.shop}</Text>
+              <Text as="p"><Text as="span" fontWeight="semibold">Timestamp:</Text> {data.timestamp}</Text>
+            </Box>
+          </BlockStack>
+        </Card>
+
+        <Card>
+          <BlockStack gap="300">
+            <Text as="h2" variant="headingMd">Database Configuration</Text>
+            <Box 
+              background="bg-surface-secondary" 
+              padding="400" 
+              borderRadius="200"
+              borderWidth="025"
+              borderColor="border"
+            >
+              <pre style={{ margin: 0, fontSize: "12px", fontFamily: "monospace", overflow: "auto" }}>
+                {JSON.stringify(data.shopData, null, 2)}
+              </pre>
+            </Box>
+          </BlockStack>
+        </Card>
+
+        <Card>
+          <BlockStack gap="300">
+            <Text as="h2" variant="headingMd">Test Script URL</Text>
+            <Box>
+              <Link 
+                url={`${data.envAppUrl || data.requestAppUrl}/visual-search-unified.js?shop=${data.shop}&t=${Date.now()}`}
+                external
+              >
+                Open Visual Search Script (New Tab)
+              </Link>
+            </Box>
+          </BlockStack>
+        </Card>
+
+        <Card>
+          <BlockStack gap="300">
+            <Text as="h2" variant="headingMd">Expected Script Configuration</Text>
+            <Box 
+              background="bg-surface-secondary" 
+              padding="400" 
+              borderRadius="200"
+              borderWidth="025"
+              borderColor="border"
+            >
+              <pre style={{ margin: 0, fontSize: "12px", fontFamily: "monospace", overflow: "auto" }}>
 {`window.VISUAL_SEARCH_CONFIG = {
   appUrl: '${data.envAppUrl || data.requestAppUrl}',
   shopDomain: '${data.shop}',
   theme: ${JSON.stringify(data.shopData?.themeConfig || {}, null, 2)}
 };`}
-        </pre>
-      </div>
-    </div>
+              </pre>
+            </Box>
+          </BlockStack>
+        </Card>
+      </BlockStack>
+    </Page>
   );
 }

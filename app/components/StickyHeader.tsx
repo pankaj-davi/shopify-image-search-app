@@ -1,4 +1,4 @@
-import { Button, InlineStack, Text } from "@shopify/polaris";
+import { Button, InlineStack, Text, Box } from "@shopify/polaris";
 
 interface StickyHeaderProps {
   title: string;
@@ -12,15 +12,17 @@ export default function StickyHeader({
   backUrl = "/app" 
 }: StickyHeaderProps) {
   return (
-    <div style={{
-      position: "sticky",
-      top: 0,
-      zIndex: 1000,
-      backgroundColor: "white",
-      borderBottom: "1px solid #e1e3e5",
-      padding: "12px 20px",
-      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-    }}>
+    <Box 
+      position="sticky" 
+      insetBlockStart="0" 
+      zIndex="1000"
+      background="bg-surface"
+      borderBlockEndWidth="025"
+      borderColor="border"
+      paddingInline="500"
+      paddingBlock="300"
+      shadow="100"
+    >
       <InlineStack align="space-between" blockAlign="center">
         <InlineStack gap="300" blockAlign="center">
           {showBackButton && (
@@ -37,6 +39,6 @@ export default function StickyHeader({
           🏠 Home
         </Button>
       </InlineStack>
-    </div>
+    </Box>
   );
 }
