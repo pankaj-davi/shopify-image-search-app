@@ -1,0 +1,252 @@
+name: 📊 Monitoring & Health Checks
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to monitor'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+          - both
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        environment: 
+          - ${{ github.event.inputs.environment == 'both' && 'staging' || github.event.inputs.environment || 'production' }}
+          - ${{ github.event.inputs.environment == 'both' && 'production' || '' }}
+      fail-fast: false
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup environment variables
+        run: |
+          if [ "${{ matrix.environment }}" = "production" ]; then
+            echo "APP_URL=${{ secrets.PRODUCTION_APP_URL }}" >> $GITHUB_ENV
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          elif [ "${{ matrix.environment }}" = "staging" ]; then
+            echo "APP_URL=${{ secrets.STAGING_APP_URL }}" >> $GITHUB_ENV
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          fi
+      
+      - name: 🏥 Basic health check
+        id: health
+        run: |
+          echo "🏥 Checking health of ${{ matrix.environment }} environment..."
+          
+          # Basic URL check
+          if curl -f -s --max-time 30 "$APP_URL" > /dev/null; then
+            echo "✅ App is responding"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ App is not responding"
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 🔧 API endpoint checks
+        if: steps.health.outputs.status == 'healthy'
+        run: |
+          echo "🔧 Testing API endpoints..."
+          
+          # Test configuration endpoint
+          CONFIG_RESPONSE=$(curl -s -w "%{http_code}" "$APP_URL/api/test-integration?type=config")
+          CONFIG_STATUS=${CONFIG_RESPONSE: -3}
+          
+          if [ "$CONFIG_STATUS" = "200" ]; then
+            echo "✅ Configuration endpoint healthy"
+          else
+            echo "❌ Configuration endpoint failed (HTTP $CONFIG_STATUS)"
+          fi
+          
+          # Test script endpoint
+          SCRIPT_RESPONSE=$(curl -s -w "%{http_code}" "$APP_URL/visual-search-script.js")
+          SCRIPT_STATUS=${SCRIPT_RESPONSE: -3}
+          
+          if [ "$SCRIPT_STATUS" = "200" ]; then
+            echo "✅ Script endpoint healthy"
+          else
+            echo "❌ Script endpoint failed (HTTP $SCRIPT_STATUS)"
+          fi
+      
+      - name: 🗄️ Database connectivity check
+        if: steps.health.outputs.status == 'healthy'
+        run: |
+          echo "🗄️ Checking database connectivity..."
+          
+          # This would require setting up a health check endpoint in your app
+          DB_RESPONSE=$(curl -s -w "%{http_code}" "$APP_URL/api/health/database" || echo "000")
+          DB_STATUS=${DB_RESPONSE: -3}
+          
+          if [ "$DB_STATUS" = "200" ]; then
+            echo "✅ Database connection healthy"
+          else
+            echo "⚠️ Database health check not available or failed"
+          fi
+      
+      - name: 📊 Performance metrics
+        if: steps.health.outputs.status == 'healthy'
+        run: |
+          echo "📊 Collecting performance metrics..."
+          
+          # Measure response time
+          RESPONSE_TIME=$(curl -o /dev/null -s -w "%{time_total}" "$APP_URL")
+          echo "⏱️ Response time: ${RESPONSE_TIME}s"
+          
+          # Check if response time is acceptable (< 5 seconds)
+          if (( $(echo "$RESPONSE_TIME < 5.0" | bc -l) )); then
+            echo "✅ Response time acceptable"
+          else
+            echo "⚠️ Response time slow: ${RESPONSE_TIME}s"
+          fi
+      
+      - name: 📢 Alert on failure
+        if: steps.health.outputs.status == 'unhealthy'
+        run: |
+          echo "🚨 ALERT: ${{ matrix.environment }} environment is unhealthy!"
+          echo "App URL: $APP_URL"
+          echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          
+          # Here you could integrate with alerting services like:
+          # - Slack webhook
+          # - Discord webhook
+          # - Email notifications
+          # - PagerDuty
+          # - etc.
+
+  firebase-health:
+    name: 🔥 Firebase Health Check
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        environment: [staging, production]
+      fail-fast: false
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🔧 Setup Firebase credentials
+        run: |
+          if [ "${{ matrix.environment }}" = "production" ]; then
+            echo "FIREBASE_PROJECT_ID=${{ secrets.PRODUCTION_FIREBASE_PROJECT_ID }}" >> $GITHUB_ENV
+            echo "FIREBASE_CLIENT_EMAIL=${{ secrets.PRODUCTION_FIREBASE_CLIENT_EMAIL }}" >> $GITHUB_ENV
+            echo "FIREBASE_PRIVATE_KEY=${{ secrets.PRODUCTION_FIREBASE_PRIVATE_KEY }}" >> $GITHUB_ENV
+          else
+            echo "FIREBASE_PROJECT_ID=${{ secrets.STAGING_FIREBASE_PROJECT_ID }}" >> $GITHUB_ENV
+            echo "FIREBASE_CLIENT_EMAIL=${{ secrets.STAGING_FIREBASE_CLIENT_EMAIL }}" >> $GITHUB_ENV
+            echo "FIREBASE_PRIVATE_KEY=${{ secrets.STAGING_FIREBASE_PRIVATE_KEY }}" >> $GITHUB_ENV
+          fi
+      
+      - name: 🔥 Test Firebase connection
+        run: |
+          echo "🔥 Testing Firebase connection for ${{ matrix.environment }}..."
+          
+          # Create a simple test script to check Firebase connectivity
+          cat > test-firebase.js << 'EOF'
+          import { initializeApp, cert } from 'firebase-admin/app';
+          import { getFirestore } from 'firebase-admin/firestore';
+          
+          try {
+            const app = initializeApp({
+              credential: cert({
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+              }),
+            });
+            
+            const firestore = getFirestore(app);
+            
+            // Test basic connectivity
+            const testDoc = await firestore.collection('health-check').doc('test').get();
+            console.log('✅ Firebase connection successful');
+            process.exit(0);
+          } catch (error) {
+            console.error('❌ Firebase connection failed:', error.message);
+            process.exit(1);
+          }
+          EOF
+          
+          node test-firebase.js
+        env:
+          FIREBASE_PROJECT_ID: ${{ env.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ env.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ env.FIREBASE_PRIVATE_KEY }}
+
+  performance-monitoring:
+    name: ⚡ Performance Monitoring
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.environment != ''
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: ⚡ Lighthouse CI
+        run: |
+          echo "⚡ Running Lighthouse performance tests..."
+          
+          # Install Lighthouse CI
+          npm install -g @lhci/cli
+          
+          # Run Lighthouse tests (if you have LHCI configured)
+          # lhci autorun || echo "Lighthouse CI not configured"
+          
+          echo "📊 Performance monitoring completed"
+      
+      - name: 📊 Generate monitoring report
+        run: |
+          echo "📊 Performance Monitoring Report"
+          echo "================================"
+          echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "Monitored environments: production, staging"
+          echo "Next check: $(date -u -d '+15 minutes' +"%Y-%m-%d %H:%M:%S UTC")"
+
+  summary:
+    name: 📋 Monitoring Summary
+    runs-on: ubuntu-latest
+    needs: [health-check, firebase-health, performance-monitoring]
+    if: always()
+    
+    steps:
+      - name: 📋 Generate summary
+        run: |
+          echo "📋 Monitoring Summary"
+          echo "===================="
+          echo "Health Check: ${{ needs.health-check.result }}"
+          echo "Firebase Health: ${{ needs.firebase-health.result }}"
+          echo "Performance: ${{ needs.performance-monitoring.result }}"
+          echo ""
+          
+          if [ "${{ needs.health-check.result }}" = "success" ] && \
+             [ "${{ needs.firebase-health.result }}" = "success" ]; then
+            echo "✅ All systems healthy"
+          else
+            echo "⚠️ Some systems need attention"
+          fi

@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Staging environment
+  shopify-app-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile.staging
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=staging
+      - DATABASE_PROVIDER=firebase
+      - FIREBASE_PROJECT_ID=${STAGING_FIREBASE_PROJECT_ID}
+      - FIREBASE_CLIENT_EMAIL=${STAGING_FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_PRIVATE_KEY=${STAGING_FIREBASE_PRIVATE_KEY}
+      - SHOPIFY_API_KEY=${STAGING_SHOPIFY_API_KEY}
+      - SHOPIFY_API_SECRET=${STAGING_SHOPIFY_API_SECRET}
+      - SHOPIFY_APP_URL=${STAGING_APP_URL}
+      - SCOPES=${SCOPES}
+    volumes:
+      - staging_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production environment  
+  shopify-app-production:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PROVIDER=firebase
+      - FIREBASE_PROJECT_ID=${PRODUCTION_FIREBASE_PROJECT_ID}
+      - FIREBASE_CLIENT_EMAIL=${PRODUCTION_FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_PRIVATE_KEY=${PRODUCTION_FIREBASE_PRIVATE_KEY}
+      - SHOPIFY_API_KEY=${PRODUCTION_SHOPIFY_API_KEY}
+      - SHOPIFY_API_SECRET=${PRODUCTION_SHOPIFY_API_SECRET}
+      - SHOPIFY_APP_URL=${PRODUCTION_APP_URL}
+      - SCOPES=${SCOPES}
+    volumes:
+      - production_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Monitoring service
+  monitoring:
+    image: node:20-alpine
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - NODE_ENV=production
+      - APP_URL=http://shopify-app-production:3000
+    command: sh -c "npm install && npm run monitoring"
+    depends_on:
+      - shopify-app-production
+    restart: unless-stopped
+
+  # Database backup service
+  backup:
+    image: node:20-alpine
+    volumes:
+      - .:/app
+      - backup_data:/backups
+    working_dir: /app
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PROVIDER=firebase
+      - FIREBASE_PROJECT_ID=${PRODUCTION_FIREBASE_PROJECT_ID}
+      - FIREBASE_CLIENT_EMAIL=${PRODUCTION_FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_PRIVATE_KEY=${PRODUCTION_FIREBASE_PRIVATE_KEY}
+    command: sh -c "npm install && while true; do npm run db:backup && sleep 86400; done"
+    restart: unless-stopped
+
+volumes:
+  staging_data:
+  production_data:
+  backup_data:
+
+networks:
+  default:
+    driver: bridge

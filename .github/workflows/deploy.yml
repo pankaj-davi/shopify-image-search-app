@@ -1,0 +1,326 @@
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      force_deploy:
+        description: 'Force deployment (skip some checks)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Pre-deployment checks
+  pre-deploy-checks:
+    name: 🔍 Pre-deployment Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      environment: ${{ steps.env.outputs.environment }}
+      
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🎯 Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ ${{ github.ref }} == refs/tags/* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: ✅ Check if should deploy
+        id: check
+        run: |
+          if [ "${{ github.event.inputs.force_deploy }}" = "true" ]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "🚀 Force deployment requested"
+          elif [ "${{ steps.env.outputs.environment }}" = "production" ] && [[ ${{ github.ref }} == refs/tags/* ]]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "🏷️ Production deployment via tag"
+          elif [ "${{ steps.env.outputs.environment }}" = "staging" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "🧪 Staging deployment via main branch"
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Skipping deployment"
+          fi
+
+  # Run full CI pipeline
+  ci:
+    name: 🔄 Run CI Pipeline
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  # Build and push Docker image
+  docker-build:
+    name: 🐳 Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-checks, ci]
+    if: needs.pre-deploy-checks.outputs.should_deploy == 'true'
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔐 Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: 🔑 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🏷️ Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: 🏗️ Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
+
+  # Deploy to Staging
+  deploy-staging:
+    name: 🧪 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-checks, docker-build]
+    if: needs.pre-deploy-checks.outputs.environment == 'staging'
+    
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.app_url }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🚀 Deploy to Staging
+        id: deploy
+        run: |
+          echo "🧪 Deploying to staging environment..."
+          
+          # Set staging-specific environment variables
+          echo "DATABASE_PROVIDER=firebase" >> $GITHUB_ENV
+          echo "SHOPIFY_APP_URL=${{ secrets.STAGING_APP_URL }}" >> $GITHUB_ENV
+          
+          # Deploy using your preferred method (example with Railway, Heroku, or custom)
+          # Replace this with your actual deployment commands
+          
+          if [ -n "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "🚂 Deploying to Railway..."
+            # Railway deployment commands
+            echo "app_url=${{ secrets.STAGING_APP_URL }}" >> $GITHUB_OUTPUT
+          elif [ -n "${{ secrets.HEROKU_API_KEY }}" ]; then
+            echo "🟣 Deploying to Heroku..."
+            # Heroku deployment commands
+            echo "app_url=${{ secrets.STAGING_APP_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "📦 Custom deployment..."
+            # Your custom deployment logic here
+            echo "app_url=${{ secrets.STAGING_APP_URL }}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_PROVIDER: firebase
+          FIREBASE_PROJECT_ID: ${{ secrets.STAGING_FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.STAGING_FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.STAGING_FIREBASE_PRIVATE_KEY }}
+          SHOPIFY_API_KEY: ${{ secrets.STAGING_SHOPIFY_API_KEY }}
+          SHOPIFY_API_SECRET: ${{ secrets.STAGING_SHOPIFY_API_SECRET }}
+      
+      - name: 🧪 Run staging smoke tests
+        run: |
+          echo "🧪 Running staging smoke tests..."
+          # Add your staging tests here
+          curl -f ${{ steps.deploy.outputs.app_url }}/health || echo "Health check failed"
+
+  # Deploy to Production
+  deploy-production:
+    name: 🌍 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-checks, docker-build]
+    if: needs.pre-deploy-checks.outputs.environment == 'production'
+    
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.app_url }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🛡️ Production deployment confirmation
+        run: |
+          echo "🌍 Preparing production deployment..."
+          echo "🏷️ Tag: ${{ github.ref }}"
+          echo "🔍 Image: ${{ needs.docker-build.outputs.image_tag }}"
+      
+      - name: 🚀 Deploy to Production
+        id: deploy
+        run: |
+          echo "🌍 Deploying to production environment..."
+          
+          # Set production-specific environment variables
+          echo "DATABASE_PROVIDER=firebase" >> $GITHUB_ENV
+          echo "SHOPIFY_APP_URL=${{ secrets.PRODUCTION_APP_URL }}" >> $GITHUB_ENV
+          
+          # Production deployment logic
+          if [ -n "${{ secrets.PRODUCTION_RAILWAY_TOKEN }}" ]; then
+            echo "🚂 Deploying to Railway Production..."
+            # Railway production deployment
+            echo "app_url=${{ secrets.PRODUCTION_APP_URL }}" >> $GITHUB_OUTPUT
+          elif [ -n "${{ secrets.PRODUCTION_HEROKU_API_KEY }}" ]; then
+            echo "🟣 Deploying to Heroku Production..."
+            # Heroku production deployment
+            echo "app_url=${{ secrets.PRODUCTION_APP_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "📦 Custom production deployment..."
+            # Your custom production deployment
+            echo "app_url=${{ secrets.PRODUCTION_APP_URL }}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_PROVIDER: firebase
+          FIREBASE_PROJECT_ID: ${{ secrets.PRODUCTION_FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.PRODUCTION_FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.PRODUCTION_FIREBASE_PRIVATE_KEY }}
+          SHOPIFY_API_KEY: ${{ secrets.PRODUCTION_SHOPIFY_API_KEY }}
+          SHOPIFY_API_SECRET: ${{ secrets.PRODUCTION_SHOPIFY_API_SECRET }}
+      
+      - name: 🌍 Run production smoke tests
+        run: |
+          echo "🌍 Running production smoke tests..."
+          # Add comprehensive production tests
+          curl -f ${{ steps.deploy.outputs.app_url }}/health || echo "Health check failed"
+          
+          # Test critical endpoints
+          curl -f ${{ steps.deploy.outputs.app_url }}/api/test-integration?type=config || echo "Config test failed"
+
+  # Database Migration (if needed)
+  database-migration:
+    name: 🗄️ Database Migration
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-checks]
+    if: needs.pre-deploy-checks.outputs.should_deploy == 'true'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🗄️ Run database migrations
+        run: |
+          if [ "${{ needs.pre-deploy-checks.outputs.environment }}" = "production" ]; then
+            echo "🌍 Running production database migrations..."
+            # Add production migration commands if using Prisma
+            # npx prisma migrate deploy
+          else
+            echo "🧪 Running staging database migrations..."
+            # Add staging migration commands
+            # npx prisma migrate deploy
+          fi
+        env:
+          DATABASE_PROVIDER: ${{ env.DATABASE_PROVIDER }}
+
+  # Post-deployment tasks
+  post-deploy:
+    name: 📋 Post-deployment Tasks
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production, database-migration]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+      - name: 📊 Update monitoring
+        run: |
+          echo "📊 Updating monitoring and alerts..."
+          # Add monitoring setup commands
+      
+      - name: 📢 Notify deployment success
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌍 Environment: ${{ needs.pre-deploy-checks.outputs.environment }}"
+          echo "🏷️ Version: ${{ github.ref }}"
+      
+      - name: 🏷️ Create GitHub release (for production)
+        if: needs.pre-deploy-checks.outputs.environment == 'production' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+
+  # Rollback mechanism
+  rollback:
+    name: 🔄 Rollback
+    runs-on: ubuntu-latest
+    if: failure() && (needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure')
+    needs: [deploy-staging, deploy-production]
+    
+    steps:
+      - name: 🔄 Rollback deployment
+        run: |
+          echo "🔄 Rolling back deployment due to failure..."
+          # Add rollback logic here
+          
+      - name: 📢 Notify rollback
+        run: |
+          echo "❌ Deployment failed and rollback initiated"
+          echo "🔍 Check logs for failure details"

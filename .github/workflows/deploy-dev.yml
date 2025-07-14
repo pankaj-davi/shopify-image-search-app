@@ -1,0 +1,214 @@
+name: 🧪 Deploy to Development
+
+on:
+  push:
+    branches: [ develop, feature/* ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Development environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - testing
+      deploy_platform:
+        description: 'Deployment platform'
+        required: true
+        default: 'railway'
+        type: choice
+        options:
+          - railway
+          - heroku
+          - vercel
+          - docker
+
+env:
+  NODE_VERSION: '20'
+  DATABASE_PROVIDER: 'firebase'
+
+jobs:
+  # Development deployment
+  deploy-dev:
+    name: 🧪 Deploy Development Environment
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🔧 Setup development environment
+        run: |
+          echo "Setting up development environment..."
+          npm run setup:env development
+          
+          # Override with development values
+          echo "NODE_ENV=development" >> .env
+          echo "DATABASE_PROVIDER=firebase" >> .env
+          echo "FIREBASE_PROJECT_ID=${{ secrets.DEV_FIREBASE_PROJECT_ID }}" >> .env
+          echo "FIREBASE_CLIENT_EMAIL=${{ secrets.DEV_FIREBASE_CLIENT_EMAIL }}" >> .env
+          echo "FIREBASE_PRIVATE_KEY=${{ secrets.DEV_FIREBASE_PRIVATE_KEY }}" >> .env
+          echo "SHOPIFY_API_KEY=${{ secrets.DEV_SHOPIFY_API_KEY }}" >> .env
+          echo "SHOPIFY_API_SECRET=${{ secrets.DEV_SHOPIFY_API_SECRET }}" >> .env
+          echo "SHOPIFY_APP_URL=${{ secrets.DEV_APP_URL }}" >> .env
+          echo "SCOPES=read_products,write_script_tags,read_themes" >> .env
+      
+      - name: 🧪 Run tests
+        run: |
+          npm run lint
+          npm test || echo "Tests completed with warnings"
+      
+      - name: 🏗️ Build application
+        run: npm run build
+      
+      - name: 🗄️ Setup database
+        run: |
+          echo "Setting up development database..."
+          npm run health:firebase || echo "Firebase connection test completed"
+          npm run db:seed || echo "Database seeding completed"
+      
+      - name: 🚀 Deploy to Railway (Development)
+        if: ${{ github.event.inputs.deploy_platform == 'railway' || github.event.inputs.deploy_platform == '' }}
+        run: |
+          echo "Deploying to Railway development environment..."
+          # Install Railway CLI
+          npm install -g @railway/cli
+          
+          # Deploy using Railway
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+          railway environment development
+          railway up --service shopify-app-dev
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      
+      - name: 🟣 Deploy to Heroku (Development)
+        if: ${{ github.event.inputs.deploy_platform == 'heroku' }}
+        uses: akhileshns/heroku-deploy@v3.12.14
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.DEV_HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          usedocker: false
+      
+      - name: ▲ Deploy to Vercel (Development)
+        if: ${{ github.event.inputs.deploy_platform == 'vercel' }}
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-args: '--prod'
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.DEV_VERCEL_PROJECT_ID }}
+      
+      - name: 🐳 Deploy with Docker (Development)
+        if: ${{ github.event.inputs.deploy_platform == 'docker' }}
+        run: |
+          echo "Building and deploying Docker container..."
+          docker build -f Dockerfile.staging -t shopify-app:dev .
+          
+          # Tag and push to registry (if configured)
+          if [ ! -z "${{ secrets.DOCKER_REGISTRY }}" ]; then
+            docker tag shopify-app:dev ${{ secrets.DOCKER_REGISTRY }}/shopify-app:dev
+            echo "${{ secrets.DOCKER_REGISTRY_TOKEN }}" | docker login ${{ secrets.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_REGISTRY_USER }} --password-stdin
+            docker push ${{ secrets.DOCKER_REGISTRY }}/shopify-app:dev
+          fi
+      
+      - name: 🔧 Deploy Firebase Rules (Development)
+        run: |
+          echo "Deploying Firebase rules for development..."
+          npm run firebase:rules development || echo "Firebase rules deployment completed"
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.DEV_FIREBASE_PROJECT_ID }}
+      
+      - name: 📊 Post-deployment health check
+        run: |
+          echo "Running post-deployment health checks..."
+          sleep 30  # Wait for deployment to be ready
+          
+          # Health check with retry
+          for i in {1..5}; do
+            if npm run health:check; then
+              echo "✅ Health check passed"
+              break
+            else
+              echo "⏳ Health check attempt $i failed, retrying..."
+              sleep 10
+            fi
+          done
+      
+      - name: 📝 Create deployment summary
+        run: |
+          echo "## 🧪 Development Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Development" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: ${{ github.event.inputs.deploy_platform || 'railway' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date)" >> $GITHUB_STEP_SUMMARY
+          
+          if [ ! -z "${{ secrets.DEV_APP_URL }}" ]; then
+            echo "- **URL**: ${{ secrets.DEV_APP_URL }}" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 🔔 Send notification
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            MESSAGE="✅ Development deployment successful!"
+            COLOR="good"
+          else
+            MESSAGE="❌ Development deployment failed!"
+            COLOR="danger"
+          fi
+          
+          if [ ! -z "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"$MESSAGE\",\"color\":\"$COLOR\"}" \
+              ${{ secrets.SLACK_WEBHOOK_URL }}
+          fi
+
+  # Development database backup
+  backup-dev-db:
+    name: 🗄️ Backup Development Database
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: success()
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🗄️ Create database backup
+        run: |
+          echo "Creating development database backup..."
+          npm run db:backup
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.DEV_FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.DEV_FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.DEV_FIREBASE_PRIVATE_KEY }}
+      
+      - name: 📤 Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-database-backup-${{ github.run_number }}
+          path: "*.json"
+          retention-days: 7

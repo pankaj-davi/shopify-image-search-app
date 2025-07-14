@@ -1,0 +1,250 @@
+name: 🔒 Security Scan
+
+on:
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  dependency-scan:
+    name: 📦 Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🔍 Run npm audit
+        run: |
+          echo "🔍 Running npm audit..."
+          npm audit --audit-level moderate || echo "Vulnerabilities found, check output above"
+      
+      - name: 📋 Generate dependency report
+        run: |
+          echo "📋 Generating dependency vulnerability report..."
+          npm audit --json > dependency-audit.json || true
+          
+          # Create readable summary
+          echo "## 📦 Dependency Vulnerability Report" > security-report.md
+          echo "Generated on: $(date)" >> security-report.md
+          echo "" >> security-report.md
+          
+          if npm audit --audit-level moderate > /dev/null 2>&1; then
+            echo "✅ No moderate or higher vulnerabilities found" >> security-report.md
+          else
+            echo "⚠️ Vulnerabilities detected - please review" >> security-report.md
+            echo "\`\`\`" >> security-report.md
+            npm audit >> security-report.md
+            echo "\`\`\`" >> security-report.md
+          fi
+      
+      - name: 📤 Upload security artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-security-report
+          path: |
+            dependency-audit.json
+            security-report.md
+          retention-days: 30
+
+  code-security-scan:
+    name: 🔒 Code Security Scan
+    runs-on: ubuntu-latest
+    
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: 📤 Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  secrets-scan:
+    name: 🔐 Secrets Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔐 Run TruffleHog secrets scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  docker-security-scan:
+    name: 🐳 Docker Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🐳 Build Docker image for scanning
+        run: |
+          docker build -t shopify-app-security-scan:latest .
+      
+      - name: 🔍 Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'shopify-app-security-scan:latest'
+          format: 'sarif'
+          output: 'docker-trivy-results.sarif'
+      
+      - name: 📤 Upload Docker scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'docker-trivy-results.sarif'
+
+  license-compliance:
+    name: 📜 License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 📜 Check licenses
+        run: |
+          echo "📜 Checking license compliance..."
+          npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD-3-Clause;BSD-2-Clause;ISC;0BSD' --summary || echo "License check completed with warnings"
+      
+      - name: 📋 Generate license report
+        run: |
+          echo "📋 Generating license report..."
+          npx license-checker --json > licenses.json
+          npx license-checker --csv > licenses.csv
+      
+      - name: 📤 Upload license artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-compliance-report
+          path: |
+            licenses.json
+            licenses.csv
+          retention-days: 30
+
+  security-summary:
+    name: 📊 Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, code-security-scan, secrets-scan, docker-security-scan, license-compliance]
+    if: always()
+    
+    steps:
+      - name: 📊 Generate security summary
+        run: |
+          echo "📊 Security Scan Summary"
+          echo "======================="
+          echo "Dependency Scan: ${{ needs.dependency-scan.result }}"
+          echo "Code Security Scan: ${{ needs.code-security-scan.result }}"
+          echo "Secrets Detection: ${{ needs.secrets-scan.result }}"
+          echo "Docker Security: ${{ needs.docker-security-scan.result }}"
+          echo "License Compliance: ${{ needs.license-compliance.result }}"
+          echo ""
+          
+          # Check if any critical failures
+          CRITICAL_FAILURES=0
+          
+          if [ "${{ needs.secrets-scan.result }}" = "failure" ]; then
+            echo "🚨 CRITICAL: Secrets detected in code!"
+            CRITICAL_FAILURES=$((CRITICAL_FAILURES + 1))
+          fi
+          
+          if [ "${{ needs.code-security-scan.result }}" = "failure" ]; then
+            echo "⚠️ High-severity security vulnerabilities found"
+          fi
+          
+          if [ "${{ needs.dependency-scan.result }}" = "failure" ]; then
+            echo "⚠️ Dependency vulnerabilities found"
+          fi
+          
+          if [ $CRITICAL_FAILURES -gt 0 ]; then
+            echo ""
+            echo "🚨 CRITICAL SECURITY ISSUES DETECTED!"
+            echo "Please review and fix before deploying."
+            exit 1
+          else
+            echo ""
+            echo "✅ No critical security issues detected"
+          fi
+      
+      - name: 📢 Create security issue (if critical failures)
+        if: needs.secrets-scan.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Critical Security Issue Detected',
+              body: `
+                ## 🚨 Critical Security Alert
+                
+                A security scan has detected critical issues that require immediate attention:
+                
+                - **Secrets Detection**: ${{ needs.secrets-scan.result }}
+                - **Scan Date**: ${new Date().toISOString()}
+                - **Branch**: ${{ github.ref }}
+                - **Commit**: ${{ github.sha }}
+                
+                ### Actions Required:
+                1. Review the security scan results
+                2. Remove any exposed secrets
+                3. Rotate compromised credentials
+                4. Update .gitignore to prevent future exposure
+                
+                ### Scan Results:
+                [View detailed results in the Actions tab](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+                
+                **Do not deploy until these issues are resolved.**
+              `,
+              labels: ['security', 'critical', 'bug']
+            });

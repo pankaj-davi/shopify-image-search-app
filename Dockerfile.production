@@ -1,0 +1,75 @@
+# Production Dockerfile - Optimized for performance and security
+FROM node:20-alpine AS dependencies
+
+# Install system dependencies
+RUN apk add --no-cache \
+    openssl \
+    curl \
+    dumb-init
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --omit=dev --frozen-lockfile && npm cache clean --force
+
+# Remove CLI packages for production
+RUN npm remove @shopify/cli || true
+
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files and install all dependencies (including dev)
+COPY package*.json ./
+RUN npm ci --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine AS production
+
+# Install system dependencies
+RUN apk add --no-cache \
+    openssl \
+    curl \
+    dumb-init
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S shopify -u 1001
+
+# Copy production dependencies
+COPY --from=dependencies --chown=shopify:nodejs /app/node_modules ./node_modules
+
+# Copy built application
+COPY --from=builder --chown=shopify:nodejs /app/build ./build
+COPY --from=builder --chown=shopify:nodejs /app/public ./public
+COPY --from=builder --chown=shopify:nodejs /app/package*.json ./
+COPY --from=builder --chown=shopify:nodejs /app/prisma ./prisma
+
+# Set production environment
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Switch to non-root user
+USER shopify
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+EXPOSE 3000
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["npm", "run", "docker-start"]
