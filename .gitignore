@@ -36,7 +36,6 @@ firebase-debug.log
 .firebaserc
 
 # Misc
-package-lock.json
 test-firebase.js
 
 /extensions/*/dist
