@@ -37,7 +37,7 @@ jobs:
         run: |
           echo "🔍 Running npm audit..."
           echo "📝 Note: Development dependency vulnerabilities (esbuild, Remix) are expected and don't affect production"
-          
+
           # Run audit and capture output
           npm audit --audit-level moderate || {
             echo "⚠️ Vulnerabilities found - analyzing..."
