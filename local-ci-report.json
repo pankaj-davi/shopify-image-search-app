@@ -1,40 +1,40 @@
 {
-  "timestamp": "2025-07-15T01:26:02.421Z",
-  "totalTime": 31340,
+  "timestamp": "2025-07-15T01:33:34.452Z",
+  "totalTime": 31585,
   "results": {
     "lint": {
       "status": "passed",
-      "duration": 925,
+      "duration": 937,
       "output": "\n> lint\n> eslint --cache --cache-location ./node_modules/.cache/eslint .\n\n"
     },
     "format": {
       "status": "passed",
-      "duration": 1918,
+      "duration": 1905,
       "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
     },
     "typecheck": {
       "status": "passed",
-      "duration": 2623,
+      "duration": 2640,
       "output": ""
     },
     "security": {
       "status": "passed",
-      "duration": 1103,
+      "duration": 1120,
       "output": "# npm audit report\n\nesbuild  <=0.24.2\nSeverity: moderate\nesbuild enables any website to send any requests to the development server and read the response - https://github.com/advisories/GHSA-67mh-4wv8-2f99\nNo fix available\nnode_modules/esbuild\n  @remix-run/dev  *\n  Depends on vulnerable versions of @vanilla-extract/integration\n  Depends on vulnerable versions of esbuild\n  Depends on vulnerable versions of remark-mdx-frontmatter\n  node_modules/@remix-run/dev\n    @remix-run/fs-routes  *\n    Depend"
     },
     "tests": {
       "status": "passed",
-      "duration": 16226,
+      "duration": 16402,
       "output": "\n> test\n> node --test\n\nTAP version 13\n# 🗄️ Database Operation Test\n# ℹ️  Testing database environment setup...\n# ℹ️  Database provider: firebase\n# ✅ .env file found\n# ⚠️  Missing Firebase vars: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY\n# ✅ Script found: backup-database.js\n# ✅ Script found: restore-database.js\n# ✅ Script found: health-check.js\n# 📊 Environment Test Complete\n# Subtest: D:\\\\AI\\\\UUD\\\\new-p\\\\scripts\\\\db-test.js\nok 1 - D:\\\\AI\\\\UUD\\\\new-p\\\\scripts\\\\db-test.js\n  "
     },
     "build": {
       "status": "passed",
-      "duration": 8255,
-      "output": "\n> build:check\n> node scripts/simple-build-check.js\n\n\n🚀 Starting build with error catching...\n\nℹ️  Checking environment...\n✅ Environment check passed\nℹ️  Running TypeScript Check...\n✅ TypeScript Check completed\nℹ️  Running Linting...\n✅ Linting completed\nℹ️  Running Build...\n✅ Build completed\n\n==================================================\n📊 BUILD SUMMARY\n==================================================\n⏱️  Duration: 7.97s\n⚠️  Warnings: 0\n❌ Errors: 0\n\n🎉 Build completed successfully!\n===="
+      "duration": 8284,
+      "output": "\n> build:check\n> node scripts/simple-build-check.js\n\n\n🚀 Starting build with error catching...\n\nℹ️  Checking environment...\n✅ Environment check passed\nℹ️  Running TypeScript Check...\n✅ TypeScript Check completed\nℹ️  Running Linting...\n✅ Linting completed\nℹ️  Running Build...\n✅ Build completed\n\n==================================================\n📊 BUILD SUMMARY\n==================================================\n⏱️  Duration: 8.00s\n⚠️  Warnings: 0\n❌ Errors: 0\n\n🎉 Build completed successfully!\n===="
     },
     "database": {
       "status": "passed",
-      "duration": 269,
+      "duration": 274,
       "output": "\n> db:health\n> node scripts/health-check.js\n\n"
     }
   },
