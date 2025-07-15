@@ -57,6 +57,8 @@
     "deploy:dev:vercel": "node scripts/deploy-dev.js vercel",
     "deploy:dev:docker": "node scripts/deploy-dev.js docker",
     "deploy:dev:local": "node scripts/deploy-dev.js local",
+    "deploy:dev:help": "node scripts/deploy-dev-helper.js",
+    "deploy:check": "node scripts/deploy-dev-helper.js check",
     "deploy:railway": "node scripts/deploy.js railway",
     "deploy:heroku": "node scripts/deploy.js heroku",
     "deploy:vercel": "node scripts/deploy.js vercel",
