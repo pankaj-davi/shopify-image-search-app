@@ -116,26 +116,32 @@ async function showDeploymentOptions() {
 
   console.log('1. 🌐 **GitHub Actions Deployment (Recommended)**');
   console.log('   - Automatic on push to develop branch');
-  console.log('   - Manual trigger available');
+  console.log('   - Manual trigger available at: https://github.com/pankaj-davi/shopify-image-search-app/actions');
   console.log('   - Full CI/CD pipeline with testing');
   console.log('');
 
-  console.log('2. 🖥️  **Local Script Deployment**');
-  console.log('   - npm run deploy:dev (Railway - default)');
-  console.log('   - npm run deploy:dev:railway');
-  console.log('   - npm run deploy:dev:heroku');
-  console.log('   - npm run deploy:dev:vercel');
-  console.log('   - npm run deploy:dev:docker');
+  console.log('2. 🏠 **Local Development (Quick Start)**');
+  console.log('   - npm run dev (starts local Shopify development server)');
+  console.log('   - Perfect for testing and development');
+  console.log('   - Auto-reloading and live updates');
   console.log('');
 
-  console.log('3. 🐳 **Docker Deployment**');
+  console.log('3. 🚂 **Railway Deployment**');
+  console.log('   - npm run deploy:dev:railway');
+  console.log('   - Requires RAILWAY_TOKEN environment variable');
+  console.log('   - Fast and easy deployment');
+  console.log('');
+
+  console.log('4. � **Other Platforms**');
+  console.log('   - npm run deploy:dev:heroku (Heroku)');
+  console.log('   - npm run deploy:dev:vercel (Vercel)');
+  console.log('   - npm run deploy:dev:docker (Docker)');
+  console.log('');
+
+  console.log('5. 🐳 **Docker Deployment**');
   console.log('   - npm run docker:build');
   console.log('   - npm run deploy:dev:docker');
-  console.log('');
-
-  console.log('4. 🏪 **Shopify CLI Development**');
-  console.log('   - npm run dev (starts local development server)');
-  console.log('   - shopify app dev (alternative)');
+  console.log('   - Great for local testing or self-hosting');
 }
 
 async function deployToRailway() {
@@ -143,24 +149,53 @@ async function deployToRailway() {
 
   try {
     // Check if railway CLI is available
-    execSync('railway --version', { stdio: 'pipe' });
-    logSuccess('Railway CLI found');
-
-    // Deploy using npm script
-    execSync('npm run deploy:dev:railway', { stdio: 'inherit' });
-    logSuccess('Railway deployment completed!');
-
-    logInfo(
-      '🔗 Your development app should be available at your Railway domain'
-    );
-  } catch (error) {
-    if (error.message.includes('railway')) {
-      logError('Railway CLI not found. Please install it first:');
-      console.log('   npm install -g @railway/cli');
-      console.log('   railway login');
-    } else {
-      logError(`Railway deployment failed: ${error.message}`);
+    try {
+      execSync('railway --version', { stdio: 'pipe' });
+      logSuccess('Railway CLI found');
+    } catch (error) {
+      logError('Railway CLI not found. Installing...');
+      execSync('npm install -g @railway/cli', { stdio: 'inherit' });
+      logSuccess('Railway CLI installed');
     }
+
+    // Check for Railway token
+    if (!process.env.RAILWAY_TOKEN) {
+      logError('RAILWAY_TOKEN environment variable not set');
+      console.log('To deploy to Railway:');
+      console.log('1. Get your token from: https://railway.app/account/tokens');
+      console.log('2. Set it as environment variable: export RAILWAY_TOKEN=your_token');
+      console.log('3. Or add it to your .env file: RAILWAY_TOKEN=your_token');
+      return false;
+    }
+
+    // Login to Railway
+    logInfo('Authenticating with Railway...');
+    execSync(`echo "${process.env.RAILWAY_TOKEN}" | railway login --token`, { stdio: 'inherit' });
+
+    // Set environment
+    logInfo('Setting development environment...');
+    execSync('railway environment development || railway environment create development', { stdio: 'inherit' });
+
+    // Deploy
+    logInfo('Deploying application...');
+    execSync('railway up --detach', { stdio: 'inherit' });
+
+    logSuccess('Railway deployment completed!');
+    logInfo('🔗 Check your deployment at: https://railway.app');
+    
+    return true;
+
+  } catch (error) {
+    logError(`Railway deployment failed: ${error.message}`);
+    
+    // Provide helpful suggestions
+    console.log('\n💡 Troubleshooting suggestions:');
+    console.log('1. Make sure you have a Railway account and project set up');
+    console.log('2. Verify your RAILWAY_TOKEN is correct');
+    console.log('3. Check if your project has the correct Git remote');
+    console.log('4. Try deploying manually with: railway up');
+    
+    return false;
   }
 }
 
@@ -194,10 +229,12 @@ Commands:
   options     Show all deployment options
   railway     Deploy to Railway
   local       Start local development server
+  quick       Quick setup and start local development
   help        Show this help
 
 Examples:
   node deploy-dev-helper.js check
+  node deploy-dev-helper.js quick
   node deploy-dev-helper.js railway
   node deploy-dev-helper.js local
     `);
@@ -224,6 +261,17 @@ Examples:
 
     case 'local':
       await startLocalDev();
+      break;
+      
+    case 'quick':
+      logInfo('🚀 Quick local development setup...');
+      const quickReady = await checkDeploymentReadiness();
+      if (quickReady) {
+        logInfo('Environment is ready! Starting local development...');
+        await startLocalDev();
+      } else {
+        logError('Please fix the issues above before starting development');
+      }
       break;
 
     default:
