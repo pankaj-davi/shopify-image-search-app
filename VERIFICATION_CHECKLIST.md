@@ -232,6 +232,6 @@ Once all checklist items are complete:
 - [ ] Cleanup works properly on uninstall ✅
 - [ ] App is ready for production deployment ✅
 
-**Verified by:** ******\_\_\_\_******  
-**Date:** ******\_\_\_\_******  
-**Test Store:** ******\_\_\_\_******
+**Verified by:** **\*\***\_\_\_\_**\*\***  
+**Date:** **\*\***\_\_\_\_**\*\***  
+**Test Store:** **\*\***\_\_\_\_**\*\***
