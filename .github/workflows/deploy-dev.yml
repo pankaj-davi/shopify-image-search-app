@@ -82,10 +82,10 @@ jobs:
         if: ${{ github.event.inputs.deploy_platform == 'railway' || github.event.inputs.deploy_platform == '' }}
         run: |
           echo "Deploying to Railway development environment..."
-          
+
           # Install Railway CLI
           npm install -g @railway/cli
-          
+
           # Authenticate with Railway using token
           if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
             echo "❌ RAILWAY_TOKEN secret is not set!"
@@ -93,15 +93,15 @@ jobs:
             echo "Get your token from: https://railway.app/account/tokens"
             exit 1
           fi
-          
+
           echo "${{ secrets.RAILWAY_TOKEN }}" | railway login --token
-          
+
           # Check if project exists or create/link it
           railway environment development || railway environment create development
-          
+
           # Deploy the application
           railway up --detach
-          
+
           echo "✅ Railway deployment initiated!"
           echo "🔗 Check deployment status at: https://railway.app"
         env:

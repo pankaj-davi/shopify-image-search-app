@@ -116,7 +116,9 @@ async function showDeploymentOptions() {
 
   console.log('1. 🌐 **GitHub Actions Deployment (Recommended)**');
   console.log('   - Automatic on push to develop branch');
-  console.log('   - Manual trigger available at: https://github.com/pankaj-davi/shopify-image-search-app/actions');
+  console.log(
+    '   - Manual trigger available at: https://github.com/pankaj-davi/shopify-image-search-app/actions'
+  );
   console.log('   - Full CI/CD pipeline with testing');
   console.log('');
 
@@ -163,18 +165,25 @@ async function deployToRailway() {
       logError('RAILWAY_TOKEN environment variable not set');
       console.log('To deploy to Railway:');
       console.log('1. Get your token from: https://railway.app/account/tokens');
-      console.log('2. Set it as environment variable: export RAILWAY_TOKEN=your_token');
+      console.log(
+        '2. Set it as environment variable: export RAILWAY_TOKEN=your_token'
+      );
       console.log('3. Or add it to your .env file: RAILWAY_TOKEN=your_token');
       return false;
     }
 
     // Login to Railway
     logInfo('Authenticating with Railway...');
-    execSync(`echo "${process.env.RAILWAY_TOKEN}" | railway login --token`, { stdio: 'inherit' });
+    execSync(`echo "${process.env.RAILWAY_TOKEN}" | railway login --token`, {
+      stdio: 'inherit',
+    });
 
     // Set environment
     logInfo('Setting development environment...');
-    execSync('railway environment development || railway environment create development', { stdio: 'inherit' });
+    execSync(
+      'railway environment development || railway environment create development',
+      { stdio: 'inherit' }
+    );
 
     // Deploy
     logInfo('Deploying application...');
@@ -182,19 +191,18 @@ async function deployToRailway() {
 
     logSuccess('Railway deployment completed!');
     logInfo('🔗 Check your deployment at: https://railway.app');
-    
-    return true;
 
+    return true;
   } catch (error) {
     logError(`Railway deployment failed: ${error.message}`);
-    
+
     // Provide helpful suggestions
     console.log('\n💡 Troubleshooting suggestions:');
     console.log('1. Make sure you have a Railway account and project set up');
     console.log('2. Verify your RAILWAY_TOKEN is correct');
     console.log('3. Check if your project has the correct Git remote');
     console.log('4. Try deploying manually with: railway up');
-    
+
     return false;
   }
 }
@@ -262,7 +270,7 @@ Examples:
     case 'local':
       await startLocalDev();
       break;
-      
+
     case 'quick':
       logInfo('🚀 Quick local development setup...');
       const quickReady = await checkDeploymentReadiness();
