@@ -45,6 +45,7 @@
     "db:reset:safe": "node scripts/database-error-handler.js reset",
     "db:test": "node scripts/db-test.js",
     "security:audit": "npm audit --audit-level high",
+    "security:ci": "node scripts/ci-security-check.js",
     "security:scan": "npm run security:audit && npx license-checker",
     "security:monitor": "node scripts/security-monitor.js scan",
     "security:fix": "node scripts/security-monitor.js fix",

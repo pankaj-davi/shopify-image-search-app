@@ -169,8 +169,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: 🔍 Run npm audit
-        run: npm audit --audit-level moderate
+      - name: 🔍 Run security vulnerability check
+        run: node scripts/ci-security-check.js
 
       - name: 📋 Check for known vulnerabilities
         uses: aquasecurity/trivy-action@master
