@@ -59,6 +59,8 @@
     "deploy:dev:local": "node scripts/deploy-dev.js local",
     "deploy:dev:help": "node scripts/deploy-dev-helper.js",
     "deploy:check": "node scripts/deploy-dev-helper.js check",
+    "deploy:cloud": "node scripts/cloud-deploy.js trigger",
+    "deploy:status": "node scripts/cloud-deploy.js status",
     "deploy:railway": "node scripts/deploy.js railway",
     "deploy:heroku": "node scripts/deploy.js heroku",
     "deploy:vercel": "node scripts/deploy.js vercel",
