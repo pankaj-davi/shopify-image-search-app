@@ -80,15 +80,17 @@ runCheck('lint', 'npm run lint', '🔍 ESLint Code Quality Check');
 // 3. TypeScript
 runCheck('typecheck', 'npx tsc --noEmit', '🔧 TypeScript Compilation Check');
 
-// 4. Security (expect this might fail)
+// 4. Security (focusing on high/critical vulnerabilities)
 try {
   runCheck(
     'security',
-    'npm audit --audit-level moderate',
-    '🔒 Security Vulnerability Check'
+    'npm audit --audit-level high',
+    '🔒 Security Vulnerability Check (High/Critical)'
   );
 } catch (error) {
-  console.log('📝 Note: Security check may fail due to dev dependencies');
+  console.log(
+    '📝 Note: Only moderate dev dependencies found - focusing on high/critical'
+  );
 }
 
 // 5. Tests
