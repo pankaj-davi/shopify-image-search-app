@@ -40,23 +40,49 @@ export interface ProductData {
   onlineStoreUrl?: string | null;
   totalInventory?: number;
   price?: string;
-  sku?: string;
+  sku?: string | null;
   priceRange?: {
     minVariantPrice: { amount: string; currencyCode: string };
     maxVariantPrice: { amount: string; currencyCode: string };
   } | null;
-  featuredImage?: {
-    url: string;
-    altText?: string | null;
+  featuredMedia?: {
+    mediaContentType?: string;
+    image?: {
+      url: string;
+      altText?: string | null;
+    } | null;
   } | null;
+  media?: Array<{
+    mediaContentType: string;
+    image?: {
+      url: string;
+      altText?: string | null;
+      width?: number;
+      height?: number;
+    };
+  }>;
   options?: Array<{ name: string; values: string[] }>;
-  variants?: Array<{ price: string; sku: string }>;
+  variants?: Array<{ 
+    id?: string;
+    price: string; 
+    sku: string | null;
+    title?: string;
+    availableForSale?: boolean;
+    image?: {
+      url: string;
+      altText?: string | null;
+      width?: number;
+      height?: number;
+    } | null;
+  }>;
   metafields?: Array<{
     namespace: string;
     key: string;
     value: string;
     type: string;
-    description?: string | null;
+    definition?: {
+      description?: string | null;
+    } | null;
   }>;
   shopDomain: string;
   createdAt: Date;
@@ -73,10 +99,76 @@ export interface StoreData {
   timezoneAbbreviation?: string;
   timezoneOffset?: string;
   timezoneOffsetMinutes?: number;
+  
+  // Enhanced Plan Details
   plan?: {
     partnerDevelopment?: boolean;
     shopifyPlus?: boolean;
+    displayName?: string;
   };
+  
+  // Store Details (NEW)
+  description?: string;
+  url?: string;
+  primaryDomain?: {
+    host?: string;
+    sslEnabled?: boolean;
+    url?: string;
+  };
+  
+  // Contact & Communication (NEW)
+  contactEmail?: string;
+  
+  // Location & Settings (NEW)
+  ianaTimezone?: string;
+  weightUnit?: string;
+  unitSystem?: string;
+  enabledPresentmentCurrencies?: string[];
+  
+  // Address Information (NEW)
+  billingAddress?: {
+    address1?: string;
+    address2?: string;
+    city?: string;
+    company?: string;
+    country?: string;
+    countryCodeV2?: string;
+    phone?: string;
+    province?: string;
+    provinceCode?: string;
+    zip?: string;
+  };
+  
+  // Store Configuration (NEW)
+  checkoutApiSupported?: boolean;
+  setupRequired?: boolean;
+  taxesIncluded?: boolean;
+  taxShipping?: boolean;
+  marketingSmsConsentEnabledAtCheckout?: boolean;
+  transactionalSmsDisabled?: boolean;
+  
+  // Store Features (NEW)
+  features?: {
+    avalaraAvatax?: boolean;
+    branding?: boolean;
+    captcha?: boolean;
+    eligibleForSubscriptions?: boolean;
+    giftCards?: boolean;
+    reports?: boolean;
+    sellsSubscriptions?: boolean;
+    showMetrics?: boolean;
+    storefront?: boolean;
+    usingShopifyBalance?: boolean;
+  };
+  
+  // Resource Limits (NEW)
+  resourceLimits?: {
+    locationLimit?: number;
+    maxProductOptions?: number;
+    maxProductVariants?: number;
+    redirectLimitReached?: boolean;
+  };
+  
   themeConfig?: any; // Visual search theme configuration
   productCount?: number; // Track synced products count
   lastSyncAt?: Date; // Track last sync timestamp

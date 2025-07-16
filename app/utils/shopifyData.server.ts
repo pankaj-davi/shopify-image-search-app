@@ -37,6 +37,7 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     `#graphql
       query {
         shop {
+          # Basic Info (existing)
           id
           name
           myshopifyDomain
@@ -45,12 +46,75 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
           timezoneAbbreviation
           timezoneOffset
           timezoneOffsetMinutes
+          createdAt
+          updatedAt
+          
+          # Plan Details (enhanced)
           plan {
             partnerDevelopment
             shopifyPlus
           }
-          createdAt
-          updatedAt
+          
+          # Store Details (NEW)
+          description
+          url
+          primaryDomain {
+            host
+            sslEnabled
+            url
+          }
+          
+          # Contact & Communication (NEW)
+          contactEmail
+          
+          # Location & Settings (NEW)
+          ianaTimezone
+          weightUnit
+          unitSystem
+          enabledPresentmentCurrencies
+          
+          # Address Information (NEW)
+          billingAddress {
+            address1
+            address2
+            city
+            company
+            country
+            countryCodeV2
+            phone
+            province
+            provinceCode
+            zip
+          }
+          
+          # Store Configuration (NEW)
+          checkoutApiSupported
+          setupRequired
+          taxesIncluded
+          taxShipping
+          marketingSmsConsentEnabledAtCheckout
+          transactionalSmsDisabled
+          
+          # Store Features (NEW)
+          features {
+            avalaraAvatax
+            branding
+            captcha
+            eligibleForSubscriptions
+            giftCards
+            reports
+            sellsSubscriptions
+            showMetrics
+            storefront
+          }
+          
+          # Resource Limits (NEW)
+          resourceLimits {
+            locationLimit
+            maxProductOptions
+            maxProductVariants
+            redirectLimitReached
+          }
         }
         products(first: 25) {
           edges {
@@ -81,11 +145,35 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
                   }
                 }
               }
+              media(first: 10) {
+                edges {
+                  node {
+                    mediaContentType
+                    ... on MediaImage {
+                      image {
+                        url
+                        altText
+                        width
+                        height
+                      }
+                    }
+                  }
+                }
+              }
               variants(first: 10) {
                 edges {
                   node {
+                    id
                     price
                     sku
+                    title
+                    availableForSale
+                    image {
+                      url
+                      altText
+                      width
+                      height
+                    }
                   }
                 }
               }
@@ -110,7 +198,49 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     );
     
   const storeData = await storeResponse.json();
-  console.log("Store data from Shopify:", storeData);
+  
+  // Enhanced logging to show all captured store details
+  console.log("📊 COMPLETE STORE DATA CAPTURED:");
+  console.log("🏪 Basic Info:", {
+    name: storeData.data.shop.name,
+    domain: storeData.data.shop.myshopifyDomain,
+    email: storeData.data.shop.email,
+    currency: storeData.data.shop.currencyCode
+  });
+  
+  console.log("📍 Store Location & Contact:", {
+    contactEmail: storeData.data.shop.contactEmail,
+    timezone: storeData.data.shop.ianaTimezone,
+    address: storeData.data.shop.billingAddress
+  });
+  
+  console.log("💎 Plan & Features:", {
+    plan: storeData.data.shop.plan,
+    features: storeData.data.shop.features,
+    limits: storeData.data.shop.resourceLimits
+  });
+  
+  console.log("🎨 Store Configuration:", {
+    description: storeData.data.shop.description,
+    url: storeData.data.shop.url,
+    primaryDomain: storeData.data.shop.primaryDomain,
+    taxSettings: {
+      taxesIncluded: storeData.data.shop.taxesIncluded,
+      taxShipping: storeData.data.shop.taxShipping
+    }
+  });
+  
+  console.log("⚙️ Store Capabilities:", {
+    checkoutApiSupported: storeData.data.shop.checkoutApiSupported,
+    weightUnit: storeData.data.shop.weightUnit,
+    unitSystem: storeData.data.shop.unitSystem,
+    currencies: storeData.data.shop.enabledPresentmentCurrencies
+  });
+  
+  console.log("📦 Products Summary:", {
+    totalProducts: storeData.data.products.edges.length,
+    firstProduct: storeData.data.products.edges[0]?.node.title
+  });
 
   // Use the enhanced atomic sync method for better consistency and performance
   await appDatabase.syncStoreWithProducts(
