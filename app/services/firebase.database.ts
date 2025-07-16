@@ -2,20 +2,74 @@ import { type DatabaseInterface, type ProductData, type StoreData } from './data
 import { getFirestoreInstance } from './firebase.service';
 import { FieldValue } from 'firebase-admin/firestore';
 
+// Utility function to safely convert timestamps
+function safeToDate(timestamp: any): Date {
+  if (!timestamp) {
+    return new Date();
+  }
+  
+  // If it's already a Date object, return as-is
+  if (timestamp instanceof Date) {
+    return timestamp;
+  }
+  
+  // If it's a Firebase Timestamp with toDate method
+  if (timestamp && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate();
+  }
+  
+  // If it's a string, try to parse it
+  if (typeof timestamp === 'string') {
+    return new Date(timestamp);
+  }
+  
+  // Fallback to current date
+  return new Date();
+}
+
+// Utility function to remove undefined values from objects
+function sanitizeData(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeData(item)).filter(item => item !== undefined);
+  }
+  
+  if (typeof obj === 'object') {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        sanitized[key] = sanitizeData(value);
+      }
+    }
+    return sanitized;
+  }
+  
+  return obj;
+}
+
 export class FirebaseDatabase implements DatabaseInterface {
   private firestore = getFirestoreInstance();
 
-  // Product operations
+  // Product operations (using subcollections)
   async createProduct(product: ProductData): Promise<string> {
     try {
-      const productData = {
+      const productData = sanitizeData({
         ...product,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
-      };
+      });
       
-      const docRef = await this.firestore.collection('products').add(productData);
-      console.log('🔥 Product created in Firebase:', docRef.id);
+      // Store product in subcollection under the store
+      const docRef = await this.firestore
+        .collection('stores')
+        .doc(product.shopDomain)
+        .collection('products')
+        .add(productData);
+        
+      console.log('🔥 Product created in Firebase subcollection:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('❌ Error creating product in Firebase:', error);
@@ -23,10 +77,59 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
+  async batchCreateProducts(products: ProductData[]): Promise<string[]> {
+    try {
+      const batch = this.firestore.batch();
+      const productIds: string[] = [];
+      
+      for (const product of products) {
+        const docRef = this.firestore.collection('products').doc();
+        const productData = sanitizeData({
+          ...product,
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        
+        batch.set(docRef, productData);
+        productIds.push(docRef.id);
+      }
+      
+      await batch.commit();
+      console.log(`🔥 Batch created ${products.length} products in Firebase`);
+      return productIds;
+    } catch (error) {
+      console.error('❌ Error batch creating products in Firebase:', error);
+      throw error;
+    }
+  }
+
+  async batchUpdateProducts(updates: Array<{ id: string; data: Partial<ProductData> }>): Promise<void> {
+    try {
+      const batch = this.firestore.batch();
+      
+      for (const update of updates) {
+        const docRef = this.firestore.collection('products').doc(update.id);
+        const updateData = sanitizeData({
+          ...update.data,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        
+        batch.update(docRef, updateData);
+      }
+      
+      await batch.commit();
+      console.log(`🔥 Batch updated ${updates.length} products in Firebase`);
+    } catch (error) {
+      console.error('❌ Error batch updating products in Firebase:', error);
+      throw error;
+    }
+  }
+
   async getProducts(limit: number = 10): Promise<ProductData[]> {
     try {
-      const query = this.firestore
-        .collection('products')
+      // Use collection group query to get products from all stores
+      const collectionGroup = this.firestore.collectionGroup('products');
+      const query = collectionGroup
         .orderBy('createdAt', 'desc')
         .limit(limit);
       
@@ -41,15 +144,26 @@ export class FirebaseDatabase implements DatabaseInterface {
           title: data.title,
           handle: data.handle,
           status: data.status,
+          description: data.description,
+          vendor: data.vendor,
+          productType: data.productType,
+          tags: data.tags,
+          onlineStoreUrl: data.onlineStoreUrl,
+          totalInventory: data.totalInventory,
           price: data.price,
           sku: data.sku,
+          priceRange: data.priceRange,
+          featuredImage: data.featuredImage,
+          options: data.options,
+          variants: data.variants,
+          metafields: data.metafields,
           shopDomain: data.shopDomain,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          createdAt: safeToDate(data.createdAt),
+          updatedAt: safeToDate(data.updatedAt),
         });
       });
       
-      console.log(`🔥 Retrieved ${products.length} products from Firebase`);
+      console.log(`🔥 Retrieved ${products.length} products from Firebase subcollections`);
       return products;
     } catch (error) {
       console.error('❌ Error getting products from Firebase:', error);
@@ -75,8 +189,8 @@ export class FirebaseDatabase implements DatabaseInterface {
         price: data.price,
         sku: data.sku,
         shopDomain: data.shopDomain,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
+        createdAt: safeToDate(data.createdAt),
+        updatedAt: safeToDate(data.updatedAt),
       };
     } catch (error) {
       console.error('❌ Error getting product by ID from Firebase:', error);
@@ -86,10 +200,10 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async updateProduct(id: string, updates: Partial<ProductData>): Promise<void> {
     try {
-      const updateData = {
+      const updateData = sanitizeData({
         ...updates,
         updatedAt: FieldValue.serverTimestamp(),
-      };
+      });
       
       await this.firestore.collection('products').doc(id).update(updateData);
       console.log('🔥 Product updated in Firebase:', id);
@@ -112,11 +226,11 @@ export class FirebaseDatabase implements DatabaseInterface {
   // Store operations
   async createStore(store: StoreData): Promise<string> {
     try {
-      const storeData = {
+      const storeData = sanitizeData({
         ...store,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
-      };
+      });
       
       // Use shopDomain as document ID for easy retrieval
       const docRef = this.firestore.collection('stores').doc(store.shopDomain);
@@ -144,9 +258,17 @@ export class FirebaseDatabase implements DatabaseInterface {
         shopDomain: data.shopDomain,
         name: data.name,
         myshopifyDomain: data.myshopifyDomain,
+        email: data.email,
+        currencyCode: data.currencyCode,
+        timezoneAbbreviation: data.timezoneAbbreviation,
+        timezoneOffset: data.timezoneOffset,
+        timezoneOffsetMinutes: data.timezoneOffsetMinutes,
+        plan: data.plan,
         themeConfig: data.themeConfig, // Include theme configuration
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
+        productCount: data.productCount,
+        lastSyncAt: data.lastSyncAt ? safeToDate(data.lastSyncAt) : undefined,
+        createdAt: safeToDate(data.createdAt),
+        updatedAt: safeToDate(data.updatedAt),
       };
     } catch (error) {
       console.error('❌ Error getting store from Firebase:', error);
@@ -156,10 +278,10 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async updateStore(shopDomain: string, updates: Partial<StoreData>): Promise<void> {
     try {
-      const updateData = {
+      const updateData = sanitizeData({
         ...updates,
         updatedAt: FieldValue.serverTimestamp(),
-      };
+      });
       
       await this.firestore.collection('stores').doc(shopDomain).update(updateData);
       console.log('🔥 Store updated in Firebase:', shopDomain);
@@ -169,12 +291,110 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
+  // Store-Product relationship operations
+  async getStoreWithProducts(shopDomain: string, productLimit: number = 25): Promise<{ store: StoreData; products: ProductData[] } | null> {
+    try {
+      // Get store data
+      const store = await this.getStore(shopDomain);
+      if (!store) {
+        return null;
+      }
+
+      // Get products for this store
+      const products = await this.getProductsByShop(shopDomain, productLimit);
+
+      return { store, products };
+    } catch (error) {
+      console.error('❌ Error getting store with products from Firebase:', error);
+      throw error;
+    }
+  }
+
+  async syncStoreWithProducts(storeData: StoreData, products: ProductData[]): Promise<void> {
+    try {
+      console.log(`🔥 Starting Firebase transaction to sync store ${storeData.shopDomain} with ${products.length} products`);
+      
+      await this.firestore.runTransaction(async (transaction) => {
+        // Update or create store
+        const storeRef = this.firestore.collection('stores').doc(storeData.shopDomain);
+        const storeDoc = await transaction.get(storeRef);
+        
+        const storeUpdateData: any = sanitizeData({
+          ...storeData,
+          productCount: products.length,
+          lastSyncAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        if (storeDoc.exists) {
+          transaction.update(storeRef, storeUpdateData);
+          console.log(`🔥 Store updated in transaction: ${storeData.shopDomain}`);
+        } else {
+          storeUpdateData.createdAt = FieldValue.serverTimestamp();
+          transaction.set(storeRef, storeUpdateData);
+          console.log(`🔥 Store created in transaction: ${storeData.shopDomain}`);
+        }
+      });
+
+      // Handle products in batches using subcollections
+      const batchSize = 400; // Leave some room for safety
+      for (let i = 0; i < products.length; i += batchSize) {
+        const batch = this.firestore.batch();
+        const productBatch = products.slice(i, i + batchSize);
+        
+        for (const product of productBatch) {
+          // Check if product exists by shopifyProductId in the store's subcollection
+          const existingProductQuery = await this.firestore
+            .collection('stores')
+            .doc(storeData.shopDomain)
+            .collection('products')
+            .where('shopifyProductId', '==', product.shopifyProductId)
+            .limit(1)
+            .get();
+
+          if (!existingProductQuery.empty) {
+            // Update existing product in subcollection
+            const existingDoc = existingProductQuery.docs[0];
+            const updateData = sanitizeData({
+              ...product,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+            batch.update(existingDoc.ref, updateData);
+          } else {
+            // Create new product in subcollection
+            const newProductRef = this.firestore
+              .collection('stores')
+              .doc(storeData.shopDomain)
+              .collection('products')
+              .doc();
+              
+            const productData = sanitizeData({
+              ...product,
+              createdAt: FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+            batch.set(newProductRef, productData);
+          }
+        }
+        
+        await batch.commit();
+        console.log(`🔥 Processed batch ${Math.floor(i / batchSize) + 1} of products (${productBatch.length} products)`);
+      }
+      
+      console.log(`✅ Successfully synced store ${storeData.shopDomain} with ${products.length} products using subcollections`);
+    } catch (error) {
+      console.error('❌ Error syncing store with products in Firebase:', error);
+      throw error;
+    }
+  }
+
   // Firebase-specific methods
   async getProductsByShop(shopDomain: string, limit: number = 10): Promise<ProductData[]> {
     try {
       const query = this.firestore
+        .collection('stores')
+        .doc(shopDomain)
         .collection('products')
-        .where('shopDomain', '==', shopDomain)
         .orderBy('createdAt', 'desc')
         .limit(limit);
       
@@ -189,11 +409,22 @@ export class FirebaseDatabase implements DatabaseInterface {
           title: data.title,
           handle: data.handle,
           status: data.status,
+          description: data.description,
+          vendor: data.vendor,
+          productType: data.productType,
+          tags: data.tags,
+          onlineStoreUrl: data.onlineStoreUrl,
+          totalInventory: data.totalInventory,
           price: data.price,
           sku: data.sku,
+          priceRange: data.priceRange,
+          featuredImage: data.featuredImage,
+          options: data.options,
+          variants: data.variants,
+          metafields: data.metafields,
           shopDomain: data.shopDomain,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          createdAt: safeToDate(data.createdAt),
+          updatedAt: safeToDate(data.updatedAt),
         });
       });
       
@@ -206,38 +437,86 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async searchProducts(searchTerm: string, shopDomain?: string): Promise<ProductData[]> {
     try {
-      let query: any = this.firestore.collection('products');
+      const products: ProductData[] = [];
       
       if (shopDomain) {
-        query = query.where('shopDomain', '==', shopDomain);
-      }
-      
-      // Note: Firestore doesn't support full-text search natively
-      // For production, consider using Algolia or Elasticsearch
-      const snapshot = await query.get();
-      
-      const products: ProductData[] = [];
-      snapshot.forEach((doc: any) => {
-        const data = doc.data();
-        const title = data.title?.toLowerCase() || '';
-        const handle = data.handle?.toLowerCase() || '';
-        const search = searchTerm.toLowerCase();
+        // Search within a specific store's subcollection
+        const snapshot = await this.firestore
+          .collection('stores')
+          .doc(shopDomain)
+          .collection('products')
+          .get();
+          
+        snapshot.forEach((doc: any) => {
+          const data = doc.data();
+          const title = data.title?.toLowerCase() || '';
+          const handle = data.handle?.toLowerCase() || '';
+          const search = searchTerm.toLowerCase();
+          
+          if (title.includes(search) || handle.includes(search)) {
+            products.push({
+              id: doc.id,
+              shopifyProductId: data.shopifyProductId,
+              title: data.title,
+              handle: data.handle,
+              status: data.status,
+              description: data.description,
+              vendor: data.vendor,
+              productType: data.productType,
+              tags: data.tags,
+              onlineStoreUrl: data.onlineStoreUrl,
+              totalInventory: data.totalInventory,
+              price: data.price,
+              sku: data.sku,
+              priceRange: data.priceRange,
+              featuredImage: data.featuredImage,
+              options: data.options,
+              variants: data.variants,
+              metafields: data.metafields,
+              shopDomain: data.shopDomain,
+              createdAt: safeToDate(data.createdAt),
+              updatedAt: safeToDate(data.updatedAt),
+            });
+          }
+        });
+      } else {
+        // Search across all stores (collection group query)
+        const collectionGroup = this.firestore.collectionGroup('products');
+        const snapshot = await collectionGroup.get();
         
-        if (title.includes(search) || handle.includes(search)) {
-          products.push({
-            id: doc.id,
-            shopifyProductId: data.shopifyProductId,
-            title: data.title,
-            handle: data.handle,
-            status: data.status,
-            price: data.price,
-            sku: data.sku,
-            shopDomain: data.shopDomain,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
-          });
-        }
-      });
+        snapshot.forEach((doc: any) => {
+          const data = doc.data();
+          const title = data.title?.toLowerCase() || '';
+          const handle = data.handle?.toLowerCase() || '';
+          const search = searchTerm.toLowerCase();
+          
+          if (title.includes(search) || handle.includes(search)) {
+            products.push({
+              id: doc.id,
+              shopifyProductId: data.shopifyProductId,
+              title: data.title,
+              handle: data.handle,
+              status: data.status,
+              description: data.description,
+              vendor: data.vendor,
+              productType: data.productType,
+              tags: data.tags,
+              onlineStoreUrl: data.onlineStoreUrl,
+              totalInventory: data.totalInventory,
+              price: data.price,
+              sku: data.sku,
+              priceRange: data.priceRange,
+              featuredImage: data.featuredImage,
+              options: data.options,
+              variants: data.variants,
+              metafields: data.metafields,
+              shopDomain: data.shopDomain,
+              createdAt: safeToDate(data.createdAt),
+              updatedAt: safeToDate(data.updatedAt),
+            });
+          }
+        });
+      }
       
       return products;
     } catch (error) {

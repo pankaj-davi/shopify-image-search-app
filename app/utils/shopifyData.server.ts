@@ -23,9 +23,12 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
       console.error("Failed to inject visual search script for existing store:", error);
     }
     
+    // Get store with associated products for better data consistency
+    const storeWithProducts = await appDatabase.getStoreWithProducts(shopDomain, 25);
+    
     return {
-      store: storeExists,
-      products: [],
+      store: storeWithProducts?.store || storeExists,
+      products: storeWithProducts?.products?.map((product: any) => ({ node: product })) || [],
     };
   }
 
@@ -107,17 +110,13 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     );
     
   const storeData = await storeResponse.json();
-    console.log("Store data from Shopify:", storeData);
-  // Sync store information to our database
-  await appDatabase.syncStore(storeData.data.shop);
+  console.log("Store data from Shopify:", storeData);
 
-  // Sync products to our database
-  for (const productEdge of storeData.data.products.edges) {
-    await appDatabase.syncProductFromShopify(
-      productEdge.node,
-      storeData.data.shop.myshopifyDomain
-    );
-  }
+  // Use the enhanced atomic sync method for better consistency and performance
+  await appDatabase.syncStoreWithProducts(
+    storeData.data.shop,
+    storeData.data.products.edges.map((edge: any) => edge.node)
+  );
 
   // Inject visual search script for new stores
   try {

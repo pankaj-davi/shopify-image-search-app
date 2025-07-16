@@ -11,38 +11,123 @@ export class AppDatabaseService {
   }
 
   // Store operations
-  async syncStore(storeInfo: { name: string; myshopifyDomain: string }) {
+  async syncStore(storeInfo: any): Promise<string> {
     const db = await this.getDB();
     const shopDomain = storeInfo.myshopifyDomain;
 
     try {
       // Check if store exists
-      let store = await db.getStore(shopDomain);
+      const store = await db.getStore(shopDomain);
       
       if (!store) {
-        // Create new store
+        // Create new store with enhanced data
         const storeData: StoreData = {
           shopDomain,
           name: storeInfo.name,
           myshopifyDomain: storeInfo.myshopifyDomain,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          email: storeInfo.email,
+          currencyCode: storeInfo.currencyCode,
+          timezoneAbbreviation: storeInfo.timezoneAbbreviation,
+          timezoneOffset: storeInfo.timezoneOffset,
+          timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
+          plan: storeInfo.plan,
+          createdAt: new Date(storeInfo.createdAt),
+          updatedAt: new Date(storeInfo.updatedAt || storeInfo.createdAt),
         };
         
         const storeId = await db.createStore(storeData);
         console.log(`✅ Store synced (created): ${shopDomain} -> ${storeId}`);
         return storeId;
       } else {
-        // Update existing store
+        // Update existing store with enhanced data
         await db.updateStore(shopDomain, {
           name: storeInfo.name,
-          updatedAt: new Date(),
+          email: storeInfo.email,
+          currencyCode: storeInfo.currencyCode,
+          timezoneAbbreviation: storeInfo.timezoneAbbreviation,
+          timezoneOffset: storeInfo.timezoneOffset,
+          timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
+          plan: storeInfo.plan,
+          updatedAt: new Date(storeInfo.updatedAt || storeInfo.createdAt),
         });
         console.log(`✅ Store synced (updated): ${shopDomain}`);
-        return store.id;
+        return store.id!;
       }
     } catch (error) {
       console.error('❌ Error syncing store:', error);
+      throw error;
+    }
+  }
+
+  // Enhanced method to sync store with products in one operation
+  async syncStoreWithProducts(storeInfo: any, shopifyProducts: any[]): Promise<void> {
+    const db = await this.getDB();
+    const shopDomain = storeInfo.myshopifyDomain;
+
+    try {
+      // Prepare store data
+      const storeData: StoreData = {
+        shopDomain,
+        name: storeInfo.name,
+        myshopifyDomain: storeInfo.myshopifyDomain,
+        email: storeInfo.email,
+        currencyCode: storeInfo.currencyCode,
+        timezoneAbbreviation: storeInfo.timezoneAbbreviation,
+        timezoneOffset: storeInfo.timezoneOffset,
+        timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
+        plan: storeInfo.plan,
+        createdAt: new Date(storeInfo.createdAt),
+        updatedAt: new Date(storeInfo.updatedAt || storeInfo.createdAt),
+      };
+
+      // Prepare products data
+      const products: ProductData[] = shopifyProducts.map(product => {
+        const variant = product.variants?.edges?.[0]?.node;
+        
+        return {
+          shopifyProductId: product.id,
+          title: product.title,
+          handle: product.handle,
+          status: product.status,
+          description: product.description || null,
+          vendor: product.vendor || null,
+          productType: product.productType || null,
+          tags: product.tags || [],
+          onlineStoreUrl: product.onlineStoreUrl || null,
+          totalInventory: product.totalInventory || 0,
+          price: variant?.price || '',
+          sku: variant?.sku || '',
+          priceRange: product.priceRangeV2 ? {
+            minVariantPrice: product.priceRangeV2.minVariantPrice,
+            maxVariantPrice: product.priceRangeV2.maxVariantPrice,
+          } : null,
+          featuredImage: product.featuredMedia?.image ? {
+            url: product.featuredMedia.image.url,
+            altText: product.featuredMedia.image.altText || null,
+          } : null,
+          options: product.options || [],
+          variants: product.variants?.edges?.map((edge: any) => ({
+            price: edge.node.price,
+            sku: edge.node.sku || '',
+          })) || [],
+          metafields: product.metafields?.edges?.map((edge: any) => ({
+            namespace: edge.node.namespace,
+            key: edge.node.key,
+            value: edge.node.value,
+            type: edge.node.type,
+            description: edge.node.definition?.description || null,
+          })) || [],
+          shopDomain,
+          createdAt: new Date(product.createdAt),
+          updatedAt: new Date(product.updatedAt || product.createdAt),
+        };
+      });
+
+      // Use the new atomic sync method
+      await db.syncStoreWithProducts(storeData, products);
+      console.log(`✅ Store and products synced atomically: ${shopDomain} (${products.length} products)`);
+    } catch (error) {
+      console.error('❌ Error syncing store with products:', error);
       throw error;
     }
   }
@@ -54,6 +139,18 @@ export class AppDatabaseService {
       return store;
     } catch (error) {
       console.error(`❌ Error fetching store: ${shopDomain}`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced method to get store with associated products
+  async getStoreWithProducts(shopDomain: string, productLimit: number = 25) {
+    const db = await this.getDB();
+    try {
+      const result = await db.getStoreWithProducts(shopDomain, productLimit);
+      return result;
+    } catch (error) {
+      console.error(`❌ Error fetching store with products: ${shopDomain}`, error);
       throw error;
     }
   }
