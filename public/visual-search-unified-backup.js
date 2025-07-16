@@ -25,6 +25,7 @@
   const CONFIG = {
     // App configuration
     APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://your-app-domain.com',
+    EXTERNAL_API_URL: 'http://localhost:3000/pi/visual-search',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || window.Shopify?.shop || '',
     
     // Theme customization (can be overridden by store owners)
@@ -96,6 +97,123 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+      
+      @keyframes visual-search-skeleton-pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.4; }
+        100% { opacity: 1; }
+      }
+    `,
+    
+    // Responsive media queries for modal content
+    responsiveStyles: `
+      @media (min-width: 768px) {
+        .visual-search-modal-content {
+          flex-direction: row !important;
+        }
+        .visual-search-left-panel {
+          flex: 1 !important;
+          border-right: 1px solid #e9e9e9 !important;
+          border-bottom: none !important;
+          max-height: none !important;
+          padding: 24px !important;
+        }
+        .visual-search-right-panel {
+          flex: 3 !important;
+        }
+        .visual-search-results-grid {
+          grid-template-columns: repeat(3, 1fr) !important;
+          gap: 16px !important;
+        }
+        .visual-search-results-header {
+          padding: 20px 24px 16px !important;
+        }
+        .visual-search-results-container {
+          padding: 20px 24px !important;
+        }
+        .visual-search-upload-icon {
+          width: 64px !important;
+          height: 64px !important;
+          margin-bottom: 20px !important;
+        }
+        .visual-search-upload-icon svg {
+          width: 32px !important;
+          height: 32px !important;
+        }
+        .visual-search-main-upload h3 {
+          font-size: 20px !important;
+          margin-bottom: 12px !important;
+        }
+        .visual-search-main-upload p {
+          font-size: 16px !important;
+          margin-bottom: 24px !important;
+          max-width: 280px !important;
+        }
+        .visual-search-main-upload {
+          padding: 40px 24px !important;
+          border-radius: 16px !important;
+          margin-bottom: 20px !important;
+          min-height: 200px !important;
+        }
+        .visual-search-alt-buttons {
+          gap: 12px !important;
+          margin-bottom: 24px !important;
+        }
+        .visual-search-alt-button {
+          padding: 16px !important;
+          font-size: 14px !important;
+          gap: 8px !important;
+          border-radius: 12px !important;
+        }
+        .visual-search-alt-button svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+        .visual-search-tips {
+          padding: 16px !important;
+          border-radius: 12px !important;
+        }
+        .visual-search-tips h4 {
+          font-size: 14px !important;
+          margin-bottom: 8px !important;
+        }
+        .visual-search-tips ul {
+          font-size: 13px !important;
+          line-height: 1.6 !important;
+        }
+        .visual-search-empty-state {
+          padding: 60px 20px !important;
+        }
+        .visual-search-empty-icon {
+          width: 80px !important;
+          height: 80px !important;
+          margin-bottom: 20px !important;
+        }
+        .visual-search-empty-icon svg {
+          width: 32px !important;
+          height: 32px !important;
+        }
+        .visual-search-empty-state h3 {
+          font-size: 18px !important;
+          margin-bottom: 8px !important;
+        }
+        .visual-search-empty-state p {
+          font-size: 14px !important;
+          max-width: 300px !important;
+        }
+      }
+      
+      @media (min-width: 1024px) {
+        .visual-search-results-grid {
+          grid-template-columns: repeat(4, 1fr) !important;
+        }
+      }
+      
+      @media (min-width: 1200px) {
+        .visual-search-results-grid {
+          grid-template-columns: repeat(5, 1fr) !important;
+        }
+      }
     `,
     
     // Icon styles - Google-inspired design with smart positioning
@@ -130,6 +248,24 @@
       animation: visual-search-spin 1s linear infinite;
     `,
     
+    // Skeleton loader for image
+    imageSkeleton: `
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    `,
+    
+    // Skeleton loader for product cards
+    productSkeleton: `
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e9e9e9;
+    `,
+    
     // Pinterest-style overlay
     drawerOverlay: `
       position: fixed;
@@ -147,18 +283,19 @@
       isolation: isolate;
     `,
     
-    // Pinterest-style modal content - Large layout with 1:3 ratio
+    // Pinterest-style modal content - Mobile-first responsive design
     drawerContent: (isMobile) => `
       background: #ffffff;
-      border-radius: ${isMobile ? '16px' : '20px'};
+      border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
       padding: 0;
-      max-width: ${isMobile ? '95%' : '1400px'};
-      width: ${isMobile ? '95%' : '90%'};
-      max-height: 85vh;
-      height: ${isMobile ? '80vh' : '700px'};
+      max-width: ${isMobile ? '100%' : '1600px'};
+      width: ${isMobile ? '100%' : '95%'};
+      max-height: ${isMobile ? '95vh' : '90vh'};
+      height: ${isMobile ? '95vh' : '800px'};
+      ${isMobile ? 'position: fixed; bottom: 0; left: 0; right: 0;' : ''}
       overflow: hidden;
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
-      transform: translateY(${isMobile ? '20px' : '24px'}) scale(${isMobile ? '0.96' : '0.94'});
+      transform: ${isMobile ? 'translateY(100%)' : 'translateY(24px) scale(0.94)'};
       transition: all 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       position: relative;
@@ -282,44 +419,49 @@
       </div>
     </div>
 
-    <!-- Main Content Area with 1:3 Layout -->
-    <div id="modal-content" style="
+    <!-- Main Content Area with Mobile-First Responsive Layout -->
+    <div id="modal-content" class="visual-search-modal-content" style="
       flex: 1;
       display: flex;
+      flex-direction: column;
       overflow: hidden;
       min-height: 0;
     ">
-      <!-- Left Side - Image Upload/Selection (1 part) -->
-      <div id="left-panel" style="
+      <!-- Mobile: Stacked Layout, Desktop: Side-by-side Layout -->
+      
+      <!-- Left Side - Image Upload/Selection -->
+      <div id="left-panel" class="visual-search-left-panel" style="
         flex: 1;
         background: #fafafa;
-        border-right: 1px solid #e9e9e9;
+        border-bottom: 1px solid #e9e9e9;
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        min-height: 300px;
+        max-height: 50vh;
+        padding: 16px;
       ">
         <!-- Upload Section (Initial View) -->
         <div id="upload-section" style="
-          padding: 24px;
           flex: 1;
           display: flex;
           flex-direction: column;
         ">
           <!-- Main Upload Area -->
-          <div style="
+          <div class="visual-search-main-upload" style="
             border: 2px dashed #dadada;
-            border-radius: 16px;
-            padding: 40px 24px;
+            border-radius: 12px;
+            padding: 24px 16px;
             text-align: center;
             background: #ffffff;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             transition: all 0.2s ease;
             cursor: pointer;
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            min-height: 200px;
+            min-height: 160px;
           " id="main-upload-area" onmouseover="
             this.style.borderColor='#e60023';
             this.style.background='#fef7f7';
@@ -328,17 +470,17 @@
             this.style.background='#ffffff';
           ">
             <!-- Upload Icon -->
-            <div style="
-              width: 64px;
-              height: 64px;
+            <div class="visual-search-upload-icon" style="
+              width: 48px;
+              height: 48px;
               background: #e60023;
               border-radius: 50%;
-              margin: 0 auto 20px;
+              margin: 0 auto 16px;
               display: flex;
               align-items: center;
               justify-content: center;
             ">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7,10 12,15 17,10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
@@ -346,31 +488,31 @@
             </div>
             
             <h3 style="
-              margin: 0 0 12px;
+              margin: 0 0 8px;
               color: #111111;
-              font-size: 20px;
+              font-size: 18px;
               font-weight: 600;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">Upload your image</h3>
             
             <p style="
-              margin: 0 0 24px;
+              margin: 0 0 16px;
               color: #5f5f5f;
-              font-size: 16px;
-              line-height: 1.5;
+              font-size: 14px;
+              line-height: 1.4;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              max-width: 280px;
+              max-width: 240px;
               margin-left: auto;
               margin-right: auto;
-            ">Drag and drop an image here, or click to browse from your device</p>
+            ">Drag and drop an image here, or tap to browse</p>
             
             <button id="upload-from-device" style="
               background: #e60023;
               color: white;
               border: none;
-              padding: 14px 28px;
-              border-radius: 24px;
-              font-size: 16px;
+              padding: 12px 24px;
+              border-radius: 20px;
+              font-size: 14px;
               font-weight: 600;
               cursor: pointer;
               transition: all 0.2s ease;
@@ -385,24 +527,24 @@
           </div>
 
           <!-- Alternative Options -->
-          <div style="
+          <div class="visual-search-alt-buttons" style="
             display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
+            gap: 8px;
+            margin-bottom: 16px;
           ">
             <!-- Camera Option -->
-            <button id="take-photo" style="
+            <button id="take-photo" class="visual-search-alt-button" style="
               flex: 1;
               display: flex;
               align-items: center;
               justify-content: center;
-              gap: 8px;
-              padding: 16px;
+              gap: 6px;
+              padding: 12px 8px;
               border: 1px solid #e9e9e9;
-              border-radius: 12px;
+              border-radius: 8px;
               background: white;
               color: #111111;
-              font-size: 14px;
+              font-size: 13px;
               font-weight: 500;
               cursor: pointer;
               transition: all 0.2s ease;
@@ -414,7 +556,7 @@
               this.style.background='white';
               this.style.borderColor='#e9e9e9';
             ">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                 <circle cx="12" cy="13" r="4"/>
               </svg>
@@ -422,18 +564,18 @@
             </button>
 
             <!-- URL Option -->
-            <button id="from-url" style="
+            <button id="from-url" class="visual-search-alt-button" style="
               flex: 1;
               display: flex;
               align-items: center;
               justify-content: center;
-              gap: 8px;
-              padding: 16px;
+              gap: 6px;
+              padding: 12px 8px;
               border: 1px solid #e9e9e9;
-              border-radius: 12px;
+              border-radius: 8px;
               background: white;
               color: #111111;
-              font-size: 14px;
+              font-size: 13px;
               font-weight: 500;
               cursor: pointer;
               transition: all 0.2s ease;
@@ -445,7 +587,7 @@
               this.style.background='white';
               this.style.borderColor='#e9e9e9';
             ">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
               </svg>
@@ -453,63 +595,62 @@
             </button>
           </div>
 
-          <!-- Pinterest-Style Tips -->
-          <div style="
+          <!-- Mobile-Optimized Tips -->
+          <div class="visual-search-tips" style="
             background: #ffffff;
             border: 1px solid #e9e9e9;
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 8px;
+            padding: 12px;
           ">
             <h4 style="
-              margin: 0 0 8px;
+              margin: 0 0 6px;
               color: #111111;
-              font-size: 14px;
+              font-size: 13px;
               font-weight: 600;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">💡 Tips for better results</h4>
             
             <ul style="
               margin: 0;
-              padding-left: 16px;
+              padding-left: 14px;
               color: #5f5f5f;
-              font-size: 13px;
-              line-height: 1.6;
+              font-size: 12px;
+              line-height: 1.5;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">
               <li>Use clear, well-lit images</li>
               <li>Focus on a single main item</li>
               <li>Avoid cluttered backgrounds</li>
-              <li>Higher resolution = better results</li>
             </ul>
           </div>
         </div>
 
         <!-- Image Preview Section (Hidden Initially) -->
-        <div id="image-preview-section" style="display: none; padding: 24px;">
+        <div id="image-preview-section" style="display: none;">
           <div style="
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
           ">
             <h3 style="
-              margin: 0 0 8px;
+              margin: 0 0 6px;
               color: #111111;
-              font-size: 18px;
+              font-size: 16px;
               font-weight: 600;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">Your uploaded image</h3>
             <p style="
               margin: 0;
               color: #5f5f5f;
-              font-size: 14px;
+              font-size: 13px;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">Click on items to search for similar products</p>
+            ">Analyzing image and searching for similar products...</p>
           </div>
 
           <!-- Image Container -->
           <div id="image-selection-container" style="
             position: relative;
-            margin-bottom: 20px;
-            border-radius: 12px;
+            margin-bottom: 16px;
+            border-radius: 8px;
             overflow: hidden;
             background: #f7f7f7;
             min-height: 200px;
@@ -521,34 +662,19 @@
             <!-- Uploaded image will be inserted here -->
           </div>
 
-          <!-- Action Buttons -->
+          <!-- Upload Another Button -->
           <div style="
             display: flex;
-            gap: 12px;
             justify-content: center;
+            margin-top: 12px;
           ">
-            <button id="analyze-image" style="
-              flex: 1;
-              background: #e60023;
-              color: white;
-              border: none;
-              padding: 12px 20px;
-              border-radius: 8px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: all 0.2s ease;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">Analyze Image</button>
-            
             <button id="upload-another" style="
-              flex: 1;
               background: white;
               color: #e60023;
               border: 2px solid #e60023;
-              padding: 12px 20px;
-              border-radius: 8px;
-              font-size: 14px;
+              padding: 10px 20px;
+              border-radius: 6px;
+              font-size: 13px;
               font-weight: 600;
               cursor: pointer;
               transition: all 0.2s ease;
@@ -558,64 +684,15 @@
         </div>
       </div>
 
-      <!-- Right Side - Product Results (3 parts) -->
-      <div id="right-panel" style="
-        flex: 3;
+      <!-- Right Side - Product Results -->
+      <div id="right-panel" class="visual-search-right-panel" style="
+        flex: 2;
         background: #ffffff;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        min-height: 0;
       ">
-        <!-- Detected Items Section (Hidden Initially) -->
-        <div id="detected-items-filter" style="display: none; padding: 20px 24px; border-bottom: 1px solid #e9e9e9; background: #ffffff;">
-          <h4 style="
-            margin: 0 0 12px;
-            color: #111111;
-            font-size: 16px;
-            font-weight: 600;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          ">Detected items:</h4>
-          <div id="items-filter-list" style="
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-          ">
-            <!-- Detected items will be inserted here -->
-          </div>
-          <div style="
-            display: flex;
-            gap: 12px;
-          ">
-            <button id="search-all-items" style="
-              background: #e60023;
-              color: white;
-              border: none;
-              padding: 10px 20px;
-              border-radius: 8px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: all 0.2s ease;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">Search All Items</button>
-            
-            <button id="search-selected" style="
-              background: white;
-              color: #e60023;
-              border: 2px solid #e60023;
-              padding: 10px 20px;
-              border-radius: 8px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: all 0.2s ease;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              opacity: 0.5;
-            " disabled>Search Selected (0)</button>
-          </div>
-        </div>
-
         <!-- Search Results Section -->
         <div id="results-section" style="
           flex: 1;
@@ -624,36 +701,37 @@
           overflow: hidden;
         ">
           <!-- Results Header -->
-          <div id="results-header" style="
-            padding: 20px 24px 16px;
+          <div id="results-header" class="visual-search-results-header" style="
+            padding: 16px;
             border-bottom: 1px solid #e9e9e9;
             background: #ffffff;
+            flex-shrink: 0;
           ">
             <h3 id="results-title" style="
-              margin: 0 0 8px;
+              margin: 0 0 4px;
               color: #111111;
-              font-size: 18px;
+              font-size: 16px;
               font-weight: 600;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">Ready to search</h3>
             <p id="results-count" style="
               margin: 0;
               color: #5f5f5f;
-              font-size: 14px;
+              font-size: 13px;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">Upload an image to start searching</p>
           </div>
 
-          <!-- Results Grid with 4 columns and scroll -->
-          <div id="results-container" style="
+          <!-- Results Grid with Mobile-First Responsive Columns -->
+          <div id="results-container" class="visual-search-results-container" style="
             flex: 1;
             overflow-y: auto;
-            padding: 20px 24px;
+            padding: 16px;
           ">
-            <div id="results-grid" style="
+            <div id="results-grid" class="visual-search-results-grid" style="
               display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              gap: 16px;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 12px;
             ">
               <!-- Results will be dynamically inserted here -->
             </div>
@@ -662,62 +740,62 @@
             <div id="loading-more" style="
               display: none;
               text-align: center;
-              padding: 20px;
+              padding: 16px;
               color: #5f5f5f;
-              font-size: 14px;
+              font-size: 13px;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">
               <div style="
                 display: inline-block;
-                width: 20px;
-                height: 20px;
+                width: 18px;
+                height: 18px;
                 border: 2px solid #e9e9e9;
                 border-top: 2px solid #e60023;
                 border-radius: 50%;
                 animation: visual-search-spin 1s linear infinite;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
               "></div>
               <div>Loading more results...</div>
             </div>
 
             <!-- Empty State -->
-            <div id="empty-state" style="
+            <div id="empty-state" class="visual-search-empty-state" style="
               display: flex;
               flex-direction: column;
               align-items: center;
               justify-content: center;
               text-align: center;
-              padding: 60px 20px;
+              padding: 40px 16px;
               color: #5f5f5f;
             ">
-              <div style="
-                width: 80px;
-                height: 80px;
+              <div class="visual-search-empty-icon" style="
+                width: 60px;
+                height: 60px;
                 background: #f0f0f0;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin-bottom: 20px;
+                margin-bottom: 16px;
               ">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="11" cy="11" r="8"/>
                   <path d="m21 21-4.35-4.35"/>
                   <rect x="7" y="7" width="8" height="6" rx="1"/>
                 </svg>
               </div>
               <h3 style="
-                margin: 0 0 8px;
+                margin: 0 0 6px;
                 color: #111111;
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 600;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
               ">Start your visual search</h3>
               <p style="
                 margin: 0;
-                font-size: 14px;
-                line-height: 1.5;
-                max-width: 300px;
+                font-size: 13px;
+                line-height: 1.4;
+                max-width: 260px;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
               ">Upload an image to find similar products using our AI-powered search technology</p>
             </div>
@@ -736,7 +814,7 @@
     
     const style = document.createElement('style');
     style.id = 'visual-search-global-styles';
-    style.textContent = STYLES.spinnerKeyframes;
+    style.textContent = STYLES.spinnerKeyframes + STYLES.responsiveStyles;
     document.head.appendChild(style);
   }
   
@@ -1012,18 +1090,27 @@
     overlay.appendChild(drawer);
     document.body.appendChild(overlay);
 
+    // Add global styles for responsive behavior
+    addGlobalStyles();
+
     // Animate in
     requestAnimationFrame(() => {
       overlay.style.opacity = '1';
-      drawer.style.transform = 'translateY(0) scale(1)';
+      if (isMobile) {
+        drawer.style.transform = 'translateY(0)';
+      } else {
+        drawer.style.transform = 'translateY(0) scale(1)';
+      }
     });
 
     // Close function
     const closeDrawer = () => {
       overlay.style.opacity = '0';
-      drawer.style.transform = isMobile 
-        ? 'translateY(24px) scale(0.98)' 
-        : 'translateY(32px) scale(0.96)';
+      if (isMobile) {
+        drawer.style.transform = 'translateY(100%)';
+      } else {
+        drawer.style.transform = 'translateY(32px) scale(0.96)';
+      }
       
       // Restore original z-index values
       originalZIndexes.forEach((originalZIndex, el) => {
@@ -1092,18 +1179,8 @@
       showUploadSection(drawer);
     });
 
-    // Analyze Image button handler
-    drawer.querySelector('#analyze-image')?.addEventListener('click', () => {
-      if (drawer._imageFile) {
-        analyzeUploadedImage(drawer, searchInput);
-      }
-    });
-
     // Filter handlers - Simplified for no filters
     // setupFilterHandlers(drawer, searchInput);
-    
-    // Selection section handlers
-    setupSelectionHandlers(drawer, searchInput);
     
     // Results section handlers  
     setupResultsHandlers(drawer, searchInput);
@@ -1146,18 +1223,41 @@
     drawer.querySelector('#upload-section').style.display = 'none';
     drawer.querySelector('#image-preview-section').style.display = 'block';
     
-    // Display the uploaded image
+    // Display the uploaded image with skeleton loader
     const imageContainer = drawer.querySelector('#image-selection-container');
+    
+    // Show skeleton loader first
+    imageContainer.innerHTML = `
+      <div style="${STYLES.imageSkeleton}" id="image-skeleton"></div>
+    `;
+    
     const reader = new FileReader();
     reader.onload = (e) => {
-      imageContainer.innerHTML = `
-        <img src="${e.target.result}" style="
-          max-width: 100%;
-          max-height: 100%;
-          border-radius: 8px;
-          object-fit: contain;
-        " id="uploaded-image">
+      // Create image element
+      const img = document.createElement('img');
+      img.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        object-fit: contain;
+        max-width: 100%;
+        max-height: 100%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
       `;
+      img.id = 'uploaded-image';
+      img.src = e.target.result;
+      
+      // Once image loads, fade it in and remove skeleton
+      img.onload = () => {
+        const skeleton = imageContainer.querySelector('#image-skeleton');
+        if (skeleton) {
+          skeleton.remove();
+        }
+        img.style.opacity = '1';
+      };
+      
+      imageContainer.appendChild(img);
     };
     reader.readAsDataURL(imageFile);
     
@@ -1165,8 +1265,8 @@
     drawer._imageFile = imageFile;
     drawer._searchInput = searchInput;
     
-    // Update results section
-    updateResultsHeader(drawer, 'Image uploaded', 'Click "Analyze Image" to detect items and start searching');
+    // Automatically analyze the image when preview is shown
+    analyzeUploadedImage(drawer, searchInput);
   }
 
   function showUploadSection(drawer) {
@@ -1179,10 +1279,15 @@
     drawer._detectedItems = null;
     drawer._selectedItems = [];
     
-    // Reset results
+    // Reset results and show empty state
     updateResultsHeader(drawer, 'Ready to search', 'Upload an image to start searching');
     clearResults(drawer);
-    hideDetectedItemsFilter(drawer);
+    
+    // Show empty state again
+    const emptyState = drawer.querySelector('#empty-state');
+    if (emptyState) {
+      emptyState.style.display = 'flex';
+    }
   }
 
   async function analyzeUploadedImage(drawer, searchInput) {
@@ -1191,14 +1296,17 @@
       
       const formData = new FormData();
       formData.append('image', drawer._imageFile);
-      formData.append('shop', CONFIG.SHOP_DOMAIN);
-      formData.append('analyze', 'true'); // Request item detection
+      formData.append('analyze', 'true');
       
-      const response = await fetch(`${CONFIG.APP_URL}/api/visual-search`, {
+      console.log('[Visual Search] Sending analysis request to:', CONFIG.EXTERNAL_API_URL);
+      console.log('[Visual Search] Shop domain header:', CONFIG.SHOP_DOMAIN);
+      
+      const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
         body: formData,
         headers: {
-          'X-Requested-With': 'XMLHttpRequest'
+          'X-Requested-With': 'XMLHttpRequest',
+          'shopDomainURL': CONFIG.SHOP_DOMAIN
         }
       });
       
@@ -1208,93 +1316,63 @@
       
       const result = await response.json();
       
-      if (result.success && result.detectedItems) {
-        drawer._detectedItems = result.detectedItems;
-        showDetectedItemsFilter(drawer, result.detectedItems);
-        updateResultsHeader(drawer, 'Items detected', `Found ${result.detectedItems.length} items in your image`);
+      console.log('[Visual Search] Analysis API Response:', result);
+      
+      // Handle the new API response format with product IDs and images array
+      if (result && (result.products || result.detectedItems || result.length > 0)) {
+        let detectedItems = [];
+        
+        // If result is an array, convert it to detectedItems format
+        if (Array.isArray(result)) {
+          detectedItems = result.map((item, index) => ({
+            id: item.productId || item.id || index,
+            image: item.image || item.imageUrl
+          }));
+        } 
+        // If result has detectedItems property
+        else if (result.detectedItems) {
+          detectedItems = result.detectedItems;
+        }
+        // If result has products property
+        else if (result.products) {
+          detectedItems = result.products.map((item, index) => ({
+            id: item.productId || item.id || index,
+            image: item.image || item.imageUrl
+          }));
+        }
+        
+        if (detectedItems.length > 0) {
+          drawer._detectedItems = detectedItems;
+          // Automatically perform search with all detected items
+          performVisualSearch(drawer, detectedItems, searchInput, 'detected items');
+        } else {
+          showError('No items detected in the image. Please try a different image.');
+          updateResultsHeader(drawer, 'No items detected', 'Try uploading a clearer image');
+          // Show empty state when no items detected
+          const emptyState = drawer.querySelector('#empty-state');
+          if (emptyState) {
+            emptyState.style.display = 'flex';
+          }
+        }
       } else {
         showError(result.error || 'Could not analyze image. Please try again.');
         updateResultsHeader(drawer, 'Analysis failed', 'Could not detect items in the image');
+        // Show empty state when analysis fails
+        const emptyState = drawer.querySelector('#empty-state');
+        if (emptyState) {
+          emptyState.style.display = 'flex';
+        }
       }
     } catch (error) {
       console.error('Visual search error:', error);
       showError('Something went wrong. Please try again.');
       updateResultsHeader(drawer, 'Analysis failed', 'Something went wrong during analysis');
+      // Show empty state when error occurs
+      const emptyState = drawer.querySelector('#empty-state');
+      if (emptyState) {
+        emptyState.style.display = 'flex';
+      }
     }
-  }
-
-  function showDetectedItemsFilter(drawer, detectedItems) {
-    const filterSection = drawer.querySelector('#detected-items-filter');
-    const itemsList = drawer.querySelector('#items-filter-list');
-    let selectedItems = [];
-    
-    filterSection.style.display = 'block';
-    
-    itemsList.innerHTML = detectedItems.map((item, index) => `
-      <button data-item-id="${index}" style="
-        padding: 8px 16px;
-        border: 2px solid #e9e9e9;
-        border-radius: 20px;
-        background: white;
-        color: #111111;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      " onmouseover="
-        this.style.borderColor='#e60023';
-      " onmouseout="
-        if (!this.classList.contains('selected')) {
-          this.style.borderColor='#e9e9e9';
-        }
-      ">
-        ${item.name} ${item.confidence ? `(${Math.round(item.confidence * 100)}%)` : ''}
-      </button>
-    `).join('');
-    
-    // Add click handlers for item selection
-    itemsList.addEventListener('click', (e) => {
-      const button = e.target.closest('[data-item-id]');
-      if (!button) return;
-      
-      const itemId = parseInt(button.dataset.itemId);
-      
-      if (button.classList.contains('selected')) {
-        // Deselect
-        button.classList.remove('selected');
-        button.style.backgroundColor = 'white';
-        button.style.color = '#111111';
-        button.style.borderColor = '#e9e9e9';
-        selectedItems = selectedItems.filter(id => id !== itemId);
-      } else {
-        // Select
-        button.classList.add('selected');
-        button.style.backgroundColor = '#e60023';
-        button.style.color = 'white';
-        button.style.borderColor = '#e60023';
-        selectedItems.push(itemId);
-      }
-      
-      // Update search button
-      const searchSelectedBtn = drawer.querySelector('#search-selected');
-      if (selectedItems.length > 0) {
-        searchSelectedBtn.disabled = false;
-        searchSelectedBtn.textContent = `Search Selected (${selectedItems.length})`;
-        searchSelectedBtn.style.opacity = '1';
-      } else {
-        searchSelectedBtn.disabled = true;
-        searchSelectedBtn.textContent = 'Search Selected (0)';
-        searchSelectedBtn.style.opacity = '0.5';
-      }
-      
-      drawer._selectedItems = selectedItems;
-    });
-  }
-
-  function hideDetectedItemsFilter(drawer) {
-    const filterSection = drawer.querySelector('#detected-items-filter');
-    filterSection.style.display = 'none';
   }
 
   function updateResultsHeader(drawer, title, description) {
@@ -1307,23 +1385,29 @@
     resultsGrid.innerHTML = '';
   }
 
-  function setupSelectionHandlers(drawer, searchInput) {
-    // Search all items
-    drawer.addEventListener('click', (e) => {
-      if (e.target.id === 'search-all-items') {
-        const allItems = drawer._detectedItems || [];
-        performVisualSearch(drawer, allItems, searchInput, 'all items');
-      }
-    });
+  function showSkeletonLoaders(drawer) {
+    const resultsGrid = drawer.querySelector('#results-grid');
+    const emptyState = drawer.querySelector('#empty-state');
     
-    // Search selected items
-    drawer.addEventListener('click', (e) => {
-      if (e.target.id === 'search-selected') {
-        const selectedIndices = drawer._selectedItems || [];
-        const selectedItems = selectedIndices.map(index => drawer._detectedItems[index]);
-        performVisualSearch(drawer, selectedItems, searchInput, `${selectedItems.length} selected item${selectedItems.length > 1 ? 's' : ''}`);
-      }
-    });
+    // Hide empty state while loading
+    if (emptyState) {
+      emptyState.style.display = 'none';
+    }
+    
+    // Add skeleton cards for first two rows
+    // Mobile: 2 columns, Desktop: up to 5 columns (responsive)
+    const skeletonCount = window.innerWidth <= 768 ? 4 : 6; // 2 rows on mobile, 1.2 rows on desktop
+    
+    for (let i = 0; i < skeletonCount; i++) {
+      const skeletonCard = createSkeletonCard();
+      resultsGrid.appendChild(skeletonCard);
+    }
+  }
+
+  function removeSkeletonLoaders(drawer) {
+    const resultsGrid = drawer.querySelector('#results-grid');
+    const skeletonCards = resultsGrid.querySelectorAll('.skeleton-card');
+    skeletonCards.forEach(card => card.remove());
   }
 
   async function performVisualSearch(drawer, items, searchInput, searchType) {
@@ -1331,17 +1415,24 @@
       updateResultsHeader(drawer, 'Searching...', 'Finding similar products...');
       clearResults(drawer);
       
+      // Show skeleton loaders for first two rows (mobile: 2x2=4, desktop: could be more)
+      showSkeletonLoaders(drawer);
+      
       const formData = new FormData();
       formData.append('image', drawer._imageFile);
       formData.append('items', JSON.stringify(items));
-      formData.append('shop', CONFIG.SHOP_DOMAIN);
       formData.append('search', 'true');
       
-      const response = await fetch(`${CONFIG.APP_URL}/api/visual-search`, {
+      console.log('[Visual Search] Sending search request to:', CONFIG.EXTERNAL_API_URL);
+      console.log('[Visual Search] Shop domain header:', CONFIG.SHOP_DOMAIN);
+      console.log('[Visual Search] Selected items:', items);
+      
+      const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
         body: formData,
         headers: {
-          'X-Requested-With': 'XMLHttpRequest'
+          'X-Requested-With': 'XMLHttpRequest',
+          'shopDomainURL': CONFIG.SHOP_DOMAIN
         }
       });
       
@@ -1351,16 +1442,47 @@
       
       const result = await response.json();
       
-      if (result.success && result.products) {
-        showSearchResults(drawer, result.products, searchType, searchInput);
+      console.log('[Visual Search] Search API Response:', result);
+      
+      // Handle the new API response format with product IDs and images array
+      let products = [];
+      
+      if (Array.isArray(result)) {
+        // If result is an array of products
+        products = result.map((item, index) => ({
+          id: item.productId || item.id || index,
+          image: item.image || item.imageUrl
+        }));
+      } else if (result.success && result.products) {
+        // If result has success flag and products array
+        products = result.products;
+      } else if (result.products) {
+        // If result directly has products array
+        products = result.products;
+      }
+      
+      if (products.length > 0) {
+        showSearchResults(drawer, products, searchType, searchInput);
       } else {
         showError(result.error || 'No similar items found.');
         updateResultsHeader(drawer, 'No results', 'Try uploading a different image');
+        // Remove skeleton loaders and show empty state when no search results found
+        removeSkeletonLoaders(drawer);
+        const emptyState = drawer.querySelector('#empty-state');
+        if (emptyState) {
+          emptyState.style.display = 'flex';
+        }
       }
     } catch (error) {
       console.error('Visual search error:', error);
       showError('Search failed. Please try again.');
       updateResultsHeader(drawer, 'Search failed', 'Something went wrong. Please try again.');
+      // Remove skeleton loaders and show empty state when search fails
+      removeSkeletonLoaders(drawer);
+      const emptyState = drawer.querySelector('#empty-state');
+      if (emptyState) {
+        emptyState.style.display = 'flex';
+      }
     }
   }
 
@@ -1380,7 +1502,15 @@
 
   function displayAllResults(drawer, products) {
     const resultsGrid = drawer.querySelector('#results-grid');
-    resultsGrid.innerHTML = '';
+    const emptyState = drawer.querySelector('#empty-state');
+    
+    // Remove skeleton loaders first
+    removeSkeletonLoaders(drawer);
+    
+    // Hide empty state when we have results
+    if (emptyState) {
+      emptyState.style.display = 'none';
+    }
     
     // Update header
     updateResultsHeader(drawer, 'Search results', `Found ${products.length} similar products`);
@@ -1474,33 +1604,12 @@
         position: relative;
         overflow: hidden;
       ">
-        <img src="${product.image}" alt="${product.title}" style="
+        <img src="${product.image}" alt="Product ${product.id}" style="
           width: 100%;
           height: 100%;
           object-fit: cover;
           transition: transform 0.2s ease;
         " onload="this.parentElement.style.background='transparent'">
-      </div>
-      <div style="padding: 12px;">
-        <h4 style="
-          margin: 0 0 4px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #111111;
-          line-height: 1.3;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        ">${product.title}</h4>
-        <p style="
-          margin: 0;
-          font-size: 14px;
-          font-weight: 600;
-          color: #e60023;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        ">${product.price}</p>
       </div>
     `;
     
@@ -1519,14 +1628,42 @@
       img.style.transform = 'scale(1)';
     });
     
-    // Add click handler
-    card.addEventListener('click', () => {
-      if (product.url) {
-        window.open(product.url, '_blank');
-      }
-    });
-    
     return card;
+  }
+  
+  function createSkeletonCard() {
+    const skeletonCard = document.createElement('div');
+    skeletonCard.className = 'skeleton-card';
+    skeletonCard.style.cssText = STYLES.productSkeleton;
+    
+    skeletonCard.innerHTML = `
+      <div style="
+        aspect-ratio: 1;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
+      "></div>
+      <div style="padding: 12px;">
+        <div style="
+          height: 14px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
+          border-radius: 4px;
+          margin-bottom: 6px;
+        "></div>
+        <div style="
+          height: 12px;
+          width: 60%;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
+          border-radius: 4px;
+        "></div>
+      </div>
+    `;
+    
+    return skeletonCard;
   }
   
   // ====================================================================
@@ -1690,7 +1827,7 @@
         ">
       `;
       
-      updateResultsHeader(drawer, 'Image loaded', 'Click "Analyze Image" to detect items and start searching');
+      updateResultsHeader(drawer, 'Image loaded', 'Analyzing image and searching for similar products...');
       
     } catch (error) {
       console.error('Visual search error:', error);

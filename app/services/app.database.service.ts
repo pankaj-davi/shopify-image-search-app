@@ -11,38 +11,228 @@ export class AppDatabaseService {
   }
 
   // Store operations
-  async syncStore(storeInfo: { name: string; myshopifyDomain: string }) {
+  async syncStore(storeInfo: any): Promise<string> {
     const db = await this.getDB();
     const shopDomain = storeInfo.myshopifyDomain;
 
     try {
       // Check if store exists
-      let store = await db.getStore(shopDomain);
+      const store = await db.getStore(shopDomain);
       
       if (!store) {
-        // Create new store
+        // Create new store with enhanced data
         const storeData: StoreData = {
           shopDomain,
           name: storeInfo.name,
           myshopifyDomain: storeInfo.myshopifyDomain,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          email: storeInfo.email,
+          currencyCode: storeInfo.currencyCode,
+          timezoneAbbreviation: storeInfo.timezoneAbbreviation,
+          timezoneOffset: storeInfo.timezoneOffset,
+          timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
+          plan: storeInfo.plan,
+          
+          // Enhanced store details
+          description: storeInfo.description,
+          url: storeInfo.url,
+          primaryDomain: storeInfo.primaryDomain,
+          contactEmail: storeInfo.contactEmail,
+          ianaTimezone: storeInfo.ianaTimezone,
+          weightUnit: storeInfo.weightUnit,
+          unitSystem: storeInfo.unitSystem,
+          enabledPresentmentCurrencies: storeInfo.enabledPresentmentCurrencies,
+          billingAddress: storeInfo.billingAddress,
+          checkoutApiSupported: storeInfo.checkoutApiSupported,
+          setupRequired: storeInfo.setupRequired,
+          taxesIncluded: storeInfo.taxesIncluded,
+          taxShipping: storeInfo.taxShipping,
+          marketingSmsConsentEnabledAtCheckout: storeInfo.marketingSmsConsentEnabledAtCheckout,
+          transactionalSmsDisabled: storeInfo.transactionalSmsDisabled,
+          features: storeInfo.features,
+          resourceLimits: storeInfo.resourceLimits,
+          
+          createdAt: storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date(),
+          updatedAt: storeInfo.updatedAt && typeof storeInfo.updatedAt === 'string' ? new Date(storeInfo.updatedAt) : (storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date()),
         };
         
         const storeId = await db.createStore(storeData);
         console.log(`✅ Store synced (created): ${shopDomain} -> ${storeId}`);
         return storeId;
       } else {
-        // Update existing store
+        // Update existing store with enhanced data
         await db.updateStore(shopDomain, {
           name: storeInfo.name,
-          updatedAt: new Date(),
+          email: storeInfo.email,
+          currencyCode: storeInfo.currencyCode,
+          timezoneAbbreviation: storeInfo.timezoneAbbreviation,
+          timezoneOffset: storeInfo.timezoneOffset,
+          timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
+          plan: storeInfo.plan,
+          updatedAt: new Date(storeInfo.updatedAt || storeInfo.createdAt),
         });
         console.log(`✅ Store synced (updated): ${shopDomain}`);
-        return store.id;
+        return store.id!;
       }
     } catch (error) {
       console.error('❌ Error syncing store:', error);
+      throw error;
+    }
+  }
+
+  // Enhanced method to sync store with products in one operation
+  // NOTE: To capture all images, ensure your Shopify GraphQL query includes:
+  // - featuredMedia { mediaContentType, image { url, altText } }
+  // - media(first: 10) { edges { node { mediaContentType, image { url, altText, width, height } } } }
+  // - variants(first: 10) { edges { node { id, price, sku, title, image { url, altText, width, height } } } }
+  async syncStoreWithProducts(storeInfo: any, shopifyProducts: any[]): Promise<void> {
+    const db = await this.getDB();
+    const shopDomain = storeInfo.myshopifyDomain;
+
+    try {
+      // Prepare store data with all enhanced fields
+      const storeData: StoreData = {
+        shopDomain,
+        name: storeInfo.name,
+        myshopifyDomain: storeInfo.myshopifyDomain,
+        email: storeInfo.email,
+        currencyCode: storeInfo.currencyCode,
+        timezoneAbbreviation: storeInfo.timezoneAbbreviation,
+        timezoneOffset: storeInfo.timezoneOffset,
+        timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
+        plan: storeInfo.plan,
+        
+        // Enhanced store details
+        description: storeInfo.description,
+        url: storeInfo.url,
+        primaryDomain: storeInfo.primaryDomain,
+        contactEmail: storeInfo.contactEmail,
+        ianaTimezone: storeInfo.ianaTimezone,
+        weightUnit: storeInfo.weightUnit,
+        unitSystem: storeInfo.unitSystem,
+        enabledPresentmentCurrencies: storeInfo.enabledPresentmentCurrencies,
+        billingAddress: storeInfo.billingAddress,
+        checkoutApiSupported: storeInfo.checkoutApiSupported,
+        setupRequired: storeInfo.setupRequired,
+        taxesIncluded: storeInfo.taxesIncluded,
+        taxShipping: storeInfo.taxShipping,
+        marketingSmsConsentEnabledAtCheckout: storeInfo.marketingSmsConsentEnabledAtCheckout,
+        transactionalSmsDisabled: storeInfo.transactionalSmsDisabled,
+        features: storeInfo.features,
+        resourceLimits: storeInfo.resourceLimits,
+        
+        createdAt: storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date(),
+        updatedAt: storeInfo.updatedAt && typeof storeInfo.updatedAt === 'string' ? new Date(storeInfo.updatedAt) : (storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date()),
+      };
+
+      // Prepare products data
+      console.log(`🔍 Raw Shopify product data structure:`, JSON.stringify(shopifyProducts.slice(0, 1), null, 2));
+      const products: ProductData[] = shopifyProducts.map(product => {
+        const variant = product.variants?.edges?.[0]?.node;
+        
+        // Extract all featured media information
+        const featuredMedia = product.featuredMedia ? {
+          mediaContentType: product.featuredMedia.mediaContentType,
+          image: product.featuredMedia.image ? {
+            url: product.featuredMedia.image.url,
+            altText: product.featuredMedia.image.altText || null,
+          } : null,
+        } : null;
+
+        // Extract all media (images, videos, etc.) - this replaces the deprecated images field
+        const allMedia = product.media?.edges?.map((edge: any) => ({
+          mediaContentType: edge.node.mediaContentType,
+          image: edge.node.image ? {
+            url: edge.node.image.url,
+            altText: edge.node.image.altText || null,
+            width: edge.node.image.width || null,
+            height: edge.node.image.height || null,
+          } : null,
+        })) || [];
+
+        // Debug logging for image data
+        if (product.title.includes('Example T-Shirt')) {
+          console.log(`🖼️ Image debug for ${product.title}:`, {
+            featuredMedia: JSON.stringify(featuredMedia, null, 2),
+            mediaCount: allMedia.length,
+            allMedia: JSON.stringify(allMedia, null, 2),
+            variantImages: product.variants?.edges?.map((v: any) => v.node.image).filter(Boolean)
+          });
+        }
+
+        // Extract all variants with complete information including images
+        const allVariants = product.variants?.edges?.map((edge: any) => ({
+          id: edge.node.id,
+          price: edge.node.price,
+          sku: edge.node.sku || null,
+          title: edge.node.title || null,
+          availableForSale: edge.node.availableForSale || false,
+          image: edge.node.image ? {
+            url: edge.node.image.url,
+            altText: edge.node.image.altText || null,
+            width: edge.node.image.width || null,
+            height: edge.node.image.height || null,
+          } : null,
+        })) || [];
+
+        // Extract all metafields with complete information
+        const allMetafields = product.metafields?.edges?.map((edge: any) => ({
+          namespace: edge.node.namespace,
+          key: edge.node.key,
+          value: edge.node.value,
+          type: edge.node.type,
+          definition: edge.node.definition ? {
+            description: edge.node.definition.description || null,
+          } : null,
+        })) || [];
+
+        // Extract all options with complete information
+        const allOptions = product.options?.map((option: any) => ({
+          name: option.name,
+          values: option.values || [],
+        })) || [];
+
+        // Extract complete price range information
+        const priceRange = product.priceRangeV2 ? {
+          minVariantPrice: {
+            amount: product.priceRangeV2.minVariantPrice.amount,
+            currencyCode: product.priceRangeV2.minVariantPrice.currencyCode,
+          },
+          maxVariantPrice: {
+            amount: product.priceRangeV2.maxVariantPrice.amount,
+            currencyCode: product.priceRangeV2.maxVariantPrice.currencyCode,
+          },
+        } : null;
+
+        return {
+          shopifyProductId: product.id,
+          title: product.title,
+          handle: product.handle,
+          status: product.status,
+          description: product.description || null,
+          vendor: product.vendor || null,
+          productType: product.productType || null,
+          tags: product.tags || [],
+          onlineStoreUrl: product.onlineStoreUrl || null,
+          totalInventory: product.totalInventory || 0,
+          price: variant?.price || '',
+          sku: variant?.sku || null,
+          priceRange,
+          featuredMedia,
+          media: allMedia,
+          options: allOptions,
+          variants: allVariants,
+          metafields: allMetafields,
+          shopDomain,
+          createdAt: product.createdAt && typeof product.createdAt === 'string' ? new Date(product.createdAt) : new Date(),
+          updatedAt: product.updatedAt && typeof product.updatedAt === 'string' ? new Date(product.updatedAt) : (product.createdAt && typeof product.createdAt === 'string' ? new Date(product.createdAt) : new Date()),
+        };
+      });
+
+      // Use the new atomic sync method
+      await db.syncStoreWithProducts(storeData, products);
+      console.log(`✅ Store and products synced atomically: ${shopDomain} (${products.length} products)`);
+    } catch (error) {
+      console.error('❌ Error syncing store with products:', error);
       throw error;
     }
   }
@@ -54,6 +244,18 @@ export class AppDatabaseService {
       return store;
     } catch (error) {
       console.error(`❌ Error fetching store: ${shopDomain}`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced method to get store with associated products
+  async getStoreWithProducts(shopDomain: string, productLimit: number = 25) {
+    const db = await this.getDB();
+    try {
+      const result = await db.getStoreWithProducts(shopDomain, productLimit);
+      return result;
+    } catch (error) {
+      console.error(`❌ Error fetching store with products: ${shopDomain}`, error);
       throw error;
     }
   }
@@ -86,17 +288,93 @@ export class AppDatabaseService {
 
     try {
       const variant = shopifyProduct.variants?.edges?.[0]?.node;
+      console.log(`📝variantDDDDDDDDDDDDD Shopify: ${JSON.stringify(variant, null, 2)}`);
+      // Extract all featured media information
+      const featuredMedia = shopifyProduct.featuredMedia ? {
+        mediaContentType: shopifyProduct.featuredMedia.mediaContentType,
+        image: shopifyProduct.featuredMedia.image ? {
+          url: shopifyProduct.featuredMedia.image.url,
+          altText: shopifyProduct.featuredMedia.image.altText || null,
+        } : null,
+      } : null;
+
+      // Extract all media (images, videos, etc.) - this replaces the deprecated images field
+      const allMedia = shopifyProduct.media?.edges?.map((edge: any) => ({
+        mediaContentType: edge.node.mediaContentType,
+        image: edge.node.image ? {
+          url: edge.node.image.url,
+          altText: edge.node.image.altText || null,
+          width: edge.node.image.width || null,
+          height: edge.node.image.height || null,
+        } : null,
+      })) || [];
+
+      // Extract all variants with complete information including images
+      const allVariants = shopifyProduct.variants?.edges?.map((edge: any) => ({
+        id: edge.node.id,
+        price: edge.node.price,
+        sku: edge.node.sku || null,
+        title: edge.node.title || null,
+        availableForSale: edge.node.availableForSale || false,
+        image: edge.node.image ? {
+          url: edge.node.image.url,
+          altText: edge.node.image.altText || null,
+          width: edge.node.image.width || null,
+          height: edge.node.image.height || null,
+        } : null,
+      })) || [];
+
+      // Extract all metafields with complete information
+      const allMetafields = shopifyProduct.metafields?.edges?.map((edge: any) => ({
+        namespace: edge.node.namespace,
+        key: edge.node.key,
+        value: edge.node.value,
+        type: edge.node.type,
+        definition: edge.node.definition ? {
+          description: edge.node.definition.description || null,
+        } : null,
+      })) || [];
+
+      // Extract all options with complete information
+      const allOptions = shopifyProduct.options?.map((option: any) => ({
+        name: option.name,
+        values: option.values || [],
+      })) || [];
+
+      // Extract complete price range information
+      const priceRange = shopifyProduct.priceRangeV2 ? {
+        minVariantPrice: {
+          amount: shopifyProduct.priceRangeV2.minVariantPrice.amount,
+          currencyCode: shopifyProduct.priceRangeV2.minVariantPrice.currencyCode,
+        },
+        maxVariantPrice: {
+          amount: shopifyProduct.priceRangeV2.maxVariantPrice.amount,
+          currencyCode: shopifyProduct.priceRangeV2.maxVariantPrice.currencyCode,
+        },
+      } : null;
       
       const productData: ProductData = {
         shopifyProductId: shopifyProduct.id,
         title: shopifyProduct.title,
         handle: shopifyProduct.handle,
         status: shopifyProduct.status,
+        description: shopifyProduct.description || null,
+        vendor: shopifyProduct.vendor || null,
+        productType: shopifyProduct.productType || null,
+        tags: shopifyProduct.tags || [],
+        onlineStoreUrl: shopifyProduct.onlineStoreUrl || null,
+        totalInventory: shopifyProduct.totalInventory || 0,
         price: variant?.price || '',
-        sku: variant?.sku || '',
+        sku: variant?.sku || null,
+        priceRange,
+        featuredMedia,
+        media: allMedia,
+        options: allOptions,
+        variants: allVariants,
+        metafields: allMetafields,
         shopDomain,
-        createdAt: new Date(shopifyProduct.createdAt),
-        updatedAt: new Date(shopifyProduct.updatedAt || shopifyProduct.createdAt),
+        createdAt: shopifyProduct.createdAt && typeof shopifyProduct.createdAt === 'string' ? new Date(shopifyProduct.createdAt) : new Date(),
+        updatedAt: shopifyProduct.updatedAt && typeof shopifyProduct.updatedAt === 'string' ? new Date(shopifyProduct.updatedAt) : (shopifyProduct.createdAt && typeof shopifyProduct.createdAt === 'string' ? new Date(shopifyProduct.createdAt) : new Date()),
       };
 
       // Check if product already exists
@@ -109,8 +387,20 @@ export class AppDatabaseService {
           title: productData.title,
           handle: productData.handle,
           status: productData.status,
+          description: productData.description,
+          vendor: productData.vendor,
+          productType: productData.productType,
+          tags: productData.tags,
+          onlineStoreUrl: productData.onlineStoreUrl,
+          totalInventory: productData.totalInventory,
           price: productData.price,
           sku: productData.sku,
+          priceRange: productData.priceRange,
+          featuredMedia: productData.featuredMedia,
+          media: productData.media,
+          options: productData.options,
+          variants: productData.variants,
+          metafields: productData.metafields,
           updatedAt: productData.updatedAt,
         });
         console.log(`✅ Product synced (updated): ${productData.title}`);
