@@ -17,7 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log(`[Script Serving] Final App URL: ${appUrl}`);
 
   // Get theme configuration for this shop from database
-  let themeConfig = {};
+  let themeConfig: any = {};
   try {
     const shopData = await appDatabase.getStore(shop);
     console.log(`[Script Serving] Raw shop data:`, shopData);
@@ -31,17 +31,45 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.error("Failed to load theme config for shop:", shop, error);
   }
 
+  // Extract theme and modal configurations from the flat themeConfig structure
+  const extractedTheme = {
+    iconColor: themeConfig.iconColor,
+    iconColorHover: themeConfig.iconColorHover,
+    iconBackgroundHover: themeConfig.iconBackgroundHover,
+    primaryColor: themeConfig.primaryColor,
+    primaryColorDark: themeConfig.primaryColorDark,
+    iconStyle: themeConfig.iconStyle || 'google',
+    iconSizeMultiplier: themeConfig.iconSizeMultiplier,
+    iconPosition: themeConfig.iconPosition,
+    iconOffset: themeConfig.iconOffset
+  };
+
+  const extractedModal = themeConfig.modal || {};
+
+  console.log(`[Script Serving] Extracted theme config:`, extractedTheme);
+  console.log(`[Script Serving] Extracted modal config:`, extractedModal);
+
+  // Create the final configuration object that will be sent to the browser
+  const finalConfig = {
+    appUrl: appUrl,
+    shopDomain: shop,
+    theme: extractedTheme,
+    modal: extractedModal
+  };
+
+  console.log(`[Script Serving] Final configuration to send to browser:`, JSON.stringify(finalConfig, null, 2));
+
   // Configure the script with shop-specific settings and theme
   const configuredScript = `
     // Visual Search Script - Generated at ${new Date().toISOString()}
     // Shop: ${shop}
-    // Config: ${JSON.stringify(themeConfig)}
+    // Full Config: ${JSON.stringify(themeConfig)}
     
-    window.VISUAL_SEARCH_CONFIG = {
-      appUrl: '${appUrl}',
-      shopDomain: '${shop}',
-      theme: ${JSON.stringify(themeConfig)}
-    };
+    window.VISUAL_SEARCH_CONFIG = ${JSON.stringify(finalConfig)};
+    
+    // Debug logging for browser console
+    console.log('[Visual Search] Configuration loaded:', window.VISUAL_SEARCH_CONFIG);
+    console.log('[Visual Search] Modal config:', window.VISUAL_SEARCH_CONFIG?.modal);
     
     ${visualSearchScript}
   `;

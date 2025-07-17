@@ -48,6 +48,29 @@
       ICON_OFFSET: window.VISUAL_SEARCH_CONFIG?.theme?.iconOffset || 8
     },
     
+    // Modal sizing configuration (new feature)
+    MODAL: {
+      // Width options: 'small', 'medium', 'large', 'fullwidth', 'fullscreen', 'custom'
+      WIDTH_MODE: window.VISUAL_SEARCH_CONFIG?.modal?.widthMode || 'fullwidth',
+      WIDTH_PERCENTAGE: window.VISUAL_SEARCH_CONFIG?.modal?.widthPercentage || 95, // For custom width (50-100%)
+      WIDTH_MAX_PIXELS: window.VISUAL_SEARCH_CONFIG?.modal?.widthMaxPixels || 1600, // Max width in pixels
+      
+      // Height options: 'small', 'medium', 'large', 'fullheight', 'fullscreen', 'custom'
+      HEIGHT_MODE: window.VISUAL_SEARCH_CONFIG?.modal?.heightMode || 'fullheight',
+      HEIGHT_PERCENTAGE: window.VISUAL_SEARCH_CONFIG?.modal?.heightPercentage || 90, // For custom height (50-95%)
+      HEIGHT_MAX_PIXELS: window.VISUAL_SEARCH_CONFIG?.modal?.heightMaxPixels || 800, // Max height in pixels
+      
+      // Mobile behavior
+      MOBILE_FULLSCREEN: window.VISUAL_SEARCH_CONFIG?.modal?.mobileFullscreen !== false, // Default true,
+      
+      // Animation settings
+      ANIMATE_ENTRANCE: window.VISUAL_SEARCH_CONFIG?.modal?.animateEntrance !== false, // Default true
+      
+      // Position on screen
+      VERTICAL_POSITION: window.VISUAL_SEARCH_CONFIG?.modal?.verticalPosition || 'center', // 'top', 'center', 'bottom'
+      HORIZONTAL_POSITION: window.VISUAL_SEARCH_CONFIG?.modal?.horizontalPosition || 'center' // 'left', 'center', 'right'
+    },
+    
     // UI Settings (fallback to theme or defaults)
     get PINTEREST_RED() { return this.THEME.PRIMARY_COLOR; },
     get PINTEREST_RED_DARK() { return this.THEME.PRIMARY_COLOR_DARK; },
@@ -91,6 +114,87 @@
   // STYLES
   // ====================================================================
   
+  // Helper function to determine modal size category for UI scaling
+  function getModalSizeCategory(modalConfig, isMobile) {
+    if (isMobile && modalConfig.MOBILE_FULLSCREEN) {
+      return 'mobile-fullscreen';
+    }
+    
+    const widthMode = modalConfig.WIDTH_MODE;
+    const heightMode = modalConfig.HEIGHT_MODE;
+    
+    // Check for fullscreen modes first (100% coverage)
+    if (widthMode === 'fullscreen' && heightMode === 'fullscreen') {
+      return 'fullscreen';
+    } else if (widthMode === 'fullscreen' || heightMode === 'fullscreen') {
+      return 'extra-large';
+    }
+    
+    // Determine overall size based on width and height modes
+    if (widthMode === 'fullwidth' && heightMode === 'fullheight') {
+      return 'extra-large';
+    } else if (widthMode === 'large' || heightMode === 'large') {
+      return 'large';
+    } else if (widthMode === 'medium' || heightMode === 'medium') {
+      return 'medium';
+    } else if (widthMode === 'small' || heightMode === 'small') {
+      return 'small';
+    } else if (widthMode === 'custom' || heightMode === 'custom') {
+      // For custom, evaluate based on percentages
+      const widthPercent = modalConfig.WIDTH_PERCENTAGE || 80;
+      const heightPercent = modalConfig.HEIGHT_PERCENTAGE || 80;
+      const avgPercent = (widthPercent + heightPercent) / 2;
+      
+      if (avgPercent >= 95) return 'fullscreen';
+      else if (avgPercent >= 90) return 'extra-large';
+      else if (avgPercent >= 70) return 'large';
+      else if (avgPercent >= 50) return 'medium';
+      else return 'small';
+    }
+    
+    return 'medium'; // default
+  }
+  
+  // Dynamic scaling configuration based on modal size
+  const DYNAMIC_SCALING = {
+    'small': {
+      fontSize: { base: '12px', heading: '16px', button: '12px' },
+      imageSize: { grid: '80px', preview: '160px', icon: '16px' },
+      spacing: { padding: '6px', margin: '3px', gap: '6px' },
+      grid: { columns: 3, itemHeight: '90px' }
+    },
+    'medium': {
+      fontSize: { base: '14px', heading: '18px', button: '14px' },
+      imageSize: { grid: '100px', preview: '200px', icon: '18px' },
+      spacing: { padding: '8px', margin: '4px', gap: '8px' },
+      grid: { columns: 4, itemHeight: '110px' }
+    },
+    'large': {
+      fontSize: { base: '15px', heading: '19px', button: '15px' },
+      imageSize: { grid: '120px', preview: '240px', icon: '20px' },
+      spacing: { padding: '10px', margin: '5px', gap: '10px' },
+      grid: { columns: 5, itemHeight: '130px' }
+    },
+    'extra-large': {
+      fontSize: { base: '16px', heading: '20px', button: '16px' },
+      imageSize: { grid: '140px', preview: '280px', icon: '22px' },
+      spacing: { padding: '12px', margin: '6px', gap: '12px' },
+      grid: { columns: 6, itemHeight: '150px' }
+    },
+    'fullscreen': {
+      fontSize: { base: '17px', heading: '22px', button: '17px' },
+      imageSize: { grid: '160px', preview: '320px', icon: '24px' },
+      spacing: { padding: '14px', margin: '7px', gap: '14px' },
+      grid: { columns: 7, itemHeight: '170px' }
+    },
+    'mobile-fullscreen': {
+      fontSize: { base: '13px', heading: '17px', button: '13px' },
+      imageSize: { grid: '90px', preview: '180px', icon: '18px' },
+      spacing: { padding: '8px', margin: '4px', gap: '8px' },
+      grid: { columns: 2, itemHeight: '100px' }
+    }
+  };
+
   const STYLES = {
     // Spinner animation keyframes
     spinnerKeyframes: `
@@ -132,12 +236,12 @@
       }
       
       .visual-search-results-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
+        grid-template-columns: repeat(var(--vs-grid-columns, 2), 1fr) !important;
+        gap: var(--vs-spacing-gap, 12px) !important;
       }
       
       .visual-search-results-header {
-        padding: 16px !important;
+        padding: var(--vs-spacing-padding, 16px) !important;
         position: sticky !important;
         top: 0 !important;
         background: #ffffff !important;
@@ -145,15 +249,15 @@
       }
       
       .visual-search-results-container {
-        padding: 16px !important;
+        padding: var(--vs-spacing-padding, 16px) !important;
         -webkit-overflow-scrolling: touch;
       }
       
       /* Touch-optimized button sizes */
       .visual-search-alt-button {
-        padding: 14px 12px !important;
-        font-size: 14px !important;
-        gap: 8px !important;
+        padding: var(--vs-spacing-padding, 14px) 12px !important;
+        font-size: var(--vs-font-button, 14px) !important;
+        gap: var(--vs-spacing-gap, 8px) !important;
         border-radius: 10px !important;
         min-height: 48px !important;
       }
@@ -165,16 +269,16 @@
       
       /* Enhanced upload area for mobile */
       .visual-search-main-upload {
-        padding: 24px 16px !important;
+        padding: var(--vs-spacing-padding, 24px) 16px !important;
         border-radius: 12px !important;
         margin-bottom: 16px !important;
-        min-height: 180px !important;
+        min-height: calc(var(--vs-grid-item-height, 180px) * 1.0) !important;
         touch-action: manipulation;
       }
       
       .visual-search-upload-icon {
-        width: 56px !important;
-        height: 56px !important;
+        width: calc(var(--vs-icon-size, 20px) * 2.8) !important;
+        height: calc(var(--vs-icon-size, 20px) * 2.8) !important;
         margin-bottom: 16px !important;
       }
       
@@ -184,13 +288,13 @@
       }
       
       .visual-search-main-upload h3 {
-        font-size: 18px !important;
-        margin-bottom: 10px !important;
+        font-size: var(--vs-font-heading, 18px) !important;
+        margin-bottom: var(--vs-spacing-margin, 10px) !important;
       }
       
       .visual-search-main-upload p {
-        font-size: 15px !important;
-        margin-bottom: 20px !important;
+        font-size: var(--vs-font-base, 15px) !important;
+        margin-bottom: var(--vs-spacing-padding, 20px) !important;
         max-width: 260px !important;
       }
       
@@ -320,8 +424,8 @@
           flex: 2 !important;
         }
         .visual-search-results-grid {
-          grid-template-columns: repeat(3, 1fr) !important;
-          gap: 14px !important;
+          grid-template-columns: repeat(var(--vs-grid-columns, 3), 1fr) !important;
+          gap: var(--vs-spacing-gap, 14px) !important;
         }
       }
 
@@ -341,23 +445,23 @@
           flex: 3 !important;
         }
         .visual-search-results-grid {
-          grid-template-columns: repeat(3, 1fr) !important;
-          gap: 16px !important;
+          grid-template-columns: repeat(var(--vs-grid-columns, 3), 1fr) !important;
+          gap: var(--vs-spacing-padding, 16px) !important;
         }
         .visual-search-results-header {
-          padding: 20px 24px 16px !important;
+          padding: var(--vs-spacing-padding, 20px) 24px 16px !important;
         }
         .visual-search-results-container {
-          padding: 20px 24px !important;
+          padding: var(--vs-spacing-padding, 20px) 24px !important;
         }
         .visual-search-upload-icon {
-          width: 64px !important;
-          height: 64px !important;
-          margin-bottom: 20px !important;
+          width: calc(var(--vs-icon-size, 20px) * 3.2) !important;
+          height: calc(var(--vs-icon-size, 20px) * 3.2) !important;
+          margin-bottom: var(--vs-spacing-padding, 20px) !important;
         }
         .visual-search-upload-icon svg {
-          width: 32px !important;
-          height: 32px !important;
+          width: calc(var(--vs-icon-size, 20px) * 1.6) !important;
+          height: calc(var(--vs-icon-size, 20px) * 1.6) !important;
         }
         .visual-search-main-upload h3 {
           font-size: 20px !important;
@@ -453,13 +557,13 @@
       
       @media (min-width: 1024px) {
         .visual-search-results-grid {
-          grid-template-columns: repeat(4, 1fr) !important;
+          grid-template-columns: repeat(var(--vs-grid-columns, 4), 1fr) !important;
         }
       }
       
       @media (min-width: 1200px) {
         .visual-search-results-grid {
-          grid-template-columns: repeat(5, 1fr) !important;
+          grid-template-columns: repeat(var(--vs-grid-columns, 5), 1fr) !important;
         }
       }
       
@@ -545,49 +649,191 @@
       border: 1px solid #e9e9e9;
     `,
     
-    // Pinterest-style overlay
-    drawerOverlay: `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 999999 !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
-      isolation: isolate;
-    `,
+    // Pinterest-style modal content - Enhanced mobile-first responsive design with configurable sizing
+    drawerContent: (isMobile) => {
+      const modalConfig = CONFIG.MODAL;
+      
+      // Calculate modal size category for UI scaling
+      const modalSizeCategory = getModalSizeCategory(modalConfig, isMobile);
+      
+      // Calculate width based on configuration
+      let width, maxWidth;
+      if (isMobile && modalConfig.MOBILE_FULLSCREEN) {
+        width = '100%';
+        maxWidth = '100%';
+      } else {
+        switch (modalConfig.WIDTH_MODE) {
+          case 'small':
+            width = '400px';
+            maxWidth = '90vw';
+            break;
+          case 'medium':
+            width = '800px';
+            maxWidth = '90vw';
+            break;
+          case 'large':
+            width = '1200px';
+            maxWidth = '95vw';
+            break;
+          case 'fullwidth':
+            width = '95vw';
+            maxWidth = `${modalConfig.WIDTH_MAX_PIXELS}px`;
+            break;
+          case 'fullscreen':
+            width = '100vw';
+            maxWidth = '100vw';
+            break;
+          case 'custom':
+            width = `${modalConfig.WIDTH_PERCENTAGE}vw`;
+            maxWidth = `${modalConfig.WIDTH_MAX_PIXELS}px`;
+            break;
+          default:
+            width = '95vw';
+            maxWidth = '1600px';
+        }
+      }
+      
+      // Calculate height based on configuration
+      let height, maxHeight, minHeight;
+      if (isMobile && modalConfig.MOBILE_FULLSCREEN) {
+        height = 'auto';
+        maxHeight = '95vh';
+        minHeight = '50vh';
+      } else {
+        switch (modalConfig.HEIGHT_MODE) {
+          case 'small':
+            height = '400px';
+            maxHeight = '80vh';
+            minHeight = '400px';
+            break;
+          case 'medium':
+            height = '600px';
+            maxHeight = '85vh';
+            minHeight = '500px';
+            break;
+          case 'large':
+            height = '800px';
+            maxHeight = '90vh';
+            minHeight = '600px';
+            break;
+          case 'fullheight':
+            height = '90vh';
+            maxHeight = `${modalConfig.HEIGHT_MAX_PIXELS}px`;
+            minHeight = '600px';
+            break;
+          case 'fullscreen':
+            height = '100vh';
+            maxHeight = '100vh';
+            minHeight = '100vh';
+            break;
+          case 'custom':
+            height = `${modalConfig.HEIGHT_PERCENTAGE}vh`;
+            maxHeight = `${modalConfig.HEIGHT_MAX_PIXELS}px`;
+            minHeight = '400px';
+            break;
+          default:
+            height = '800px';
+            maxHeight = '90vh';
+            minHeight = '600px';
+        }
+      }
+      
+      // Get dynamic scaling settings
+      const scaling = DYNAMIC_SCALING[modalSizeCategory] || DYNAMIC_SCALING['medium'];
+      
+      // Special handling for fullscreen mode
+      const isFullscreen = modalConfig.WIDTH_MODE === 'fullscreen' || modalConfig.HEIGHT_MODE === 'fullscreen';
+      
+      return `
+        background: #ffffff;
+        border-radius: ${isMobile ? '20px 20px 0 0' : (isFullscreen ? '0' : '20px')};
+        padding: 0;
+        width: ${width};
+        max-width: ${maxWidth};
+        height: ${height};
+        max-height: ${maxHeight};
+        min-height: ${minHeight};
+        ${isMobile && modalConfig.MOBILE_FULLSCREEN ? 'position: fixed; bottom: 0; left: 0; right: 0;' : ''}
+        ${isFullscreen ? 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; margin: 0;' : ''}
+        overflow: hidden;
+        box-shadow: ${isFullscreen ? 'none' : '0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1)'};
+        transform: ${isMobile ? 'translateY(100%)' : (isFullscreen ? 'none' : 'translateY(24px) scale(0.94)')};
+        transition: all 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size: ${scaling.fontSize.base};
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        display: flex;
+        flex-direction: column;
+        z-index: 1000000 !important;
+        /* Enhanced mobile support */
+        -webkit-overflow-scrolling: touch;
+        -webkit-tap-highlight-color: transparent;
+        /* Dynamic CSS variables for scaling */
+        --vs-font-base: ${scaling.fontSize.base};
+        --vs-font-heading: ${scaling.fontSize.heading};
+        --vs-font-button: ${scaling.fontSize.button};
+        --vs-image-grid: ${scaling.imageSize.grid};
+        --vs-image-preview: ${scaling.imageSize.preview};
+        --vs-icon-size: ${scaling.imageSize.icon};
+        --vs-spacing-padding: ${scaling.spacing.padding};
+        --vs-spacing-margin: ${scaling.spacing.margin};
+        --vs-spacing-gap: ${scaling.spacing.gap};
+        --vs-grid-columns: ${scaling.grid.columns};
+        --vs-grid-item-height: ${scaling.grid.itemHeight};
+        touch-action: manipulation;
+      `;
+    },
     
-    // Pinterest-style modal content - Enhanced mobile-first responsive design
-    drawerContent: (isMobile) => `
-      background: #ffffff;
-      border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
-      padding: 0;
-      max-width: ${isMobile ? '100%' : '1600px'};
-      width: ${isMobile ? '100%' : '95%'};
-      max-height: ${isMobile ? '95vh' : '90vh'};
-      height: ${isMobile ? 'auto' : '800px'};
-      min-height: ${isMobile ? '50vh' : '600px'};
-      ${isMobile ? 'position: fixed; bottom: 0; left: 0; right: 0;' : ''}
-      overflow: hidden;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
-      transform: ${isMobile ? 'translateY(100%)' : 'translateY(24px) scale(0.94)'};
-      transition: all 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      position: relative;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      display: flex;
-      flex-direction: column;
-      z-index: 1000000 !important;
-      /* Enhanced mobile support */
-      -webkit-overflow-scrolling: touch;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    `,
+    // Enhanced drawer overlay with positioning support
+    drawerOverlay: (isMobile) => {
+      const modalConfig = CONFIG.MODAL;
+      let alignItems = 'center';
+      let justifyContent = 'center';
+      
+      // Only apply custom positioning for desktop
+      if (!isMobile || !modalConfig.MOBILE_FULLSCREEN) {
+        switch (modalConfig.VERTICAL_POSITION) {
+          case 'top':
+            alignItems = 'flex-start';
+            break;
+          case 'bottom':
+            alignItems = 'flex-end';
+            break;
+          default:
+            alignItems = 'center';
+        }
+        
+        switch (modalConfig.HORIZONTAL_POSITION) {
+          case 'left':
+            justifyContent = 'flex-start';
+            break;
+          case 'right':
+            justifyContent = 'flex-end';
+            break;
+          default:
+            justifyContent = 'center';
+        }
+      }
+      
+      return `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999999 !important;
+        display: flex;
+        align-items: ${alignItems};
+        justify-content: ${justifyContent};
+        padding: ${isMobile ? '0' : '20px'};
+        box-sizing: border-box;
+        opacity: 0;
+        transition: opacity 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        isolation: isolate;
+      `;
+    },
     
     // Notification toast
     notification: (type) => {
@@ -1700,7 +1946,7 @@
     // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'visual-search-drawer';
-    overlay.style.cssText = STYLES.drawerOverlay;
+    overlay.style.cssText = STYLES.drawerOverlay(isMobile);
 
     // Create drawer content
     const drawer = document.createElement('div');
@@ -2865,35 +3111,39 @@
     const card = document.createElement('div');
     card.style.cssText = `
       background: white;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      border: 1px solid #e9e9e9;
-      transition: all 0.2s ease;
+      border: 1px solid #f0f0f0;
+      transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
       cursor: pointer;
       position: relative;
+      height: var(--vs-grid-item-height, 200px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     `;
     
     card.innerHTML = `
       <div style="
-        aspect-ratio: 1;
-        background: #f7f7f7;
+        width: 100%;
+        height: 100%;
+        background: #f8f9fa;
         position: relative;
         overflow: hidden;
+        border-radius: 16px;
       ">
         <img src="${product.image}" alt="Product ${product.id}" style="
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.2s ease;
+          transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
         " onload="this.parentElement.style.background='transparent'">
         
-        <!-- Camera overlay icon for search by image -->
+        <!-- Enhanced camera overlay icon for search by image -->
         <div class="camera-overlay" style="
           position: absolute;
-          top: 8px;
-          left: 8px;
-          width: 32px;
-          height: 32px;
+          top: var(--vs-spacing-margin, 8px);
+          left: var(--vs-spacing-margin, 8px);
+          width: calc(var(--vs-icon-size, 20px) * 1.8);
+          height: calc(var(--vs-icon-size, 20px) * 1.8);
           background: rgba(255, 255, 255, 0.95);
           border-radius: 50%;
           display: flex;
@@ -2901,56 +3151,87 @@
           justify-content: center;
           opacity: 0;
           transform: scale(0.8);
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
           z-index: 10;
           pointer-events: none;
           cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          backdrop-filter: blur(4px);
         " title="Search with this image">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#333" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">
-            <!-- Camera body -->
+          <svg width="calc(var(--vs-icon-size, 20px) * 0.9)" height="calc(var(--vs-icon-size, 20px) * 0.9)" viewBox="0 0 24 24" fill="#333" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">
+            <!-- Enhanced camera icon -->
             <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
             <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
             <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
             
-            <!-- Camera lens -->
+            <!-- Camera lens with better detail -->
             <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
             <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
+            <circle cx="12" cy="12" r="1" fill="currentColor" opacity="0.6"/>
             
             <!-- Flash/viewfinder -->
             <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
           </svg>
         </div>
+        
+        <!-- Subtle gradient overlay for better icon visibility -->
+        <div style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 50px;
+          background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, transparent 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+        " class="gradient-overlay"></div>
       </div>
     `;
     
-    // Add hover effects
+    // Add enhanced hover effects
     card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-2px)';
-      card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
+      card.style.transform = 'translateY(-4px)';
+      card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.12)';
       const img = card.querySelector('img');
       const cameraOverlay = card.querySelector('.camera-overlay');
+      const gradientOverlay = card.querySelector('.gradient-overlay');
       
-      img.style.transform = 'scale(1.05)';
+      if (img) img.style.transform = 'scale(1.08)';
       
-      // Show camera overlay
-      cameraOverlay.style.opacity = '1';
-      cameraOverlay.style.transform = 'scale(1)';
-      cameraOverlay.style.pointerEvents = 'auto';
+      // Show camera overlay with enhanced animation
+      if (cameraOverlay) {
+        cameraOverlay.style.opacity = '1';
+        cameraOverlay.style.transform = 'scale(1)';
+        cameraOverlay.style.pointerEvents = 'auto';
+      }
+      
+      // Show gradient overlay for better icon visibility
+      if (gradientOverlay) {
+        gradientOverlay.style.opacity = '1';
+      }
     });
     
     card.addEventListener('mouseleave', () => {
       card.style.transform = 'translateY(0)';
-      card.style.boxShadow = 'none';
+      card.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)';
       const img = card.querySelector('img');
       const cameraOverlay = card.querySelector('.camera-overlay');
+      const gradientOverlay = card.querySelector('.gradient-overlay');
       
-      img.style.transform = 'scale(1)';
+      if (img) img.style.transform = 'scale(1)';
       
       // Hide camera overlay
-      cameraOverlay.style.opacity = '0';
-      cameraOverlay.style.transform = 'scale(0.8)';
-      cameraOverlay.style.pointerEvents = 'none';
+      if (cameraOverlay) {
+        cameraOverlay.style.opacity = '0';
+        cameraOverlay.style.transform = 'scale(0.8)';
+        cameraOverlay.style.pointerEvents = 'none';
+      }
+      
+      // Hide gradient overlay
+      if (gradientOverlay) {
+        gradientOverlay.style.opacity = '0';
+      }
     });
     
     // Add click handler for search by image functionality
@@ -2972,33 +3253,23 @@
   function createSkeletonCard() {
     const skeletonCard = document.createElement('div');
     skeletonCard.className = 'skeleton-card';
-    skeletonCard.style.cssText = STYLES.productSkeleton;
+    skeletonCard.style.cssText = STYLES.productSkeleton + `
+      height: var(--vs-grid-item-height, 200px);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #f0f0f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    `;
     
     skeletonCard.innerHTML = `
       <div style="
-        aspect-ratio: 1;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, #f8f9fa 25%, #e9ecef 50%, #f8f9fa 75%);
         background-size: 200% 100%;
         animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
+        border-radius: 16px;
       "></div>
-      <div style="padding: 12px;">
-        <div style="
-          height: 14px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200% 100%;
-          animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
-          border-radius: 4px;
-          margin-bottom: 6px;
-        "></div>
-        <div style="
-          height: 12px;
-          width: 60%;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200% 100%;
-          animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
-          border-radius: 4px;
-        "></div>
-      </div>
     `;
     
     return skeletonCard;
