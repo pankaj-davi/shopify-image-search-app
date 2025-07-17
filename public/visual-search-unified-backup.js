@@ -83,7 +83,8 @@
   console.log('[Visual Search] Configuration:', {
     appUrl: CONFIG.APP_URL,
     shopDomain: CONFIG.SHOP_DOMAIN,
-    hasConfig: !!window.VISUAL_SEARCH_CONFIG
+    hasConfig: !!window.VISUAL_SEARCH_CONFIG,
+    CONFIG : JSON.parse(JSON.stringify(CONFIG)),
   });
   
   // ====================================================================
@@ -105,8 +106,226 @@
       }
     `,
     
-    // Responsive media queries for modal content
+    // Enhanced responsive media queries for optimal mobile experience
     responsiveStyles: `
+      /* Base mobile styles - optimized for touch */
+      .visual-search-modal-content {
+        flex-direction: column !important;
+        touch-action: manipulation;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .visual-search-left-panel {
+        flex: none !important;
+        border-bottom: 1px solid #e9e9e9 !important;
+        border-right: none !important;
+        max-height: 45vh !important;
+        min-height: 280px !important;
+        padding: 16px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .visual-search-right-panel {
+        flex: 1 !important;
+        min-height: 300px !important;
+      }
+      
+      .visual-search-results-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      
+      .visual-search-results-header {
+        padding: 16px !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: #ffffff !important;
+        z-index: 10 !important;
+      }
+      
+      .visual-search-results-container {
+        padding: 16px !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Touch-optimized button sizes */
+      .visual-search-alt-button {
+        padding: 14px 12px !important;
+        font-size: 14px !important;
+        gap: 8px !important;
+        border-radius: 10px !important;
+        min-height: 48px !important;
+      }
+      
+      .visual-search-alt-button svg {
+        width: 18px !important;
+        height: 18px !important;
+      }
+      
+      /* Enhanced upload area for mobile */
+      .visual-search-main-upload {
+        padding: 24px 16px !important;
+        border-radius: 12px !important;
+        margin-bottom: 16px !important;
+        min-height: 180px !important;
+        touch-action: manipulation;
+      }
+      
+      .visual-search-upload-icon {
+        width: 56px !important;
+        height: 56px !important;
+        margin-bottom: 16px !important;
+      }
+      
+      .visual-search-upload-icon svg {
+        width: 28px !important;
+        height: 28px !important;
+      }
+      
+      .visual-search-main-upload h3 {
+        font-size: 18px !important;
+        margin-bottom: 10px !important;
+      }
+      
+      .visual-search-main-upload p {
+        font-size: 15px !important;
+        margin-bottom: 20px !important;
+        max-width: 260px !important;
+      }
+      
+      .visual-search-main-upload button {
+        padding: 14px 28px !important;
+        font-size: 15px !important;
+        min-height: 48px !important;
+      }
+      
+      /* Mobile-friendly tips section */
+      .visual-search-tips {
+        padding: 14px !important;
+        border-radius: 10px !important;
+      }
+      
+      .visual-search-tips h4 {
+        font-size: 14px !important;
+        margin-bottom: 8px !important;
+      }
+      
+      .visual-search-tips ul {
+        font-size: 13px !important;
+        line-height: 1.6 !important;
+      }
+      
+      /* Product card optimizations for mobile */
+      .visual-search-product-card {
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        background: #ffffff !important;
+        border: 1px solid #e9e9e9 !important;
+        transition: all 0.2s ease !important;
+        touch-action: manipulation !important;
+      }
+      
+      .visual-search-product-card:active {
+        transform: scale(0.98) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+      }
+      
+      /* Crop tool mobile optimizations */
+      #image-selection-container {
+        border-radius: 12px !important;
+        min-height: 200px !important;
+        max-height: 320px !important;
+        touch-action: none !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+        padding: 15px !important;
+      }
+      
+      #image-selection-container img {
+        max-width: calc(100% - 30px) !important;
+        max-height: calc(100% - 30px) !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: 120px !important;
+        min-height: 120px !important;
+        object-fit: contain !important;
+        display: block !important;
+        margin: 0 auto !important;
+      }
+      
+      /* Close button mobile optimization */
+      #close-drawer-x {
+        width: 40px !important;
+        height: 40px !important;
+        top: 8px !important;
+        right: 12px !important;
+        font-size: 18px !important;
+        touch-action: manipulation !important;
+      }
+      
+      /* Header mobile adjustments */
+      .visual-search-drawer > div > div:first-child {
+        padding: 16px 20px 12px !important;
+      }
+      
+      .visual-search-drawer h2 {
+        font-size: 20px !important;
+      }
+      
+      .visual-search-drawer > div > div:first-child p {
+        font-size: 14px !important;
+      }
+      
+      /* Empty state mobile */
+      .visual-search-empty-state {
+        padding: 40px 20px !important;
+      }
+      
+      .visual-search-empty-icon {
+        width: 64px !important;
+        height: 64px !important;
+        margin-bottom: 16px !important;
+      }
+      
+      .visual-search-empty-icon svg {
+        width: 28px !important;
+        height: 28px !important;
+      }
+      
+      .visual-search-empty-state h3 {
+        font-size: 16px !important;
+        margin-bottom: 6px !important;
+      }
+      
+      .visual-search-empty-state p {
+        font-size: 13px !important;
+        max-width: 280px !important;
+      }
+
+      /* Tablet landscape optimizations */
+      @media (min-width: 768px) and (orientation: landscape) {
+        .visual-search-modal-content {
+          flex-direction: row !important;
+        }
+        .visual-search-left-panel {
+          flex: 1 !important;
+          border-right: 1px solid #e9e9e9 !important;
+          border-bottom: none !important;
+          max-height: none !important;
+          padding: 20px !important;
+        }
+        .visual-search-right-panel {
+          flex: 2 !important;
+        }
+        .visual-search-results-grid {
+          grid-template-columns: repeat(3, 1fr) !important;
+          gap: 14px !important;
+        }
+      }
+
+      /* Desktop optimizations */
       @media (min-width: 768px) {
         .visual-search-modal-content {
           flex-direction: row !important;
@@ -201,6 +420,35 @@
           font-size: 14px !important;
           max-width: 300px !important;
         }
+        
+        #image-selection-container {
+          max-height: 450px !important;
+          min-height: 250px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          overflow: visible !important;
+          padding: 15px !important;
+        }
+        
+        #image-selection-container img {
+          max-width: calc(100% - 30px) !important;
+          max-height: calc(100% - 30px) !important;
+          width: auto !important;
+          height: auto !important;
+          min-width: 180px !important;
+          min-height: 180px !important;
+          object-fit: contain !important;
+          display: block !important;
+          margin: 0 auto !important;
+        }
+        
+        #close-drawer-x {
+          width: 32px !important;
+          height: 32px !important;
+          top: 12px !important;
+          right: 16px !important;
+          font-size: 20px !important;
+        }
       }
       
       @media (min-width: 1024px) {
@@ -212,6 +460,37 @@
       @media (min-width: 1200px) {
         .visual-search-results-grid {
           grid-template-columns: repeat(5, 1fr) !important;
+        }
+      }
+      
+      /* High DPI display optimizations */
+      @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        .visual-search-product-card img {
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
+        }
+      }
+      
+      /* Reduced motion accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        .visual-search-drawer,
+        .visual-search-drawer * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+      
+      /* High contrast mode support */
+      @media (prefers-contrast: high) {
+        .visual-search-drawer {
+          border: 2px solid !important;
+        }
+        .visual-search-product-card {
+          border: 2px solid !important;
+        }
+        .visual-search-alt-button {
+          border: 2px solid !important;
         }
       }
     `,
@@ -283,7 +562,7 @@
       isolation: isolate;
     `,
     
-    // Pinterest-style modal content - Mobile-first responsive design
+    // Pinterest-style modal content - Enhanced mobile-first responsive design
     drawerContent: (isMobile) => `
       background: #ffffff;
       border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
@@ -291,7 +570,8 @@
       max-width: ${isMobile ? '100%' : '1600px'};
       width: ${isMobile ? '100%' : '95%'};
       max-height: ${isMobile ? '95vh' : '90vh'};
-      height: ${isMobile ? '95vh' : '800px'};
+      height: ${isMobile ? 'auto' : '800px'};
+      min-height: ${isMobile ? '50vh' : '600px'};
       ${isMobile ? 'position: fixed; bottom: 0; left: 0; right: 0;' : ''}
       overflow: hidden;
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -303,6 +583,10 @@
       display: flex;
       flex-direction: column;
       z-index: 1000000 !important;
+      /* Enhanced mobile support */
+      -webkit-overflow-scrolling: touch;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     `,
     
     // Notification toast
@@ -320,7 +604,7 @@
         color: ${colors[type].text};
         padding: 12px 20px;
         border-radius: 6px;
-        z-index: 999998;
+        z-index: 2147483647 !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 14px;
         box-shadow: 0 4px 12px var(--visual-search-shadow-medium, rgba(0,0,0,0.15));
@@ -329,7 +613,327 @@
         transform: translateX(100%);
         transition: transform 0.3s ease;
       `;
-    }
+    },
+
+    // Crop box styles for image selection
+    cropBox: `
+      position: absolute;
+      border: 3px solid #f8f8f8;
+      cursor: grab;
+      box-sizing: border-box;
+      touch-action: none;
+      background: rgba(248, 248, 248, 0.02);
+      transition: all 0.2s ease;
+      opacity: 0;
+      transform: scale(0.9);
+      animation: crop-box-appear 0.3s ease forwards;
+      min-width: 50px;
+      min-height: 50px;
+      border-radius: 12px;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    `,
+
+    cropBoxActive: `
+      border-color: #f0f0f0;
+      background: rgba(248, 248, 248, 0.05);
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(0, 0, 0, 0.1);
+    `,
+
+    resizeHandle: (position) => `
+      position: absolute;
+      cursor: ${position === 'nw' || position === 'se' ? 'nw-resize' : 'ne-resize'};
+      touch-action: none;
+      transition: all 0.2s ease;
+      ${position === 'nw' ? 'top: -6px; left: -6px;' : ''}
+      ${position === 'ne' ? 'top: -6px; right: -6px;' : ''}
+      ${position === 'sw' ? 'bottom: -6px; left: -6px;' : ''}
+      ${position === 'se' ? 'bottom: -6px; right: -6px;' : ''}
+    `,
+
+    // Elbow-shaped corner handle with double border
+    elbowHandle: (position) => `
+      width: 16px;
+      height: 16px;
+      background: transparent;
+      pointer-events: auto;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        ${position === 'nw' ? 'top: 0; left: 0; border-top: 3px solid #ffffff; border-left: 3px solid #ffffff; width: 12px; height: 12px;' : ''}
+        ${position === 'ne' ? 'top: 0; right: 0; border-top: 3px solid #ffffff; border-right: 3px solid #ffffff; width: 12px; height: 12px;' : ''}
+        ${position === 'sw' ? 'bottom: 0; left: 0; border-bottom: 3px solid #ffffff; border-left: 3px solid #ffffff; width: 12px; height: 12px;' : ''}
+        ${position === 'se' ? 'bottom: 0; right: 0; border-bottom: 3px solid #ffffff; border-right: 3px solid #ffffff; width: 12px; height: 12px;' : ''}
+        border-radius: ${position === 'nw' ? '0 0 4px 0' : position === 'ne' ? '0 0 0 4px' : position === 'sw' ? '0 4px 0 0' : '4px 0 0 0'};
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        ${position === 'nw' ? 'top: 2px; left: 2px; border-top: 2px solid #f8f8f8; border-left: 2px solid #f8f8f8; width: 8px; height: 8px;' : ''}
+        ${position === 'ne' ? 'top: 2px; right: 2px; border-top: 2px solid #f8f8f8; border-right: 2px solid #f8f8f8; width: 8px; height: 8px;' : ''}
+        ${position === 'sw' ? 'bottom: 2px; left: 2px; border-bottom: 2px solid #f8f8f8; border-left: 2px solid #f8f8f8; width: 8px; height: 8px;' : ''}
+        ${position === 'se' ? 'bottom: 2px; right: 2px; border-bottom: 2px solid #f8f8f8; border-right: 2px solid #f8f8f8; width: 8px; height: 8px;' : ''}
+        border-radius: ${position === 'nw' ? '0 0 2px 0' : position === 'ne' ? '0 0 0 2px' : position === 'sw' ? '0 2px 0 0' : '2px 0 0 0'};
+      }
+    `,
+
+    // Border resize handles (horizontal and vertical)
+    borderHandle: (side) => `
+      position: absolute;
+      background: transparent;
+      touch-action: none;
+      transition: all 0.2s ease;
+      cursor: ${side === 'top' || side === 'bottom' ? 'ns-resize' : 'ew-resize'};
+      
+      ${side === 'top' ? 'top: -4px; left: 16px; right: 16px; height: 8px;' : ''}
+      ${side === 'bottom' ? 'bottom: -4px; left: 16px; right: 16px; height: 8px;' : ''}
+      ${side === 'left' ? 'left: -4px; top: 16px; bottom: 16px; width: 8px;' : ''}
+      ${side === 'right' ? 'right: -4px; top: 16px; bottom: 16px; width: 8px;' : ''}
+      
+      &::before {
+        content: '';
+        position: absolute;
+        background: rgba(248, 248, 248, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 2px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        
+        ${side === 'top' || side === 'bottom' ? 'left: 50%; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 4px;' : ''}
+        ${side === 'left' || side === 'right' ? 'left: 50%; top: 50%; transform: translate(-50%, -50%); width: 4px; height: 20px;' : ''}
+      }
+      
+      &:hover::before {
+        background: rgba(240, 240, 240, 0.9);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+    `,
+
+    resizeHandleActive: `
+      &::before {
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      
+      &::after {
+        border-color: #e60023;
+      }
+    `,
+
+    borderHandleActive: `
+      &::before {
+        background: rgba(230, 0, 35, 0.8) !important;
+        border-color: rgba(255, 255, 255, 1);
+        box-shadow: 0 2px 8px rgba(230, 0, 35, 0.3);
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+    `,
+
+    cropBoxKeyframes: `
+      @keyframes crop-box-appear {
+        0% {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      
+      @keyframes crop-box-pulse {
+        0%, 100% {
+          border-color: #e60023;
+        }
+        50% {
+          border-color: #ff3366;
+        }
+      }
+      
+      /* Elbow-shaped corner handles - Thin and small */
+      .resize-handle-corner {
+        width: 12px;
+        height: 12px;
+        background: transparent;
+        pointer-events: auto;
+      }
+      
+      .resize-handle-corner::before {
+        content: '';
+        position: absolute;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+      }
+      
+      .resize-handle-corner::after {
+        content: '';
+        position: absolute;
+      }
+      
+      .resize-handle-corner[data-position="nw"]::before {
+        top: 0;
+        left: 0;
+        border-top: 2px solid #ffffff;
+        border-left: 2px solid #ffffff;
+        width: 8px;
+        height: 8px;
+        border-radius: 0 0 1px 0;
+      }
+      
+      .resize-handle-corner[data-position="nw"]::after {
+        top: 1px;
+        left: 1px;
+        border-top: 1px solid #f8f8f8;
+        border-left: 1px solid #f8f8f8;
+        width: 5px;
+        height: 5px;
+        border-radius: 0 0 1px 0;
+      }
+      
+      .resize-handle-corner[data-position="ne"]::before {
+        top: 0;
+        right: 0;
+        border-top: 2px solid #ffffff;
+        border-right: 2px solid #ffffff;
+        width: 8px;
+        height: 8px;
+        border-radius: 0 0 0 1px;
+      }
+      
+      .resize-handle-corner[data-position="ne"]::after {
+        top: 1px;
+        right: 1px;
+        border-top: 1px solid #f8f8f8;
+        border-right: 1px solid #f8f8f8;
+        width: 5px;
+        height: 5px;
+        border-radius: 0 0 0 1px;
+      }
+      
+      .resize-handle-corner[data-position="sw"]::before {
+        bottom: 0;
+        left: 0;
+        border-bottom: 2px solid #ffffff;
+        border-left: 2px solid #ffffff;
+        width: 8px;
+        height: 8px;
+        border-radius: 0 1px 0 0;
+      }
+      
+      .resize-handle-corner[data-position="sw"]::after {
+        bottom: 1px;
+        left: 1px;
+        border-bottom: 1px solid #f8f8f8;
+        border-left: 1px solid #f8f8f8;
+        width: 5px;
+        height: 5px;
+        border-radius: 0 1px 0 0;
+      }
+      
+      .resize-handle-corner[data-position="se"]::before {
+        bottom: 0;
+        right: 0;
+        border-bottom: 2px solid #ffffff;
+        border-right: 2px solid #ffffff;
+        width: 8px;
+        height: 8px;
+        border-radius: 1px 0 0 0;
+      }
+      
+      .resize-handle-corner[data-position="se"]::after {
+        bottom: 1px;
+        right: 1px;
+        border-bottom: 1px solid #f8f8f8;
+        border-right: 1px solid #f8f8f8;
+        width: 5px;
+        height: 5px;
+        border-radius: 1px 0 0 0;
+      }
+      
+      .resize-handle-corner:hover::before {
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      
+      .resize-handle-corner:hover::after {
+        border-color: #e60023;
+      }
+      
+      /* Border resize handles */
+      .resize-handle-border {
+        background: transparent;
+        touch-action: none;
+        transition: all 0.2s ease;
+      }
+      
+      .resize-handle-border::before {
+        content: '';
+        position: absolute;
+        background: rgba(248, 248, 248, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 2px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      
+      .resize-handle-border[data-side="top"], 
+      .resize-handle-border[data-side="bottom"] {
+        height: 8px;
+        cursor: ns-resize;
+      }
+      
+      .resize-handle-border[data-side="left"], 
+      .resize-handle-border[data-side="right"] {
+        width: 8px;
+        cursor: ew-resize;
+      }
+      
+      .resize-handle-border[data-side="top"] {
+        top: -4px;
+        left: 12px;
+        right: 12px;
+      }
+      
+      .resize-handle-border[data-side="bottom"] {
+        bottom: -4px;
+        left: 12px;
+        right: 12px;
+      }
+      
+      .resize-handle-border[data-side="left"] {
+        left: -4px;
+        top: 12px;
+        bottom: 12px;
+      }
+      
+      .resize-handle-border[data-side="right"] {
+        right: -4px;
+        top: 12px;
+        bottom: 12px;
+      }
+      
+      .resize-handle-border[data-side="top"]::before,
+      .resize-handle-border[data-side="bottom"]::before {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 16px;
+        height: 3px;
+      }
+      
+      .resize-handle-border[data-side="left"]::before,
+      .resize-handle-border[data-side="right"]::before {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 3px;
+        height: 16px;
+      }
+      
+      .resize-handle-border:hover::before {
+        background: rgba(230, 0, 35, 0.8);
+        border-color: rgba(255, 255, 255, 1);
+        box-shadow: 0 2px 8px rgba(230, 0, 35, 0.3);
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+    `
   };
   
   // ====================================================================
@@ -437,9 +1041,12 @@
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         min-height: 300px;
-        max-height: 50vh;
+        max-height: 45vh;
         padding: 16px;
+        width: 100%;
+        box-sizing: border-box;
       ">
         <!-- Upload Section (Initial View) -->
         <div id="upload-section" style="
@@ -643,28 +1250,33 @@
               color: #5f5f5f;
               font-size: 13px;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">Analyzing image and searching for similar products...</p>
+            ">Adjust the crop area to focus on the item you want to search for</p>
           </div>
 
-          <!-- Image Container -->
+          <!-- Image Container with Crop Tool -->
           <div id="image-selection-container" style="
             position: relative;
             margin-bottom: 16px;
             border-radius: 8px;
-            overflow: hidden;
-            background: #f7f7f7;
+            overflow: visible;
+            background: #fafafa;
             min-height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
-            max-height: 400px;
+            max-height: 350px;
+            border: 1px solid #e9e9e9;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
           ">
-            <!-- Uploaded image will be inserted here -->
+            <!-- Uploaded image and crop box will be inserted here -->
           </div>
 
-          <!-- Upload Another Button -->
+          <!-- Control Buttons -->
           <div style="
             display: flex;
+            gap: 8px;
             justify-content: center;
             margin-top: 12px;
           ">
@@ -672,13 +1284,21 @@
               background: white;
               color: #e60023;
               border: 2px solid #e60023;
-              padding: 10px 20px;
-              border-radius: 6px;
-              font-size: 13px;
+              padding: 12px 24px;
+              border-radius: 20px;
+              font-size: 14px;
               font-weight: 600;
               cursor: pointer;
               transition: all 0.2s ease;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              width: 100%;
+              max-width: 200px;
+            " onmouseover="
+              this.style.background='#e60023';
+              this.style.color='white';
+            " onmouseout="
+              this.style.background='white';
+              this.style.color='#e60023';
             ">Upload Another</button>
           </div>
         </div>
@@ -814,7 +1434,7 @@
     
     const style = document.createElement('style');
     style.id = 'visual-search-global-styles';
-    style.textContent = STYLES.spinnerKeyframes + STYLES.responsiveStyles;
+    style.textContent = STYLES.spinnerKeyframes + STYLES.responsiveStyles + STYLES.cropBoxKeyframes;
     document.head.appendChild(style);
   }
   
@@ -1231,45 +1851,700 @@
       <div style="${STYLES.imageSkeleton}" id="image-skeleton"></div>
     `;
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      // Create image element
+    // Check if this is a URL-based image (like from search results) or a real file
+    if (imageFile._imageUrl) {
+      // Handle URL-based images (from search results)
       const img = document.createElement('img');
       img.style.cssText = `
-        width: 100%;
-        height: 100%;
+        max-width: calc(100% - 30px);
+        max-height: calc(100% - 30px);
+        width: auto;
+        height: auto;
+        min-width: 150px;
+        min-height: 150px;
         border-radius: 8px;
         object-fit: contain;
-        max-width: 100%;
-        max-height: 100%;
         opacity: 0;
         transition: opacity 0.3s ease;
+        background: transparent;
+        display: block;
+        margin: 0 auto;
       `;
       img.id = 'uploaded-image';
-      img.src = e.target.result;
+      img.src = imageFile._imageUrl;
       
-      // Once image loads, fade it in and remove skeleton
+      // Once image loads, fade it in, remove skeleton, and add crop box
       img.onload = () => {
         const skeleton = imageContainer.querySelector('#image-skeleton');
         if (skeleton) {
           skeleton.remove();
         }
         img.style.opacity = '1';
+        
+        // Add crop box after image loads with smooth transition
+        setTimeout(() => {
+          addCropBox(imageContainer, img);
+        }, 300);
+      };
+      
+      img.onerror = () => {
+        const skeleton = imageContainer.querySelector('#image-skeleton');
+        if (skeleton) {
+          skeleton.remove();
+        }
+        imageContainer.innerHTML = `
+          <div style="color: #666; text-align: center; padding: 40px;">
+            Failed to load image. Please try again.
+          </div>
+        `;
       };
       
       imageContainer.appendChild(img);
-    };
-    reader.readAsDataURL(imageFile);
+    } else {
+      // Handle real file uploads
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        // Create image element
+        const img = document.createElement('img');
+        img.style.cssText = `
+          max-width: calc(100% - 30px);
+          max-height: calc(100% - 30px);
+          width: auto;
+          height: auto;
+          min-width: 150px;
+          min-height: 150px;
+          border-radius: 8px;
+          object-fit: contain;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          background: transparent;
+          display: block;
+          margin: 0 auto;
+        `;
+        img.id = 'uploaded-image';
+        img.src = e.target.result;
+        
+        // Once image loads, fade it in, remove skeleton, and add crop box
+        img.onload = () => {
+          const skeleton = imageContainer.querySelector('#image-skeleton');
+          if (skeleton) {
+            skeleton.remove();
+          }
+          img.style.opacity = '1';
+          
+          // Add crop box after image loads with smooth transition
+          setTimeout(() => {
+            addCropBox(imageContainer, img);
+          }, 300);
+        };
+        
+        imageContainer.appendChild(img);
+      };
+      reader.readAsDataURL(imageFile);
+    }
     
     // Store file for later analysis
     drawer._imageFile = imageFile;
     drawer._searchInput = searchInput;
+  }
+
+  function triggerAutoSearch(container) {
+    // Get the drawer element
+    const drawer = container.closest('.visual-search-drawer').querySelector('div');
+    if (!drawer || !drawer._imageFile || !drawer._searchInput) return;
     
-    // Automatically analyze the image when preview is shown
-    analyzeUploadedImage(drawer, searchInput);
+    const cropData = getCropData(drawer);
+    if (cropData) {
+      performCroppedImageSearch(drawer, drawer._searchInput, cropData);
+    }
+  }
+
+  function addCropBox(container, img) {
+    // Calculate image dimensions and position within container
+    const containerRect = container.getBoundingClientRect();
+    const imgRect = img.getBoundingClientRect();
+    
+    // Calculate relative position of image within container
+    const imgLeft = imgRect.left - containerRect.left;
+    const imgTop = imgRect.top - containerRect.top;
+    const imgWidth = imgRect.width;
+    const imgHeight = imgRect.height;
+    
+    // Mobile responsive sizing
+    const isMobile = window.innerWidth <= 768;
+    const minCropSize = isMobile ? 80 : 100; // Smaller minimum on mobile
+    const handleSize = isMobile ? 16 : 12; // Larger handles on mobile for easier touch
+    const handleOffset = isMobile ? 8 : 6; // Larger offset on mobile
+    
+    // Calculate safe boundaries - ensure handles stay within image bounds
+    const handleMargin = handleOffset + (handleSize / 2);
+    const safeImgLeft = imgLeft + handleMargin;
+    const safeImgTop = imgTop + handleMargin;
+    const safeImgWidth = imgWidth - (handleMargin * 2);
+    const safeImgHeight = imgHeight - (handleMargin * 2);
+    
+    // Create crop box (centered on image, responsive size) within safe boundaries
+    const cropPercentage = isMobile ? 0.6 : 0.5; // Smaller percentage to ensure handles fit
+    const maxCropWidth = Math.min(safeImgWidth, imgWidth * 0.8);
+    const maxCropHeight = Math.min(safeImgHeight, imgHeight * 0.8);
+    const cropWidth = Math.max(Math.min(maxCropWidth * cropPercentage, maxCropWidth), minCropSize);
+    const cropHeight = Math.max(Math.min(maxCropHeight * cropPercentage, maxCropHeight), minCropSize);
+    
+    // Center the crop box within safe boundaries
+    const cropLeft = safeImgLeft + (safeImgWidth - cropWidth) / 2;
+    const cropTop = safeImgTop + (safeImgHeight - cropHeight) / 2;
+    
+    const cropBox = document.createElement('div');
+    cropBox.id = 'crop-box';
+    cropBox.style.cssText = `
+      ${STYLES.cropBox}
+      left: ${cropLeft}px;
+      top: ${cropTop}px;
+      width: ${cropWidth}px;
+      height: ${cropHeight}px;
+    `;
+    
+    // Create all 4 corner resize handles with mobile-responsive sizing
+    const cornerHandles = [
+      { id: 'nw', position: 'nw', cursor: 'nw-resize' },
+      { id: 'ne', position: 'ne', cursor: 'ne-resize' },
+      { id: 'sw', position: 'sw', cursor: 'sw-resize' },
+      { id: 'se', position: 'se', cursor: 'se-resize' }
+    ];
+    
+    cornerHandles.forEach(handle => {
+      const resizeHandle = document.createElement('div');
+      resizeHandle.id = `resize-handle-${handle.id}`;
+      resizeHandle.className = 'resize-handle resize-handle-corner';
+      resizeHandle.dataset.position = handle.position;
+      resizeHandle.dataset.type = 'corner';
+      resizeHandle.style.cssText = `
+        position: absolute;
+        width: ${handleSize}px;
+        height: ${handleSize}px;
+        background: rgba(248, 248, 248, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        border-radius: ${isMobile ? '4px' : '2px'};
+        cursor: ${handle.cursor};
+        touch-action: none;
+        transition: all 0.2s ease;
+        z-index: 12;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        ${handle.position === 'nw' ? `top: -${handleOffset}px; left: -${handleOffset}px;` : ''}
+        ${handle.position === 'ne' ? `top: -${handleOffset}px; right: -${handleOffset}px;` : ''}
+        ${handle.position === 'sw' ? `bottom: -${handleOffset}px; left: -${handleOffset}px;` : ''}
+        ${handle.position === 'se' ? `bottom: -${handleOffset}px; right: -${handleOffset}px;` : ''}
+      `;
+      cropBox.appendChild(resizeHandle);
+    });
+    
+    // Create border resize handles (top, bottom, left, right) - mobile responsive
+    const borderHandles = [
+      { id: 'top', side: 'top' },
+      { id: 'bottom', side: 'bottom' },
+      { id: 'left', side: 'left' },
+      { id: 'right', side: 'right' }
+    ];
+    
+    const borderHandleSize = isMobile ? 12 : 8;
+    const borderIndicatorSize = isMobile ? 20 : 16;
+    
+    borderHandles.forEach(handle => {
+      const resizeHandle = document.createElement('div');
+      resizeHandle.id = `resize-border-${handle.id}`;
+      resizeHandle.className = 'resize-handle resize-handle-border';
+      resizeHandle.dataset.side = handle.side;
+      resizeHandle.dataset.type = 'border';
+      resizeHandle.style.cssText = `
+        position: absolute;
+        background: transparent;
+        touch-action: none;
+        transition: all 0.2s ease;
+        cursor: ${handle.side === 'top' || handle.side === 'bottom' ? 'ns-resize' : 'ew-resize'};
+        ${handle.side === 'top' ? `top: -${borderHandleSize/2}px; left: ${handleSize + 4}px; right: ${handleSize + 4}px; height: ${borderHandleSize}px;` : ''}
+        ${handle.side === 'bottom' ? `bottom: -${borderHandleSize/2}px; left: ${handleSize + 4}px; right: ${handleSize + 4}px; height: ${borderHandleSize}px;` : ''}
+        ${handle.side === 'left' ? `left: -${borderHandleSize/2}px; top: ${handleSize + 4}px; bottom: ${handleSize + 4}px; width: ${borderHandleSize}px;` : ''}
+        ${handle.side === 'right' ? `right: -${borderHandleSize/2}px; top: ${handleSize + 4}px; bottom: ${handleSize + 4}px; width: ${borderHandleSize}px;` : ''}
+        z-index: 11;
+      `;
+      
+      // Add the visual indicator
+      const indicator = document.createElement('div');
+      indicator.style.cssText = `
+        position: absolute;
+        background: rgba(248, 248, 248, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: ${isMobile ? '3px' : '2px'};
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        pointer-events: none;
+        ${handle.side === 'top' || handle.side === 'bottom' ? 
+          `left: 50%; top: 50%; transform: translate(-50%, -50%); width: ${borderIndicatorSize}px; height: ${isMobile ? 4 : 3}px;` : 
+          `left: 50%; top: 50%; transform: translate(-50%, -50%); width: ${isMobile ? 4 : 3}px; height: ${borderIndicatorSize}px;`
+        }
+      `;
+      resizeHandle.appendChild(indicator);
+      cropBox.appendChild(resizeHandle);
+    });
+    
+    container.appendChild(cropBox);
+    
+    // Add a center draggable area indicator - mobile responsive
+    const dragArea = document.createElement('div');
+    dragArea.className = 'crop-drag-area';
+    const dragAreaSize = isMobile ? 32 : 24;
+    dragArea.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: ${dragAreaSize}px;
+      height: ${dragAreaSize}px;
+      background: rgba(248, 248, 248, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.7;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    `;
+    
+    // Add drag icon
+    const iconSize = isMobile ? 16 : 12;
+    dragArea.innerHTML = `
+      <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #666;">
+        <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+      </svg>
+    `;
+    
+    cropBox.appendChild(dragArea);
+    
+    // Add hover effects for the crop box
+    cropBox.addEventListener('mouseenter', () => {
+      dragArea.style.opacity = '1';
+      dragArea.style.transform = 'translate(-50%, -50%) scale(1.1)';
+    });
+    
+    cropBox.addEventListener('mouseleave', () => {
+      dragArea.style.opacity = '0.7';
+      dragArea.style.transform = 'translate(-50%, -50%) scale(1)';
+    });
+    
+    // Update drag area cursor on mouse down
+    cropBox.addEventListener('mousedown', (e) => {
+      if (!e.target.classList.contains('resize-handle') && !e.target.closest('.resize-handle')) {
+        dragArea.style.cursor = 'grabbing';
+      }
+    });
+    
+    document.addEventListener('mouseup', () => {
+      dragArea.style.cursor = 'grab';
+    });
+    
+    // Store image bounds for constraint checking - use safe boundaries
+    cropBox._imageBounds = {
+      left: safeImgLeft,
+      top: safeImgTop,
+      right: safeImgLeft + safeImgWidth,
+      bottom: safeImgTop + safeImgHeight
+    };
+    
+    // Store mobile state for interaction handling
+    cropBox._isMobile = isMobile;
+    cropBox._minCropSize = minCropSize;
+    cropBox._handleSize = handleSize;
+    cropBox._handleOffset = handleOffset;
+    
+    // Set up drag and resize functionality
+    setupCropBoxInteraction(cropBox, container);
+    
+    // Auto-trigger search when crop box is created
+    setTimeout(() => {
+      triggerAutoSearch(container);
+    }, 500);
+  }
+
+  function setupCropBoxInteraction(cropBox, container) {
+    let isDragging = false;
+    let isResizing = false;
+    let activeHandle = null;
+    let resizeType = null; // 'corner' or 'border'
+    let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+    function getEventXY(e) {
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else {
+        return { x: e.clientX, y: e.clientY };
+      }
+    }
+
+    function constrainToImage(left, top, width, height) {
+      const bounds = cropBox._imageBounds;
+      const minSize = cropBox._minCropSize || 50;
+      const handleSize = cropBox._handleSize || 12;
+      const handleOffset = cropBox._handleOffset || 6;
+      
+      // Additional safety margin to ensure handles don't extend outside image
+      const safetyMargin = Math.max(handleSize, handleOffset) + 2;
+      const safeBounds = {
+        left: bounds.left,
+        top: bounds.top,
+        right: bounds.right,
+        bottom: bounds.bottom
+      };
+      
+      // Constrain size first with mobile-aware minimum and safety margins
+      const maxWidth = safeBounds.right - safeBounds.left;
+      const maxHeight = safeBounds.bottom - safeBounds.top;
+      width = Math.max(minSize, Math.min(width, maxWidth));
+      height = Math.max(minSize, Math.min(height, maxHeight));
+      
+      // Constrain position to keep crop box (and handles) within safe bounds
+      left = Math.max(safeBounds.left, Math.min(left, safeBounds.right - width));
+      top = Math.max(safeBounds.top, Math.min(top, safeBounds.bottom - height));
+      
+      // Double-check that the position + size doesn't exceed boundaries
+      if (left + width > safeBounds.right) {
+        left = safeBounds.right - width;
+      }
+      if (top + height > safeBounds.bottom) {
+        top = safeBounds.bottom - height;
+      }
+      
+      // Final safety check to ensure we're within bounds
+      left = Math.max(safeBounds.left, left);
+      top = Math.max(safeBounds.top, top);
+      
+      return { left, top, width, height };
+    }
+
+    function startDrag(e) {
+      // Don't start drag if clicking on resize handles
+      if (e.target.classList.contains('resize-handle') || 
+          e.target.closest('.resize-handle')) {
+        return;
+      }
+      
+      isDragging = true;
+      const { x, y } = getEventXY(e);
+      startX = x;
+      startY = y;
+      startLeft = parseInt(cropBox.style.left);
+      startTop = parseInt(cropBox.style.top);
+      
+      // Add visual feedback for dragging
+      cropBox.style.cssText += STYLES.cropBoxActive;
+      cropBox.style.cursor = 'grabbing';
+      container.style.cursor = 'grabbing';
+      
+      // Prevent text selection and other interactions
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function startResize(e) {
+      isResizing = true;
+      resizeType = e.target.dataset.type;
+      
+      if (resizeType === 'corner') {
+        activeHandle = e.target.dataset.position;
+      } else if (resizeType === 'border') {
+        activeHandle = e.target.dataset.side;
+      }
+      
+      const { x, y } = getEventXY(e);
+      startX = x;
+      startY = y;
+      startLeft = parseInt(cropBox.style.left);
+      startTop = parseInt(cropBox.style.top);
+      startWidth = parseInt(window.getComputedStyle(cropBox).width, 10);
+      startHeight = parseInt(window.getComputedStyle(cropBox).height, 10);
+      
+      // Visual feedback
+      if (resizeType === 'corner') {
+        // Corner handle visual feedback will be handled by CSS hover
+      } else if (resizeType === 'border') {
+        const indicator = e.target.querySelector('div');
+        if (indicator) {
+          indicator.style.background = 'rgba(230, 0, 35, 0.8)';
+          indicator.style.borderColor = 'rgba(255, 255, 255, 1)';
+          indicator.style.boxShadow = '0 2px 8px rgba(230, 0, 35, 0.3)';
+          indicator.style.transform = indicator.style.transform.replace('scale(1)', 'scale(1.1)');
+        }
+      }
+      
+      container.style.cursor = e.target.style.cursor;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function onMove(e) {
+      const { x, y } = getEventXY(e);
+      
+      if (isDragging) {
+        const dx = x - startX;
+        const dy = y - startY;
+        const newLeft = startLeft + dx;
+        const newTop = startTop + dy;
+        const currentWidth = parseInt(cropBox.style.width);
+        const currentHeight = parseInt(cropBox.style.height);
+        
+        const constrained = constrainToImage(newLeft, newTop, currentWidth, currentHeight);
+        
+        // Use transform for smoother movement during drag
+        cropBox.style.transform = `translate(${constrained.left - startLeft}px, ${constrained.top - startTop}px)`;
+        
+        // Update actual position
+        cropBox.style.left = constrained.left + 'px';
+        cropBox.style.top = constrained.top + 'px';
+        
+      } else if (isResizing && activeHandle) {
+        const dx = x - startX;
+        const dy = y - startY;
+        let newLeft = startLeft;
+        let newTop = startTop;
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        
+        if (resizeType === 'corner') {
+          // Corner resize - handle all 4 corners
+          if (activeHandle === 'nw') {
+            newLeft = startLeft + dx;
+            newTop = startTop + dy;
+            newWidth = startWidth - dx;
+            newHeight = startHeight - dy;
+          } else if (activeHandle === 'ne') {
+            newTop = startTop + dy;
+            newWidth = startWidth + dx;
+            newHeight = startHeight - dy;
+          } else if (activeHandle === 'sw') {
+            newLeft = startLeft + dx;
+            newWidth = startWidth - dx;
+            newHeight = startHeight + dy;
+          } else if (activeHandle === 'se') {
+            newWidth = startWidth + dx;
+            newHeight = startHeight + dy;
+          }
+        } else if (resizeType === 'border') {
+          // Border resize - handle horizontal and vertical
+          if (activeHandle === 'top') {
+            newTop = startTop + dy;
+            newHeight = startHeight - dy;
+          } else if (activeHandle === 'bottom') {
+            newHeight = startHeight + dy;
+          } else if (activeHandle === 'left') {
+            newLeft = startLeft + dx;
+            newWidth = startWidth - dx;
+          } else if (activeHandle === 'right') {
+            newWidth = startWidth + dx;
+          }
+        }
+        
+        const constrained = constrainToImage(newLeft, newTop, newWidth, newHeight);
+        cropBox.style.left = constrained.left + 'px';
+        cropBox.style.top = constrained.top + 'px';
+        cropBox.style.width = constrained.width + 'px';
+        cropBox.style.height = constrained.height + 'px';
+      }
+      
+      if (isDragging || isResizing) {
+        e.preventDefault();
+      }
+    }
+
+    function endAction() {
+      if (isDragging) {
+        // Clean up drag styling
+        cropBox.style.cssText = cropBox.style.cssText.replace(STYLES.cropBoxActive, '');
+        cropBox.style.cursor = 'grab';
+        cropBox.style.transform = ''; // Remove transform after drag
+        container.style.cursor = '';
+        
+        // Trigger auto search after drag
+        setTimeout(() => {
+          triggerAutoSearch(container);
+        }, 300);
+      }
+      if (isResizing) {
+        // Reset visual feedback for all handles
+        const handles = cropBox.querySelectorAll('.resize-handle');
+        handles.forEach(handle => {
+          if (handle.classList.contains('resize-handle-border')) {
+            // Reset border handle styles
+            const indicator = handle.querySelector('div');
+            if (indicator) {
+              indicator.style.background = 'rgba(248, 248, 248, 0.8)';
+              indicator.style.borderColor = 'rgba(255, 255, 255, 0.9)';
+              indicator.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+              indicator.style.transform = indicator.style.transform.replace('scale(1.1)', 'scale(1)');
+            }
+          }
+        });
+        container.style.cursor = '';
+        
+        // Trigger auto search after resize
+        setTimeout(() => {
+          triggerAutoSearch(container);
+        }, 300);
+      }
+      
+      isDragging = false;
+      isResizing = false;
+      activeHandle = null;
+      resizeType = null;
+    }
+
+    // Event Listeners (Mouse + Touch)
+    cropBox.addEventListener('mousedown', startDrag);
+    cropBox.addEventListener('touchstart', startDrag, { passive: false });
+
+    // Add event listeners to all resize handles
+    const resizeHandles = cropBox.querySelectorAll('.resize-handle');
+    resizeHandles.forEach(handle => {
+      handle.addEventListener('mousedown', startResize);
+      handle.addEventListener('touchstart', startResize, { passive: false });
+    });
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+
+    document.addEventListener('mouseup', endAction);
+    document.addEventListener('touchend', endAction);
+    
+    // Store cleanup function
+    cropBox._cleanup = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('mouseup', endAction);
+      document.removeEventListener('touchend', endAction);
+    };
+  }
+
+  function getCropData(drawer) {
+    const cropBox = drawer.querySelector('#crop-box');
+    const img = drawer.querySelector('#uploaded-image');
+    
+    if (!cropBox || !img) return null;
+    
+    const container = drawer.querySelector('#image-selection-container');
+    const containerRect = container.getBoundingClientRect();
+    const imgRect = img.getBoundingClientRect();
+    const cropRect = cropBox.getBoundingClientRect();
+    
+    // Calculate crop coordinates relative to the actual image
+    const imgLeft = imgRect.left - containerRect.left;
+    const imgTop = imgRect.top - containerRect.top;
+    const cropLeft = cropRect.left - containerRect.left;
+    const cropTop = cropRect.top - containerRect.top;
+    
+    // Convert to image coordinates (0-1 scale)
+    const relativeX = (cropLeft - imgLeft) / imgRect.width;
+    const relativeY = (cropTop - imgTop) / imgRect.height;
+    const relativeWidth = cropRect.width / imgRect.width;
+    const relativeHeight = cropRect.height / imgRect.height;
+    
+    return {
+      x: Math.max(0, Math.min(1, relativeX)),
+      y: Math.max(0, Math.min(1, relativeY)),
+      width: Math.max(0, Math.min(1, relativeWidth)),
+      height: Math.max(0, Math.min(1, relativeHeight))
+    };
+  }
+
+  async function performCroppedImageSearch(drawer, searchInput, cropData) {
+    try {
+      updateResultsHeader(drawer, 'Analyzing cropped area...', 'Detecting items in the selected area...');
+      clearResults(drawer);
+      showSkeletonLoaders(drawer);
+      
+      const formData = new FormData();
+      formData.append('image', drawer._imageFile);
+      formData.append('cropData', JSON.stringify(cropData));
+      formData.append('analyze', 'true');
+      
+      console.log('[Visual Search] Sending cropped analysis request to:', CONFIG.EXTERNAL_API_URL);
+      console.log('[Visual Search] Crop data:', cropData);
+      
+      const response = await fetch(CONFIG.EXTERNAL_API_URL, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'shopDomainURL': CONFIG.SHOP_DOMAIN
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      console.log('[Visual Search] Cropped Analysis API Response:', result);
+      
+      // Handle the API response similar to regular analysis
+      if (result && (result.products || result.detectedItems || result.length > 0)) {
+        let detectedItems = [];
+        
+        if (Array.isArray(result)) {
+          detectedItems = result.map((item, index) => ({
+            id: item.productId || item.id || index,
+            image: item.image || item.imageUrl
+          }));
+        } else if (result.detectedItems) {
+          detectedItems = result.detectedItems;
+        } else if (result.products) {
+          detectedItems = result.products.map((item, index) => ({
+            id: item.productId || item.id || index,
+            image: item.image || item.imageUrl
+          }));
+        }
+        
+        if (detectedItems.length > 0) {
+          drawer._detectedItems = detectedItems;
+          performVisualSearch(drawer, detectedItems, searchInput, 'cropped area');
+        } else {
+          showError('No items detected in the selected area. Try adjusting the crop area.');
+          updateResultsHeader(drawer, 'No items detected', 'Try adjusting the crop area');
+          removeSkeletonLoaders(drawer);
+          const emptyState = drawer.querySelector('#empty-state');
+          if (emptyState) {
+            emptyState.style.display = 'flex';
+          }
+        }
+      } else {
+        showError(result.error || 'Could not analyze the selected area. Please try again.');
+        updateResultsHeader(drawer, 'Analysis failed', 'Could not detect items in the selected area');
+        removeSkeletonLoaders(drawer);
+        const emptyState = drawer.querySelector('#empty-state');
+        if (emptyState) {
+          emptyState.style.display = 'flex';
+        }
+      }
+    } catch (error) {
+      console.error('Cropped visual search error:', error);
+      showError('Something went wrong. Please try again.');
+      updateResultsHeader(drawer, 'Search failed', 'Something went wrong during analysis');
+      removeSkeletonLoaders(drawer);
+      const emptyState = drawer.querySelector('#empty-state');
+      if (emptyState) {
+        emptyState.style.display = 'flex';
+      }
+    }
   }
 
   function showUploadSection(drawer) {
+    // Clean up crop box event listeners if they exist
+    const cropBox = drawer.querySelector('#crop-box');
+    if (cropBox && cropBox._cleanup) {
+      cropBox._cleanup();
+    }
+    
     // Show upload section, hide preview
     drawer.querySelector('#upload-section').style.display = 'block';
     drawer.querySelector('#image-preview-section').style.display = 'none';
@@ -1595,6 +2870,7 @@
       border: 1px solid #e9e9e9;
       transition: all 0.2s ease;
       cursor: pointer;
+      position: relative;
     `;
     
     card.innerHTML = `
@@ -1610,6 +2886,41 @@
           object-fit: cover;
           transition: transform 0.2s ease;
         " onload="this.parentElement.style.background='transparent'">
+        
+        <!-- Camera overlay icon for search by image -->
+        <div class="camera-overlay" style="
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          width: 32px;
+          height: 32px;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transform: scale(0.8);
+          transition: all 0.3s ease;
+          z-index: 10;
+          pointer-events: none;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        " title="Search with this image">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#333" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">
+            <!-- Camera body -->
+            <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
+            <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
+            
+            <!-- Camera lens -->
+            <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
+            
+            <!-- Flash/viewfinder -->
+            <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
+          </svg>
+        </div>
       </div>
     `;
     
@@ -1618,14 +2929,41 @@
       card.style.transform = 'translateY(-2px)';
       card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
       const img = card.querySelector('img');
+      const cameraOverlay = card.querySelector('.camera-overlay');
+      
       img.style.transform = 'scale(1.05)';
+      
+      // Show camera overlay
+      cameraOverlay.style.opacity = '1';
+      cameraOverlay.style.transform = 'scale(1)';
+      cameraOverlay.style.pointerEvents = 'auto';
     });
     
     card.addEventListener('mouseleave', () => {
       card.style.transform = 'translateY(0)';
       card.style.boxShadow = 'none';
       const img = card.querySelector('img');
+      const cameraOverlay = card.querySelector('.camera-overlay');
+      
       img.style.transform = 'scale(1)';
+      
+      // Hide camera overlay
+      cameraOverlay.style.opacity = '0';
+      cameraOverlay.style.transform = 'scale(0.8)';
+      cameraOverlay.style.pointerEvents = 'none';
+    });
+    
+    // Add click handler for search by image functionality
+    card.addEventListener('click', (e) => {
+      // Check if we're in a drawer context
+      const drawer = card.closest('.visual-search-drawer');
+      if (drawer) {
+        const drawerContent = drawer.querySelector('div');
+        if (drawerContent && drawerContent._searchInput) {
+          // Use the result image for a new search
+          searchByResultImage(product.image, drawerContent._searchInput, drawerContent);
+        }
+      }
     });
     
     return card;
@@ -1666,6 +3004,37 @@
     return skeletonCard;
   }
   
+  // ====================================================================
+  // SEARCH BY RESULT IMAGE
+  // ====================================================================
+  
+  async function searchByResultImage(imageUrl, searchInput, drawer) {
+    try {
+      // Show feedback to user
+      showNotification('Using this image for new search...', 'info');
+      
+      // Create a fake file object for the result image
+      const fakeFile = {
+        name: 'result-image.jpg',
+        type: 'image/jpeg',
+        size: 0,
+        _imageUrl: imageUrl
+      };
+      
+      // Update the uploaded image display (this handles everything)
+      showImagePreview(drawer, fakeFile, searchInput);
+      
+      // Update UI to show that we're using a new image
+      updateResultsHeader(drawer, 'New search starting...', 'Using selected result image for search');
+      
+      showSuccess('Image updated! Crop and adjust the area to search.');
+      
+    } catch (error) {
+      console.error('Search by result image error:', error);
+      showError('Could not use this image for search. Please try again.');
+    }
+  }
+
   // ====================================================================
   // URL INPUT DIALOG
   // ====================================================================
@@ -1816,10 +3185,15 @@
       const imageContainer = drawer.querySelector('#image-selection-container');
       imageContainer.innerHTML = `
         <img src="${url}" style="
-          max-width: 100%;
-          max-height: 100%;
+          max-width: calc(100% - 20px);
+          max-height: calc(100% - 20px);
+          width: auto;
+          height: auto;
           border-radius: 8px;
           object-fit: contain;
+          display: block;
+          margin: 0 auto;
+          background: transparent;
         " id="uploaded-image" onload="
           this.parentElement.style.background='transparent';
         " onerror="
