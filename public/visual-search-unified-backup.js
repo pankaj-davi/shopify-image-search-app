@@ -106,8 +106,226 @@
       }
     `,
     
-    // Responsive media queries for modal content
+    // Enhanced responsive media queries for optimal mobile experience
     responsiveStyles: `
+      /* Base mobile styles - optimized for touch */
+      .visual-search-modal-content {
+        flex-direction: column !important;
+        touch-action: manipulation;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .visual-search-left-panel {
+        flex: none !important;
+        border-bottom: 1px solid #e9e9e9 !important;
+        border-right: none !important;
+        max-height: 45vh !important;
+        min-height: 280px !important;
+        padding: 16px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .visual-search-right-panel {
+        flex: 1 !important;
+        min-height: 300px !important;
+      }
+      
+      .visual-search-results-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      
+      .visual-search-results-header {
+        padding: 16px !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: #ffffff !important;
+        z-index: 10 !important;
+      }
+      
+      .visual-search-results-container {
+        padding: 16px !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Touch-optimized button sizes */
+      .visual-search-alt-button {
+        padding: 14px 12px !important;
+        font-size: 14px !important;
+        gap: 8px !important;
+        border-radius: 10px !important;
+        min-height: 48px !important;
+      }
+      
+      .visual-search-alt-button svg {
+        width: 18px !important;
+        height: 18px !important;
+      }
+      
+      /* Enhanced upload area for mobile */
+      .visual-search-main-upload {
+        padding: 24px 16px !important;
+        border-radius: 12px !important;
+        margin-bottom: 16px !important;
+        min-height: 180px !important;
+        touch-action: manipulation;
+      }
+      
+      .visual-search-upload-icon {
+        width: 56px !important;
+        height: 56px !important;
+        margin-bottom: 16px !important;
+      }
+      
+      .visual-search-upload-icon svg {
+        width: 28px !important;
+        height: 28px !important;
+      }
+      
+      .visual-search-main-upload h3 {
+        font-size: 18px !important;
+        margin-bottom: 10px !important;
+      }
+      
+      .visual-search-main-upload p {
+        font-size: 15px !important;
+        margin-bottom: 20px !important;
+        max-width: 260px !important;
+      }
+      
+      .visual-search-main-upload button {
+        padding: 14px 28px !important;
+        font-size: 15px !important;
+        min-height: 48px !important;
+      }
+      
+      /* Mobile-friendly tips section */
+      .visual-search-tips {
+        padding: 14px !important;
+        border-radius: 10px !important;
+      }
+      
+      .visual-search-tips h4 {
+        font-size: 14px !important;
+        margin-bottom: 8px !important;
+      }
+      
+      .visual-search-tips ul {
+        font-size: 13px !important;
+        line-height: 1.6 !important;
+      }
+      
+      /* Product card optimizations for mobile */
+      .visual-search-product-card {
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        background: #ffffff !important;
+        border: 1px solid #e9e9e9 !important;
+        transition: all 0.2s ease !important;
+        touch-action: manipulation !important;
+      }
+      
+      .visual-search-product-card:active {
+        transform: scale(0.98) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+      }
+      
+      /* Crop tool mobile optimizations */
+      #image-selection-container {
+        border-radius: 12px !important;
+        min-height: 200px !important;
+        max-height: 320px !important;
+        touch-action: none !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+        padding: 15px !important;
+      }
+      
+      #image-selection-container img {
+        max-width: calc(100% - 30px) !important;
+        max-height: calc(100% - 30px) !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: 120px !important;
+        min-height: 120px !important;
+        object-fit: contain !important;
+        display: block !important;
+        margin: 0 auto !important;
+      }
+      
+      /* Close button mobile optimization */
+      #close-drawer-x {
+        width: 40px !important;
+        height: 40px !important;
+        top: 8px !important;
+        right: 12px !important;
+        font-size: 18px !important;
+        touch-action: manipulation !important;
+      }
+      
+      /* Header mobile adjustments */
+      .visual-search-drawer > div > div:first-child {
+        padding: 16px 20px 12px !important;
+      }
+      
+      .visual-search-drawer h2 {
+        font-size: 20px !important;
+      }
+      
+      .visual-search-drawer > div > div:first-child p {
+        font-size: 14px !important;
+      }
+      
+      /* Empty state mobile */
+      .visual-search-empty-state {
+        padding: 40px 20px !important;
+      }
+      
+      .visual-search-empty-icon {
+        width: 64px !important;
+        height: 64px !important;
+        margin-bottom: 16px !important;
+      }
+      
+      .visual-search-empty-icon svg {
+        width: 28px !important;
+        height: 28px !important;
+      }
+      
+      .visual-search-empty-state h3 {
+        font-size: 16px !important;
+        margin-bottom: 6px !important;
+      }
+      
+      .visual-search-empty-state p {
+        font-size: 13px !important;
+        max-width: 280px !important;
+      }
+
+      /* Tablet landscape optimizations */
+      @media (min-width: 768px) and (orientation: landscape) {
+        .visual-search-modal-content {
+          flex-direction: row !important;
+        }
+        .visual-search-left-panel {
+          flex: 1 !important;
+          border-right: 1px solid #e9e9e9 !important;
+          border-bottom: none !important;
+          max-height: none !important;
+          padding: 20px !important;
+        }
+        .visual-search-right-panel {
+          flex: 2 !important;
+        }
+        .visual-search-results-grid {
+          grid-template-columns: repeat(3, 1fr) !important;
+          gap: 14px !important;
+        }
+      }
+
+      /* Desktop optimizations */
       @media (min-width: 768px) {
         .visual-search-modal-content {
           flex-direction: row !important;
@@ -202,6 +420,35 @@
           font-size: 14px !important;
           max-width: 300px !important;
         }
+        
+        #image-selection-container {
+          max-height: 450px !important;
+          min-height: 250px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          overflow: visible !important;
+          padding: 15px !important;
+        }
+        
+        #image-selection-container img {
+          max-width: calc(100% - 30px) !important;
+          max-height: calc(100% - 30px) !important;
+          width: auto !important;
+          height: auto !important;
+          min-width: 180px !important;
+          min-height: 180px !important;
+          object-fit: contain !important;
+          display: block !important;
+          margin: 0 auto !important;
+        }
+        
+        #close-drawer-x {
+          width: 32px !important;
+          height: 32px !important;
+          top: 12px !important;
+          right: 16px !important;
+          font-size: 20px !important;
+        }
       }
       
       @media (min-width: 1024px) {
@@ -213,6 +460,37 @@
       @media (min-width: 1200px) {
         .visual-search-results-grid {
           grid-template-columns: repeat(5, 1fr) !important;
+        }
+      }
+      
+      /* High DPI display optimizations */
+      @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        .visual-search-product-card img {
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
+        }
+      }
+      
+      /* Reduced motion accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        .visual-search-drawer,
+        .visual-search-drawer * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+      
+      /* High contrast mode support */
+      @media (prefers-contrast: high) {
+        .visual-search-drawer {
+          border: 2px solid !important;
+        }
+        .visual-search-product-card {
+          border: 2px solid !important;
+        }
+        .visual-search-alt-button {
+          border: 2px solid !important;
         }
       }
     `,
@@ -284,7 +562,7 @@
       isolation: isolate;
     `,
     
-    // Pinterest-style modal content - Mobile-first responsive design
+    // Pinterest-style modal content - Enhanced mobile-first responsive design
     drawerContent: (isMobile) => `
       background: #ffffff;
       border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
@@ -292,7 +570,8 @@
       max-width: ${isMobile ? '100%' : '1600px'};
       width: ${isMobile ? '100%' : '95%'};
       max-height: ${isMobile ? '95vh' : '90vh'};
-      height: ${isMobile ? '95vh' : '800px'};
+      height: ${isMobile ? 'auto' : '800px'};
+      min-height: ${isMobile ? '50vh' : '600px'};
       ${isMobile ? 'position: fixed; bottom: 0; left: 0; right: 0;' : ''}
       overflow: hidden;
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -304,6 +583,10 @@
       display: flex;
       flex-direction: column;
       z-index: 1000000 !important;
+      /* Enhanced mobile support */
+      -webkit-overflow-scrolling: touch;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     `,
     
     // Notification toast
@@ -321,7 +604,7 @@
         color: ${colors[type].text};
         padding: 12px 20px;
         border-radius: 6px;
-        z-index: 999998;
+        z-index: 2147483647 !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 14px;
         box-shadow: 0 4px 12px var(--visual-search-shadow-medium, rgba(0,0,0,0.15));
@@ -758,9 +1041,12 @@
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         min-height: 300px;
-        max-height: 50vh;
+        max-height: 45vh;
         padding: 16px;
+        width: 100%;
+        box-sizing: border-box;
       ">
         <!-- Upload Section (Initial View) -->
         <div id="upload-section" style="
@@ -972,14 +1258,17 @@
             position: relative;
             margin-bottom: 16px;
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible;
             background: #fafafa;
             min-height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
-            max-height: 400px;
+            max-height: 350px;
             border: 1px solid #e9e9e9;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
           ">
             <!-- Uploaded image and crop box will be inserted here -->
           </div>
@@ -1562,23 +1851,27 @@
       <div style="${STYLES.imageSkeleton}" id="image-skeleton"></div>
     `;
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      // Create image element
+    // Check if this is a URL-based image (like from search results) or a real file
+    if (imageFile._imageUrl) {
+      // Handle URL-based images (from search results)
       const img = document.createElement('img');
       img.style.cssText = `
-        width: 100%;
-        height: 100%;
+        max-width: calc(100% - 30px);
+        max-height: calc(100% - 30px);
+        width: auto;
+        height: auto;
+        min-width: 150px;
+        min-height: 150px;
         border-radius: 8px;
         object-fit: contain;
-        max-width: 100%;
-        max-height: 100%;
         opacity: 0;
         transition: opacity 0.3s ease;
-        background: #fafafa;
+        background: transparent;
+        display: block;
+        margin: 0 auto;
       `;
       img.id = 'uploaded-image';
-      img.src = e.target.result;
+      img.src = imageFile._imageUrl;
       
       // Once image loads, fade it in, remove skeleton, and add crop box
       img.onload = () => {
@@ -1594,9 +1887,61 @@
         }, 300);
       };
       
+      img.onerror = () => {
+        const skeleton = imageContainer.querySelector('#image-skeleton');
+        if (skeleton) {
+          skeleton.remove();
+        }
+        imageContainer.innerHTML = `
+          <div style="color: #666; text-align: center; padding: 40px;">
+            Failed to load image. Please try again.
+          </div>
+        `;
+      };
+      
       imageContainer.appendChild(img);
-    };
-    reader.readAsDataURL(imageFile);
+    } else {
+      // Handle real file uploads
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        // Create image element
+        const img = document.createElement('img');
+        img.style.cssText = `
+          max-width: calc(100% - 30px);
+          max-height: calc(100% - 30px);
+          width: auto;
+          height: auto;
+          min-width: 150px;
+          min-height: 150px;
+          border-radius: 8px;
+          object-fit: contain;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          background: transparent;
+          display: block;
+          margin: 0 auto;
+        `;
+        img.id = 'uploaded-image';
+        img.src = e.target.result;
+        
+        // Once image loads, fade it in, remove skeleton, and add crop box
+        img.onload = () => {
+          const skeleton = imageContainer.querySelector('#image-skeleton');
+          if (skeleton) {
+            skeleton.remove();
+          }
+          img.style.opacity = '1';
+          
+          // Add crop box after image loads with smooth transition
+          setTimeout(() => {
+            addCropBox(imageContainer, img);
+          }, 300);
+        };
+        
+        imageContainer.appendChild(img);
+      };
+      reader.readAsDataURL(imageFile);
+    }
     
     // Store file for later analysis
     drawer._imageFile = imageFile;
@@ -1625,11 +1970,29 @@
     const imgWidth = imgRect.width;
     const imgHeight = imgRect.height;
     
-    // Create crop box (centered on image, 60% of image size)
-    const cropWidth = Math.max(imgWidth * 0.6, 100);
-    const cropHeight = Math.max(imgHeight * 0.6, 100);
-    const cropLeft = imgLeft + (imgWidth - cropWidth) / 2;
-    const cropTop = imgTop + (imgHeight - cropHeight) / 2;
+    // Mobile responsive sizing
+    const isMobile = window.innerWidth <= 768;
+    const minCropSize = isMobile ? 80 : 100; // Smaller minimum on mobile
+    const handleSize = isMobile ? 16 : 12; // Larger handles on mobile for easier touch
+    const handleOffset = isMobile ? 8 : 6; // Larger offset on mobile
+    
+    // Calculate safe boundaries - ensure handles stay within image bounds
+    const handleMargin = handleOffset + (handleSize / 2);
+    const safeImgLeft = imgLeft + handleMargin;
+    const safeImgTop = imgTop + handleMargin;
+    const safeImgWidth = imgWidth - (handleMargin * 2);
+    const safeImgHeight = imgHeight - (handleMargin * 2);
+    
+    // Create crop box (centered on image, responsive size) within safe boundaries
+    const cropPercentage = isMobile ? 0.6 : 0.5; // Smaller percentage to ensure handles fit
+    const maxCropWidth = Math.min(safeImgWidth, imgWidth * 0.8);
+    const maxCropHeight = Math.min(safeImgHeight, imgHeight * 0.8);
+    const cropWidth = Math.max(Math.min(maxCropWidth * cropPercentage, maxCropWidth), minCropSize);
+    const cropHeight = Math.max(Math.min(maxCropHeight * cropPercentage, maxCropHeight), minCropSize);
+    
+    // Center the crop box within safe boundaries
+    const cropLeft = safeImgLeft + (safeImgWidth - cropWidth) / 2;
+    const cropTop = safeImgTop + (safeImgHeight - cropHeight) / 2;
     
     const cropBox = document.createElement('div');
     cropBox.id = 'crop-box';
@@ -1641,7 +2004,7 @@
       height: ${cropHeight}px;
     `;
     
-    // Create all 4 corner resize handles with elbow shape
+    // Create all 4 corner resize handles with mobile-responsive sizing
     const cornerHandles = [
       { id: 'nw', position: 'nw', cursor: 'nw-resize' },
       { id: 'ne', position: 'ne', cursor: 'ne-resize' },
@@ -1657,24 +2020,34 @@
       resizeHandle.dataset.type = 'corner';
       resizeHandle.style.cssText = `
         position: absolute;
+        width: ${handleSize}px;
+        height: ${handleSize}px;
+        background: rgba(248, 248, 248, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        border-radius: ${isMobile ? '4px' : '2px'};
         cursor: ${handle.cursor};
         touch-action: none;
         transition: all 0.2s ease;
-        ${handle.position === 'nw' ? 'top: -6px; left: -6px;' : ''}
-        ${handle.position === 'ne' ? 'top: -6px; right: -6px;' : ''}
-        ${handle.position === 'sw' ? 'bottom: -6px; left: -6px;' : ''}
-        ${handle.position === 'se' ? 'bottom: -6px; right: -6px;' : ''}
+        z-index: 12;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        ${handle.position === 'nw' ? `top: -${handleOffset}px; left: -${handleOffset}px;` : ''}
+        ${handle.position === 'ne' ? `top: -${handleOffset}px; right: -${handleOffset}px;` : ''}
+        ${handle.position === 'sw' ? `bottom: -${handleOffset}px; left: -${handleOffset}px;` : ''}
+        ${handle.position === 'se' ? `bottom: -${handleOffset}px; right: -${handleOffset}px;` : ''}
       `;
       cropBox.appendChild(resizeHandle);
     });
     
-    // Create border resize handles (top, bottom, left, right)
+    // Create border resize handles (top, bottom, left, right) - mobile responsive
     const borderHandles = [
       { id: 'top', side: 'top' },
       { id: 'bottom', side: 'bottom' },
       { id: 'left', side: 'left' },
       { id: 'right', side: 'right' }
     ];
+    
+    const borderHandleSize = isMobile ? 12 : 8;
+    const borderIndicatorSize = isMobile ? 20 : 16;
     
     borderHandles.forEach(handle => {
       const resizeHandle = document.createElement('div');
@@ -1688,24 +2061,25 @@
         touch-action: none;
         transition: all 0.2s ease;
         cursor: ${handle.side === 'top' || handle.side === 'bottom' ? 'ns-resize' : 'ew-resize'};
-        ${handle.side === 'top' ? 'top: -4px; left: 12px; right: 12px; height: 8px;' : ''}
-        ${handle.side === 'bottom' ? 'bottom: -4px; left: 12px; right: 12px; height: 8px;' : ''}
-        ${handle.side === 'left' ? 'left: -4px; top: 12px; bottom: 12px; width: 8px;' : ''}
-        ${handle.side === 'right' ? 'right: -4px; top: 12px; bottom: 12px; width: 8px;' : ''}
+        ${handle.side === 'top' ? `top: -${borderHandleSize/2}px; left: ${handleSize + 4}px; right: ${handleSize + 4}px; height: ${borderHandleSize}px;` : ''}
+        ${handle.side === 'bottom' ? `bottom: -${borderHandleSize/2}px; left: ${handleSize + 4}px; right: ${handleSize + 4}px; height: ${borderHandleSize}px;` : ''}
+        ${handle.side === 'left' ? `left: -${borderHandleSize/2}px; top: ${handleSize + 4}px; bottom: ${handleSize + 4}px; width: ${borderHandleSize}px;` : ''}
+        ${handle.side === 'right' ? `right: -${borderHandleSize/2}px; top: ${handleSize + 4}px; bottom: ${handleSize + 4}px; width: ${borderHandleSize}px;` : ''}
+        z-index: 11;
       `;
       
       // Add the visual indicator
       const indicator = document.createElement('div');
       indicator.style.cssText = `
         position: absolute;
-        background: rgba(248, 248, 248, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        border-radius: 2px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        background: rgba(248, 248, 248, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: ${isMobile ? '3px' : '2px'};
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
         pointer-events: none;
         ${handle.side === 'top' || handle.side === 'bottom' ? 
-          'left: 50%; top: 50%; transform: translate(-50%, -50%); width: 16px; height: 3px;' : 
-          'left: 50%; top: 50%; transform: translate(-50%, -50%); width: 3px; height: 16px;'
+          `left: 50%; top: 50%; transform: translate(-50%, -50%); width: ${borderIndicatorSize}px; height: ${isMobile ? 4 : 3}px;` : 
+          `left: 50%; top: 50%; transform: translate(-50%, -50%); width: ${isMobile ? 4 : 3}px; height: ${borderIndicatorSize}px;`
         }
       `;
       resizeHandle.appendChild(indicator);
@@ -1714,16 +2088,17 @@
     
     container.appendChild(cropBox);
     
-    // Add a center draggable area indicator
+    // Add a center draggable area indicator - mobile responsive
     const dragArea = document.createElement('div');
     dragArea.className = 'crop-drag-area';
+    const dragAreaSize = isMobile ? 32 : 24;
     dragArea.style.cssText = `
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 24px;
-      height: 24px;
+      width: ${dragAreaSize}px;
+      height: ${dragAreaSize}px;
       background: rgba(248, 248, 248, 0.9);
       border: 2px solid rgba(255, 255, 255, 0.9);
       border-radius: 50%;
@@ -1735,11 +2110,13 @@
       transition: all 0.2s ease;
       pointer-events: none;
       z-index: 10;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     `;
     
     // Add drag icon
+    const iconSize = isMobile ? 16 : 12;
     dragArea.innerHTML = `
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #666;">
+      <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #666;">
         <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
       </svg>
     `;
@@ -1748,17 +2125,13 @@
     
     // Add hover effects for the crop box
     cropBox.addEventListener('mouseenter', () => {
-      if (!isDragging && !isResizing) {
-        dragArea.style.opacity = '1';
-        dragArea.style.transform = 'translate(-50%, -50%) scale(1.1)';
-      }
+      dragArea.style.opacity = '1';
+      dragArea.style.transform = 'translate(-50%, -50%) scale(1.1)';
     });
     
     cropBox.addEventListener('mouseleave', () => {
-      if (!isDragging && !isResizing) {
-        dragArea.style.opacity = '0.7';
-        dragArea.style.transform = 'translate(-50%, -50%) scale(1)';
-      }
+      dragArea.style.opacity = '0.7';
+      dragArea.style.transform = 'translate(-50%, -50%) scale(1)';
     });
     
     // Update drag area cursor on mouse down
@@ -1772,13 +2145,19 @@
       dragArea.style.cursor = 'grab';
     });
     
-    // Store image bounds for constraint checking
+    // Store image bounds for constraint checking - use safe boundaries
     cropBox._imageBounds = {
-      left: imgLeft,
-      top: imgTop,
-      right: imgLeft + imgWidth,
-      bottom: imgTop + imgHeight
+      left: safeImgLeft,
+      top: safeImgTop,
+      right: safeImgLeft + safeImgWidth,
+      bottom: safeImgTop + safeImgHeight
     };
+    
+    // Store mobile state for interaction handling
+    cropBox._isMobile = isMobile;
+    cropBox._minCropSize = minCropSize;
+    cropBox._handleSize = handleSize;
+    cropBox._handleOffset = handleOffset;
     
     // Set up drag and resize functionality
     setupCropBoxInteraction(cropBox, container);
@@ -1806,14 +2185,40 @@
 
     function constrainToImage(left, top, width, height) {
       const bounds = cropBox._imageBounds;
+      const minSize = cropBox._minCropSize || 50;
+      const handleSize = cropBox._handleSize || 12;
+      const handleOffset = cropBox._handleOffset || 6;
       
-      // Constrain position
-      left = Math.max(bounds.left, Math.min(left, bounds.right - width));
-      top = Math.max(bounds.top, Math.min(top, bounds.bottom - height));
+      // Additional safety margin to ensure handles don't extend outside image
+      const safetyMargin = Math.max(handleSize, handleOffset) + 2;
+      const safeBounds = {
+        left: bounds.left,
+        top: bounds.top,
+        right: bounds.right,
+        bottom: bounds.bottom
+      };
       
-      // Constrain size (minimum 50px)
-      width = Math.max(50, Math.min(width, bounds.right - left));
-      height = Math.max(50, Math.min(height, bounds.bottom - top));
+      // Constrain size first with mobile-aware minimum and safety margins
+      const maxWidth = safeBounds.right - safeBounds.left;
+      const maxHeight = safeBounds.bottom - safeBounds.top;
+      width = Math.max(minSize, Math.min(width, maxWidth));
+      height = Math.max(minSize, Math.min(height, maxHeight));
+      
+      // Constrain position to keep crop box (and handles) within safe bounds
+      left = Math.max(safeBounds.left, Math.min(left, safeBounds.right - width));
+      top = Math.max(safeBounds.top, Math.min(top, safeBounds.bottom - height));
+      
+      // Double-check that the position + size doesn't exceed boundaries
+      if (left + width > safeBounds.right) {
+        left = safeBounds.right - width;
+      }
+      if (top + height > safeBounds.bottom) {
+        top = safeBounds.bottom - height;
+      }
+      
+      // Final safety check to ensure we're within bounds
+      left = Math.max(safeBounds.left, left);
+      top = Math.max(safeBounds.top, top);
       
       return { left, top, width, height };
     }
@@ -2465,6 +2870,7 @@
       border: 1px solid #e9e9e9;
       transition: all 0.2s ease;
       cursor: pointer;
+      position: relative;
     `;
     
     card.innerHTML = `
@@ -2480,6 +2886,41 @@
           object-fit: cover;
           transition: transform 0.2s ease;
         " onload="this.parentElement.style.background='transparent'">
+        
+        <!-- Camera overlay icon for search by image -->
+        <div class="camera-overlay" style="
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          width: 32px;
+          height: 32px;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transform: scale(0.8);
+          transition: all 0.3s ease;
+          z-index: 10;
+          pointer-events: none;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        " title="Search with this image">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#333" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">
+            <!-- Camera body -->
+            <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
+            <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
+            
+            <!-- Camera lens -->
+            <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
+            
+            <!-- Flash/viewfinder -->
+            <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
+          </svg>
+        </div>
       </div>
     `;
     
@@ -2488,14 +2929,41 @@
       card.style.transform = 'translateY(-2px)';
       card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
       const img = card.querySelector('img');
+      const cameraOverlay = card.querySelector('.camera-overlay');
+      
       img.style.transform = 'scale(1.05)';
+      
+      // Show camera overlay
+      cameraOverlay.style.opacity = '1';
+      cameraOverlay.style.transform = 'scale(1)';
+      cameraOverlay.style.pointerEvents = 'auto';
     });
     
     card.addEventListener('mouseleave', () => {
       card.style.transform = 'translateY(0)';
       card.style.boxShadow = 'none';
       const img = card.querySelector('img');
+      const cameraOverlay = card.querySelector('.camera-overlay');
+      
       img.style.transform = 'scale(1)';
+      
+      // Hide camera overlay
+      cameraOverlay.style.opacity = '0';
+      cameraOverlay.style.transform = 'scale(0.8)';
+      cameraOverlay.style.pointerEvents = 'none';
+    });
+    
+    // Add click handler for search by image functionality
+    card.addEventListener('click', (e) => {
+      // Check if we're in a drawer context
+      const drawer = card.closest('.visual-search-drawer');
+      if (drawer) {
+        const drawerContent = drawer.querySelector('div');
+        if (drawerContent && drawerContent._searchInput) {
+          // Use the result image for a new search
+          searchByResultImage(product.image, drawerContent._searchInput, drawerContent);
+        }
+      }
     });
     
     return card;
@@ -2536,6 +3004,37 @@
     return skeletonCard;
   }
   
+  // ====================================================================
+  // SEARCH BY RESULT IMAGE
+  // ====================================================================
+  
+  async function searchByResultImage(imageUrl, searchInput, drawer) {
+    try {
+      // Show feedback to user
+      showNotification('Using this image for new search...', 'info');
+      
+      // Create a fake file object for the result image
+      const fakeFile = {
+        name: 'result-image.jpg',
+        type: 'image/jpeg',
+        size: 0,
+        _imageUrl: imageUrl
+      };
+      
+      // Update the uploaded image display (this handles everything)
+      showImagePreview(drawer, fakeFile, searchInput);
+      
+      // Update UI to show that we're using a new image
+      updateResultsHeader(drawer, 'New search starting...', 'Using selected result image for search');
+      
+      showSuccess('Image updated! Crop and adjust the area to search.');
+      
+    } catch (error) {
+      console.error('Search by result image error:', error);
+      showError('Could not use this image for search. Please try again.');
+    }
+  }
+
   // ====================================================================
   // URL INPUT DIALOG
   // ====================================================================
@@ -2686,10 +3185,15 @@
       const imageContainer = drawer.querySelector('#image-selection-container');
       imageContainer.innerHTML = `
         <img src="${url}" style="
-          max-width: 100%;
-          max-height: 100%;
+          max-width: calc(100% - 20px);
+          max-height: calc(100% - 20px);
+          width: auto;
+          height: auto;
           border-radius: 8px;
           object-fit: contain;
+          display: block;
+          margin: 0 auto;
+          background: transparent;
         " id="uploaded-image" onload="
           this.parentElement.style.background='transparent';
         " onerror="
