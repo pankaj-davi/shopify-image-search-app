@@ -1,10 +1,10 @@
-import {  useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import {
   Page,
   Text,
   Card,
   BlockStack,
-  InlineStack,
+  InlineStack
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 

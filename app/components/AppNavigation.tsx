@@ -1,4 +1,4 @@
-import { Card, BlockStack, InlineStack, Button, Text } from "@shopify/polaris";
+import { Card, BlockStack, InlineStack, Button, Text, SkeletonBodyText, SkeletonDisplayText } from "@shopify/polaris";
 
 interface NavigationLink {
   url: string;
@@ -18,6 +18,7 @@ interface NavigationSection {
 interface AppNavigationProps {
   sections?: NavigationSection[];
   compact?: boolean;
+  loading?: boolean;
 }
 
 const DEFAULT_SECTIONS: NavigationSection[] = [
@@ -92,7 +93,48 @@ const DEFAULT_SECTIONS: NavigationSection[] = [
   },
 ];
 
-export default function AppNavigation({ sections = DEFAULT_SECTIONS, compact = false }: AppNavigationProps) {
+export default function AppNavigation({ sections = DEFAULT_SECTIONS, compact = false, loading = false }: AppNavigationProps) {
+  if (loading) {
+    return (
+      <BlockStack gap="400">
+        {compact ? (
+          <Card>
+            <BlockStack gap="300">
+              <SkeletonDisplayText size="medium" />
+              <InlineStack gap="300" wrap>
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} background="bg-surface-secondary">
+                    <div style={{ padding: "16px", minWidth: "200px" }}>
+                      <SkeletonBodyText lines={2} />
+                    </div>
+                  </Card>
+                ))}
+              </InlineStack>
+            </BlockStack>
+          </Card>
+        ) : (
+          <>
+            {[1, 2].map((section) => (
+              <Card key={section}>
+                <BlockStack gap="400">
+                  <SkeletonDisplayText size="medium" />
+                  <SkeletonBodyText lines={1} />
+                  <BlockStack gap="200">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} style={{ padding: "12px", border: "1px solid #e1e1e1", borderRadius: "6px" }}>
+                        <SkeletonBodyText lines={2} />
+                      </div>
+                    ))}
+                  </BlockStack>
+                </BlockStack>
+              </Card>
+            ))}
+          </>
+        )}
+      </BlockStack>
+    );
+  }
+
   if (compact) {
     // Compact version - show only quick access links in a grid
     const quickLinks = sections[0]?.links || DEFAULT_SECTIONS[0].links;
