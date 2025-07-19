@@ -23,10 +23,13 @@ export default function App() {
     <AppProvider isEmbeddedApp apiKey={apiKey}>
       <NavMenu>
         <Link to="/app" rel="home">
-          Home Pankaj test
+          🏠 Dashboard
         </Link>
-        <Link to="/app/additional">Additional page</Link>
-        <Link to="/app/additional">tesssssssss page</Link>
+        <Link to="/app/visual-search">⚡ Quick Setup</Link>
+        <Link to="/app/app-blocks">� Advanced Setup</Link>
+        <Link to="/app/preview">👀 Preview & Test</Link>
+        <Link to="/app/testing-tools">🔧 Help & Tools</Link>
+        <Link to="/app/additional">📊 Analytics</Link>
       </NavMenu>
       <AppLayout>
         <Outlet />

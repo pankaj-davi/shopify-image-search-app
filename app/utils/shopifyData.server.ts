@@ -1,27 +1,18 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { appDatabase } from "../services/app.database.service";
-import { ScriptInjectionService } from "../services/script-injection.service";
 
 export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
   const shopDomain = session.shop;
-
-  // Get app URL from request 
-  const url = new URL(request.url);
-  const appUrl = process.env.SHOPIFY_APP_URL || `${url.protocol}//${url.host}`;
 
   // Check if the store already exists in the database
   const storeExists = await appDatabase.getStore(shopDomain);
   console.log("Store exists in database:", storeExists);
   
   if (storeExists) {
-    // Even for existing stores, ensure visual search script is injected
-    try {
-      await ScriptInjectionService.injectVisualSearchScript(admin, shopDomain, appUrl);
-    } catch (error) {
-      console.error("Failed to inject visual search script for existing store:", error);
-    }
+    // Script injection is now optional - merchants can choose automatic or app blocks
+    // Visual search script injection moved to manual control via /app/visual-search
     
     // Get store with associated products for better data consistency
     const storeWithProducts = await appDatabase.getStoreWithProducts(shopDomain, 25);
@@ -248,13 +239,9 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     storeData.data.products.edges.map((edge: any) => edge.node)
   );
 
-  // Inject visual search script for new stores
-  try {
-    const scriptResult = await ScriptInjectionService.injectVisualSearchScript(admin, shopDomain, appUrl);
-    console.log("Visual search script injection result:", scriptResult);
-  } catch (error) {
-    console.error("Failed to inject visual search script:", error);
-  }
+  // Script injection is now optional - merchants can choose automatic or app blocks
+  // Visual search script injection moved to manual control via /app/visual-search
+  // Use /app/visual-search to enable automatic injection or /app/app-blocks for manual integration
 
   return {
     store: storeData.data.shop,

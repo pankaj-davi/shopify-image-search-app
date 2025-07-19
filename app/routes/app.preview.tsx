@@ -1607,27 +1607,25 @@ export default function PreviewPage() {
                                 <BlockStack gap="300">
                                   <Text as="h5" variant="headingMd">Option 2: App Block for Theme 2.0</Text>
                                   <Text as="p" variant="bodyMd" tone="subdued">
-                                    Create a custom app block file <Text as="span" fontWeight="semibold">blocks/visual-search.liquid</Text>:
+                                    Add visual search through the theme editor for precise placement control.
                                   </Text>
-                                  <Box 
-                                    background="bg-surface-secondary" 
-                                    padding="400" 
-                                    borderRadius="200"
-                                    borderWidth="025"
-                                    borderColor="border"
-                                  >
-                                    <div style={{ maxHeight: "300px", overflow: "auto" }}>
-                                      <pre style={{ 
-                                        fontSize: "10px", 
-                                        fontFamily: "monospace", 
-                                        margin: 0, 
-                                        lineHeight: "1.3",
-                                        whiteSpace: "pre-wrap"
-                                      }}>
-                                        {generateAppBlockConfig()}
-                                      </pre>
-                                    </div>
+                                  
+                                  <Box background="bg-surface-secondary" padding="400" borderRadius="200">
+                                    <BlockStack gap="200">
+                                      <Text as="h6" variant="headingSm">Simple 4-Step Process:</Text>
+                                      <BlockStack gap="100">
+                                        <Text as="p" variant="bodyMd">1. Go to <Text as="span" fontWeight="semibold">Online Store → Themes → Customize</Text></Text>
+                                        <Text as="p" variant="bodyMd">2. Click <Text as="span" fontWeight="semibold">"+"</Text> to add a new block</Text>
+                                        <Text as="p" variant="bodyMd">3. Find <Text as="span" fontWeight="semibold">"Visual Search"</Text> in the Apps section</Text>
+                                        <Text as="p" variant="bodyMd">4. Customize colors, positioning, and save</Text>
+                                      </BlockStack>
+                                    </BlockStack>
                                   </Box>
+                                  
+                                  <Text as="p" variant="bodyMd" tone="subdued">
+                                    <Text as="span" fontWeight="semibold">Developer Note:</Text> The app block file is automatically created at <Text as="span" fontWeight="semibold">blocks/visual-search.liquid</Text> in your theme.
+                                  </Text>
+                                  
                                   <Button 
                                     variant="secondary" 
                                     onClick={() => {
@@ -1638,7 +1636,7 @@ export default function PreviewPage() {
                                       });
                                     }}
                                   >
-                                    📋 Copy App Block Code
+                                    📋 Copy App Block Code (For Developers)
                                   </Button>
                                 </BlockStack>
                               </BlockStack>
