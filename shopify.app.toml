@@ -3,7 +3,7 @@
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
 handle = "newp"
-application_url = "https://voted-preservation-cop-dui.trycloudflare.com"
+application_url = "https://neighbors-thin-internal-ratios.trycloudflare.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-07"
 scopes = "write_products,write_script_tags"
 
 [auth]
-redirect_urls = ["https://voted-preservation-cop-dui.trycloudflare.com/auth/callback", "https://voted-preservation-cop-dui.trycloudflare.com/auth/shopify/callback", "https://voted-preservation-cop-dui.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://neighbors-thin-internal-ratios.trycloudflare.com/auth/callback", "https://neighbors-thin-internal-ratios.trycloudflare.com/auth/shopify/callback", "https://neighbors-thin-internal-ratios.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false

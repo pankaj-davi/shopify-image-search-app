@@ -1,0 +1,121 @@
+{%- comment -%}
+  Visual Search Icon Block for Shopify Theme 2.0
+  Simple app block that can be added to any section
+{%- endcomment -%}
+
+{%- liquid
+  assign icon_size = block.settings.icon_size | default: 24
+  assign icon_color = block.settings.icon_color | default: '#5f6368'
+-%}
+
+<div class="visual-search-app-block" {{ block.shopify_attributes }} data-visual-search-trigger>
+  <style>
+    .visual-search-app-block[data-visual-search-trigger] {
+      width: {{ icon_size }}px;
+      height: {{ icon_size }}px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      color: {{ icon_color }};
+      background: transparent;
+      padding: 8px;
+      margin: 4px;
+    }
+
+    .visual-search-app-block[data-visual-search-trigger]:hover {
+      color: #202124;
+      background: rgba(95, 99, 104, 0.08);
+      transform: scale(1.1);
+    }
+
+    .visual-search-app-block[data-visual-search-trigger]:active {
+      transform: scale(0.9);
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const iconElement = document.querySelector('[data-visual-search-trigger]');
+      
+      if (iconElement) {
+        iconElement.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Simple visual search trigger
+          console.log('Visual Search activated!');
+          
+          // Check if custom handler exists
+          if (window.handleVisualSearchClick) {
+            window.handleVisualSearchClick(this);
+          } else {
+            alert('Visual Search clicked! Connect to your visual search backend here.');
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- Icon SVG -->
+  {%- case block.settings.icon_style -%}
+    {%- when 'camera' -%}
+      <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+        <circle cx="12" cy="13" r="3"/>
+      </svg>
+    {%- when 'search' -%}
+      <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+    {%- else -%}
+      <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+        <circle cx="12" cy="13" r="3"/>
+      </svg>
+  {%- endcase -%}
+</div>
+
+{% schema %}
+{
+  "name": "Visual Search Icon",
+  "target": "section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "icon_style",
+      "label": "Icon Style",
+      "options": [
+        {
+          "value": "camera",
+          "label": "Camera"
+        },
+        {
+          "value": "search",
+          "label": "Search"
+        }
+      ],
+      "default": "camera"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon Color",
+      "default": "#5f6368"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon Size",
+      "min": 16,
+      "max": 32,
+      "step": 2,
+      "default": 24,
+      "unit": "px"
+    }
+  ]
+}
+{% endschema %}

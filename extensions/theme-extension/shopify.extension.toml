@@ -1,0 +1,13 @@
+name = "visual-search-theme"
+type = "theme"
+
+[[app_blocks]]
+  name = "Visual Search Input Icon"
+  target = "section"
+  icon = "visual-search-logo.svg"
+
+[settings]
+  [[settings.app_blocks]]
+    name = "Visual Search Input Icon"
+    target = "section"
+
