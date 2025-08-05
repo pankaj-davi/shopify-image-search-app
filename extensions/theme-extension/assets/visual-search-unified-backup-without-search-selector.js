@@ -1,11 +1,7 @@
 (function() {
   'use strict';
   
-  // ====================================================================
-  // VISUAL SEARCH - UNIFIED SCRIPT
-  // Single source of truth for all visual search functionality
-  // Pinterest-style UI with comprehensive styling and functionality
-  // ====================================================================
+ 
   
   // Debug logging
   console.log('[Visual Search] Unified script loaded at', new Date().toLocaleString());
@@ -23,68 +19,49 @@
   // ====================================================================
   
   const CONFIG = {
-    // App configuration
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://your-app-domain.com',
+    // App configuration - Static values
+    APP_URL: 'https://pixel-dress-store.myshopify.com/',
     EXTERNAL_API_URL: 'http://localhost:3000/visual-search',
-    SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || window.Shopify?.shop || '',
+    SHOP_DOMAIN: 'pixel-dress-store.myshopify.com',
     
-    // Theme customization (can be overridden by store owners)
+    // Theme customization - Static theme values
     THEME: {
-      // Icon colors - use CSS variables for theme compatibility
-      ICON_COLOR: window.VISUAL_SEARCH_CONFIG?.theme?.iconColor || 'var(--visual-search-text-secondary, #5f6368)',
-      ICON_COLOR_HOVER: window.VISUAL_SEARCH_CONFIG?.theme?.iconColorHover || 'var(--visual-search-text-primary, #202124)',
-      ICON_BACKGROUND_HOVER: window.VISUAL_SEARCH_CONFIG?.theme?.iconBackgroundHover || 'var(--visual-search-bg-surface-hover, rgba(95, 99, 104, 0.08))',
+      // Icon colors - Static theme colors
+      ICON_COLOR: '#5f6368',
+      ICON_COLOR_HOVER: '#202124',
+      ICON_BACKGROUND_HOVER: 'rgba(95, 99, 104, 0.08)',
       
-      // Brand colors - use CSS variables for theme compatibility
-      PRIMARY_COLOR: window.VISUAL_SEARCH_CONFIG?.theme?.primaryColor || 'var(--visual-search-brand-primary, #008060)',
-      PRIMARY_COLOR_DARK: window.VISUAL_SEARCH_CONFIG?.theme?.primaryColorDark || 'var(--visual-search-brand-active, #004C3F)',
+      // Brand colors - Static brand colors
+      PRIMARY_COLOR: '#008060',
+      PRIMARY_COLOR_DARK: '#004C3F',
       
-      // Icon style
-      ICON_STYLE: window.VISUAL_SEARCH_CONFIG?.theme?.iconStyle || 'google', // 'google', 'minimal', 'branded'
-      ICON_SIZE_MULTIPLIER: window.VISUAL_SEARCH_CONFIG?.theme?.iconSizeMultiplier || 1.0,
-      
-      // Position
-      ICON_POSITION: window.VISUAL_SEARCH_CONFIG?.theme?.iconPosition || 'right', // 'right', 'left'
-      ICON_OFFSET: window.VISUAL_SEARCH_CONFIG?.theme?.iconOffset || 8
+      // Icon settings
+      ICON_SIZE_MULTIPLIER: 1.0,
+      ICON_OFFSET: 8
     },
     
-    // UI Settings (fallback to theme or defaults)
-    get PINTEREST_RED() { return this.THEME.PRIMARY_COLOR; },
-    get PINTEREST_RED_DARK() { return this.THEME.PRIMARY_COLOR_DARK; },
+    // UI Settings - Static fallback values
+    PINTEREST_RED: '#008060',
+    PINTEREST_RED_DARK: '#004C3F',
     
     ICON_SIZE_DEFAULT: 24,
     ICON_SIZE_MIN: 20,
     ICON_SIZE_MAX: 28,
     
-    // Animation settings
+    // Animation settings - Static values
     ANIMATION_DURATION: 400,
     ANIMATION_EASING: 'cubic-bezier(0.16, 1, 0.3, 1)',
     
-    // File upload settings
+    // File upload settings - Static limits
     MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
-    ACCEPTED_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-    
-    // Search selectors for finding input fields
-    SEARCH_SELECTORS: [
-      'input[type="search"]',
-      'input[name*="search"]',
-      'input[placeholder*="search" i]',
-      'input[class*="search"]',
-      'input[id*="search"]',
-      '[role="searchbox"]',
-      '.search-input',
-      '#search',
-      '.header-search input',
-      '.predictive-search input',
-      '.search-bar input'
-    ]
+    ACCEPTED_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   };
   
-  console.log('[Visual Search] Configuration:', {
+  console.log('[Visual Search] Static Configuration loaded: PankajTest', {
     appUrl: CONFIG.APP_URL,
     shopDomain: CONFIG.SHOP_DOMAIN,
-    hasConfig: !!window.VISUAL_SEARCH_CONFIG,
-    CONFIG : JSON.parse(JSON.stringify(CONFIG)),
+    primaryColor: CONFIG.THEME.PRIMARY_COLOR,
+    iconStyle: CONFIG.THEME.ICON_STYLE
   });
   
   // ====================================================================
@@ -154,13 +131,13 @@
         padding: 14px 12px !important;
         font-size: 14px !important;
         gap: 8px !important;
-        border-radius: 10px !important;
-        min-height: 48px !important;
+        border-radius: 10px;
+        min-height: 48px;
       }
       
       .visual-search-alt-button svg {
-        width: 18px !important;
-        height: 18px !important;
+        width: 18px;
+        height: 18px;
       }
       
       /* Enhanced upload area for mobile */
@@ -173,47 +150,46 @@
       }
       
       .visual-search-upload-icon {
-        width: 56px !important;
-        height: 56px !important;
-        margin-bottom: 16px !important;
+        width: 56px;
+        height: 56px;
+        margin-bottom: 16px;
       }
       
       .visual-search-upload-icon svg {
-        width: 28px !important;
-        height: 28px !important;
+        width: 28px;
+        height: 28px;
       }
       
       .visual-search-main-upload h3 {
-        font-size: 18px !important;
-        margin-bottom: 10px !important;
+        font-size: 18px;
+        margin-bottom: 10px;
       }
       
       .visual-search-main-upload p {
-        font-size: 15px !important;
-        margin-bottom: 20px !important;
-        max-width: 260px !important;
+        font-size: 15px;
+        margin-bottom: 20px;
+        max-width: 260px;
       }
       
       .visual-search-main-upload button {
-        padding: 14px 28px !important;
-        font-size: 15px !important;
-        min-height: 48px !important;
+        padding: 14px 28px;
+        font-size: 15px;
       }
       
       /* Mobile-friendly tips section */
       .visual-search-tips {
-        padding: 14px !important;
-        border-radius: 10px !important;
+        padding: 14px;
+        border-radius: 10px;
       }
       
       .visual-search-tips h4 {
-        font-size: 14px !important;
-        margin-bottom: 8px !important;
+        font-size: 14px;
+        margin-bottom: 8px;
       }
       
       .visual-search-tips ul {
-        font-size: 13px !important;
-        line-height: 1.6 !important;
+        font-size: 13px;
+        line-height: 1.6;
       }
       
       /* Product card optimizations for mobile */
@@ -244,64 +220,62 @@
       }
       
       #image-selection-container img {
-        max-width: calc(100% - 30px) !important;
-        max-height: calc(100% - 30px) !important;
-        width: auto !important;
-        height: auto !important;
-        min-width: 120px !important;
-        min-height: 120px !important;
-        object-fit: contain !important;
-        display: block !important;
-        margin: 0 auto !important;
+        min-width: 120px;
+        min-height: 120px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+        height:300px;
+        width:250px;
       }
       
       /* Close button mobile optimization */
       #close-drawer-x {
-        width: 40px !important;
-        height: 40px !important;
-        top: 8px !important;
-        right: 12px !important;
-        font-size: 18px !important;
+        width: 40px;
+        height: 40px;
+        top: 8px;
+        right: 12px;
+        font-size: 18px;
         touch-action: manipulation !important;
       }
       
       /* Header mobile adjustments */
       .visual-search-drawer > div > div:first-child {
-        padding: 16px 20px 12px !important;
+        padding: 16px 20px 12px;
       }
       
       .visual-search-drawer h2 {
-        font-size: 20px !important;
+        font-size: 20px;
       }
       
       .visual-search-drawer > div > div:first-child p {
-        font-size: 14px !important;
+        font-size: 14px;
       }
       
       /* Empty state mobile */
       .visual-search-empty-state {
-        padding: 40px 20px !important;
+        padding: 40px 20px;
       }
       
       .visual-search-empty-icon {
-        width: 64px !important;
-        height: 64px !important;
-        margin-bottom: 16px !important;
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
       }
       
       .visual-search-empty-icon svg {
-        width: 28px !important;
-        height: 28px !important;
+        width: 28px;
+        height: 28px;
       }
       
       .visual-search-empty-state h3 {
-        font-size: 16px !important;
-        margin-bottom: 6px !important;
+        font-size: 16px;
+        margin-bottom: 6px;
       }
       
       .visual-search-empty-state p {
-        font-size: 13px !important;
-        max-width: 280px !important;
+        font-size: 13px;
+        max-width: 280px;
       }
 
       /* Tablet landscape optimizations */
@@ -351,8 +325,8 @@
           padding: 20px 24px !important;
         }
         .visual-search-upload-icon {
-          width: 64px !important;
-          height: 64px !important;
+          width: 48px !important;
+          height: 48px !important;
           margin-bottom: 20px !important;
         }
         .visual-search-upload-icon svg {
@@ -369,7 +343,7 @@
           max-width: 280px !important;
         }
         .visual-search-main-upload {
-          padding: 40px 24px !important;
+          padding: 20px !important;
           border-radius: 16px !important;
           margin-bottom: 20px !important;
           min-height: 200px !important;
@@ -428,15 +402,13 @@
           box-sizing: border-box !important;
           overflow: visible !important;
           padding: 15px !important;
+          height: 180px !important;
         }
         
         #image-selection-container img {
-          max-width: calc(100% - 30px) !important;
-          max-height: calc(100% - 30px) !important;
-          width: auto !important;
-          height: auto !important;
-          min-width: 180px !important;
-          min-height: 180px !important;
+          width: 100% !important;
+          min-width: 100% !important;
+          min-height: 240px !important;
           object-fit: contain !important;
           display: block !important;
           margin: 0 auto !important;
@@ -495,11 +467,11 @@
       }
     `,
     
-    // Icon styles - Google-inspired design with smart positioning
+    // Icon styles - Google-inspired design with right positioning
     icon: (size, offset = 8) => `
       position: absolute;
       top: 50%;
-      ${CONFIG.THEME.ICON_POSITION}: ${offset}px;
+      right: ${offset}px;
       transform: translateY(-50%);
       width: ${Math.round(size * CONFIG.THEME.ICON_SIZE_MULTIPLIER)}px;
       height: ${Math.round(size * CONFIG.THEME.ICON_SIZE_MULTIPLIER)}px;
@@ -1439,41 +1411,15 @@
   }
   
   function createSVGIcon() {
-    // Different icon styles based on theme configuration
-    const iconStyle = CONFIG.THEME.ICON_STYLE || 'google';
-    
-    switch (iconStyle) {
-      case 'minimal':
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.35-4.35"/>
-          <rect x="7" y="7" width="8" height="6" rx="1"/>
-        </svg>`;
-      
-      case 'branded':
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-          <circle cx="12" cy="8" r="2" fill="white"/>
-          <rect x="8" y="10" width="8" height="4" rx="1" fill="white" opacity="0.8"/>
-        </svg>`;
-      
-      case 'google':
-      default:
-        // Google-style camera icon for image search
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <!-- Camera body -->
-          <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
-          <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
-          
-          <!-- Camera lens -->
-          <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
-          
-          <!-- Flash/viewfinder -->
-          <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
-        </svg>`;
-    }
+    // Simple camera icon for visual search
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
+      <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
+      <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
+      <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
+    </svg>`;
   }
   
   function isMobileDevice() {
@@ -1559,114 +1505,9 @@
   // VISUAL SEARCH ICON CREATION & INJECTION
   // ====================================================================
   
-  function createVisualSearchIcon(input, size = CONFIG.ICON_SIZE_DEFAULT, offset = 8) {
-    const icon = document.createElement('div');
-    icon.className = 'visual-search-icon';
-    icon.setAttribute('aria-label', 'Search by image1');
-    icon.setAttribute('role', 'button');
-    icon.setAttribute('tabindex', '0');
-    icon.title = 'Search by image1';
-    
-    icon.style.cssText = STYLES.icon(size, offset);
-    icon.innerHTML = createSVGIcon();
-    
-    // Google-style hover effects with theme colors
-    icon.addEventListener('mouseenter', () => {
-      icon.style.opacity = '1';
-      icon.style.backgroundColor = CONFIG.THEME.ICON_BACKGROUND_HOVER;
-      icon.style.borderRadius = '50%';
-      icon.style.color = CONFIG.THEME.ICON_COLOR_HOVER;
-    });
-    
-    icon.addEventListener('mouseleave', () => {
-      icon.style.opacity = '0.7';
-      icon.style.backgroundColor = 'transparent';
-      icon.style.borderRadius = '3px';
-      icon.style.color = CONFIG.THEME.ICON_COLOR;
-    });
-    
-    // Click handlers
-    const handleClick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      openVisualSearchDrawer(input);
-    };
-    
-    icon.addEventListener('click', handleClick);
-    icon.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleClick(e);
-      }
-    });
-    
-    return icon;
-  }
-  
   function injectVisualSearchIcon() {
-    console.log('[Visual Search] Injecting visual search icons...');
-    
-    const searchInputs = document.querySelectorAll(CONFIG.SEARCH_SELECTORS.join(','));
-    console.log(`[Visual Search] Found ${searchInputs.length} search inputs`);
-
-    searchInputs.forEach(input => {
-      // Skip if already injected or hidden
-      if (input.closest('.search-container')?.querySelector('.visual-search-icon')) return;
-      if (input.dataset.visualSearchInjected) return;
-      if (getComputedStyle(input).display === 'none') return;
-
-      // Mark as injected
-      input.dataset.visualSearchInjected = 'true';
-
-      // Get container and make it relative
-      const container = input.closest('form, div, .search-form, .search-wrapper, .field') || input.parentElement;
-      if (!container) return;
-      
-      const containerStyle = getComputedStyle(container);
-      if (containerStyle.position === 'static') {
-        container.style.position = 'relative';
-      }
-
-      // Calculate icon size and smart positioning to avoid overlap
-      const inputStyle = getComputedStyle(input);
-      const inputHeight = parseInt(inputStyle.height) || 40;
-      const iconSize = Math.min(Math.max(inputHeight * 0.6, CONFIG.ICON_SIZE_MIN), CONFIG.ICON_SIZE_MAX) * CONFIG.THEME.ICON_SIZE_MULTIPLIER;
-      
-      // Check for existing icons/buttons in the input area
-      const existingIcons = container.querySelectorAll('button, .icon, .search-icon, [class*="icon"], [class*="search"]');
-      const currentPaddingLeft = parseInt(inputStyle.paddingLeft) || 0;
-      const currentPaddingRight = parseInt(inputStyle.paddingRight) || 0;
-      
-      // Calculate safe position based on theme position setting
-      let positionOffset = CONFIG.THEME.ICON_OFFSET;
-      let additionalPadding = iconSize + 15;
-      
-      if (CONFIG.THEME.ICON_POSITION === 'left') {
-        // Position on left side
-        if (existingIcons.length > 0) {
-          positionOffset = currentPaddingLeft > 30 ? currentPaddingLeft + 8 : 40;
-          additionalPadding = positionOffset + iconSize + 8;
-        }
-        
-        // Ensure minimum padding for our icon on left
-        const finalPadding = Math.max(currentPaddingLeft, additionalPadding);
-        input.style.paddingLeft = finalPadding + 'px';
-      } else {
-        // Position on right side (default)
-        if (existingIcons.length > 0) {
-          positionOffset = currentPaddingRight > 30 ? currentPaddingRight + 8 : 40;
-          additionalPadding = positionOffset + iconSize + 8;
-        }
-        
-        // Ensure minimum padding for our icon on right
-        const finalPadding = Math.max(currentPaddingRight, additionalPadding);
-        input.style.paddingRight = finalPadding + 'px';
-      }
-
-      // Create and inject icon with smart positioning
-      const icon = createVisualSearchIcon(input, iconSize, positionOffset);
-      container.appendChild(icon);
-    });
+    console.log('[Visual Search] Search selector injection disabled in this version');
+    return; // Early return - no search selector injection
   }
   
   // ====================================================================
@@ -1674,6 +1515,15 @@
   // ====================================================================
   
   function openVisualSearchDrawer(searchInput) {
+    console.log('[Visual Search] 🚪 Opening drawer with searchInput:', !!searchInput, searchInput);
+    
+    // If searchInput is null/undefined, create a fallback
+    if (!searchInput) {
+      console.log('[Visual Search] ⚠️ No searchInput provided, creating fallback');
+      // Create a mock search input object
+      searchInput = createFallbackSearchInput();
+    }
+    
     // Remove any existing drawer
     const existingDrawer = document.querySelector('.visual-search-drawer');
     if (existingDrawer) {
@@ -1709,6 +1559,28 @@
 
     overlay.appendChild(drawer);
     document.body.appendChild(overlay);
+
+    // Store the searchInput reference on multiple elements for easy access
+    overlay._searchInput = searchInput;
+    drawer._searchInput = searchInput;
+    
+    // Store globally as fallback - make it persistent
+    window.visualSearchCurrentInput = searchInput;
+    window.visualSearchCurrentSearchInput = searchInput; // Additional backup
+    
+    // Also store on any modal content that might exist
+    const modalContent = drawer.querySelector('#modal-content');
+    if (modalContent) {
+      modalContent._searchInput = searchInput;
+    }
+
+    console.log('[Visual Search] 💾 Stored searchInput on drawer elements:', !!searchInput);
+    console.log('[Visual Search] 🌍 Stored searchInput globally:', !!window.visualSearchCurrentInput);
+    console.log('[Visual Search] 🔍 SearchInput details:', {
+      value: searchInput?.value,
+      type: searchInput?.type,
+      name: searchInput?.name
+    });
 
     // Add global styles for responsive behavior
     addGlobalStyles();
@@ -1827,6 +1699,9 @@
         // Show image preview immediately
         showImagePreview(drawer, file, searchInput);
         
+        // 🚀 IMMEDIATE API CALL - Call backend as soon as file is uploaded
+        performImmediateImageAnalysis(drawer, file, searchInput);
+        
       } catch (error) {
         console.error('Visual search error:', error);
         showError('Something went wrong. Please try again.');
@@ -1943,9 +1818,62 @@
       reader.readAsDataURL(imageFile);
     }
     
-    // Store file for later analysis
+    // Store file for later analysis - store on multiple elements to ensure real-time analysis can find it
     drawer._imageFile = imageFile;
     drawer._searchInput = searchInput;
+    
+    // Store globally as fallback - ensure it's persistent
+    window.visualSearchCurrentInput = searchInput;
+    window.visualSearchCurrentSearchInput = searchInput; // Additional backup
+    
+    // Also store on modal-content div (which real-time analysis looks for)
+    const modalContent = drawer.querySelector('#modal-content');
+    if (modalContent) {
+      modalContent._imageFile = imageFile;
+      modalContent._searchInput = searchInput;
+    }
+    
+    // Also store on the image container as a fallback
+    const imageSelectionContainer = drawer.querySelector('#image-selection-container');
+    if (imageSelectionContainer) {
+      imageSelectionContainer._imageFile = imageFile;
+      imageSelectionContainer._searchInput = searchInput;
+    }
+    
+    // Also store on the drawer overlay element for better access
+    const drawerOverlay = drawer.closest('.visual-search-drawer');
+    if (drawerOverlay) {
+      drawerOverlay._imageFile = imageFile;
+      drawerOverlay._searchInput = searchInput;
+      
+      // Store references on the main drawer div too
+      const mainDrawerDiv = drawerOverlay.querySelector('div[style*="flex"]');
+      if (mainDrawerDiv && mainDrawerDiv !== drawer) {
+        mainDrawerDiv._imageFile = imageFile;
+        mainDrawerDiv._searchInput = searchInput;
+      }
+      
+      // Also store on any visual-search-modal-content div
+      const modalContentDiv = drawerOverlay.querySelector('.visual-search-modal-content');
+      if (modalContentDiv && modalContentDiv !== drawer) {
+        modalContentDiv._imageFile = imageFile;
+        modalContentDiv._searchInput = searchInput;
+      }
+      
+      // Store on the main background white div (most reliable)
+      const bgWhiteDiv = drawerOverlay.querySelector('div[style*="background: white"]');
+      if (bgWhiteDiv && bgWhiteDiv !== drawer) {
+        bgWhiteDiv._imageFile = imageFile;
+        bgWhiteDiv._searchInput = searchInput;
+      }
+    }
+    
+    console.log('[Visual Search] 📦 Data stored on elements:');
+    console.log('  - drawer:', !!drawer._imageFile, !!drawer._searchInput);
+    console.log('  - modalContent:', !!(modalContent && modalContent._imageFile), !!(modalContent && modalContent._searchInput));
+    console.log('  - imageContainer:', !!(imageSelectionContainer && imageSelectionContainer._imageFile), !!(imageSelectionContainer && imageSelectionContainer._searchInput));
+    console.log('  - drawerOverlay:', !!(drawerOverlay && drawerOverlay._imageFile), !!(drawerOverlay && drawerOverlay._searchInput));
+    console.log('  - global:', !!window.visualSearchCurrentInput);
   }
 
   function triggerAutoSearch(container) {
@@ -1956,6 +1884,264 @@
     const cropData = getCropData(drawer);
     if (cropData) {
       performCroppedImageSearch(drawer, drawer._searchInput, cropData);
+    }
+  }
+
+  // 🚀 NEW FUNCTION: Real-time API call when user crops or resizes
+  async function performRealTimeCropAnalysis(container) {
+    try {
+      console.log('[Visual Search] 🎯 Real-time crop analysis triggered!');
+      
+      // Find the drawer and data more reliably
+      let drawer = null;
+      let imageFile = null;
+      let searchInput = null;
+      
+      // First, get the drawer container
+      const drawerContainer = container.closest('.visual-search-drawer');
+      if (!drawerContainer) {
+        console.log('[Visual Search] ❌ Could not find drawer container');
+        return;
+      }
+      
+      // Try to find data from the drawer overlay first (most reliable)
+      if (drawerContainer._imageFile && drawerContainer._searchInput) {
+        imageFile = drawerContainer._imageFile;
+        searchInput = drawerContainer._searchInput;
+        drawer = drawerContainer.querySelector('#modal-content') || drawerContainer.querySelector('.visual-search-modal-content');
+        console.log('[Visual Search] ✅ Found data on drawer overlay');
+      }
+      
+      // If not found, try the main drawer div
+      if (!imageFile || !searchInput) {
+        const mainDrawer = drawerContainer.querySelector('div[style*="background: white"]');
+        if (mainDrawer && (mainDrawer._imageFile || mainDrawer._searchInput)) {
+          imageFile = imageFile || mainDrawer._imageFile;
+          searchInput = searchInput || mainDrawer._searchInput;
+          drawer = drawer || mainDrawer.querySelector('#modal-content') || mainDrawer;
+          console.log('[Visual Search] ✅ Found data on main drawer div');
+        }
+      }
+      
+      // If not found, try image selection container
+      if (!imageFile || !searchInput) {
+        const imageSelectionContainer = drawerContainer.querySelector('#image-selection-container');
+        if (imageSelectionContainer && (imageSelectionContainer._imageFile || imageSelectionContainer._searchInput)) {
+          imageFile = imageFile || imageSelectionContainer._imageFile;
+          searchInput = searchInput || imageSelectionContainer._searchInput;
+          drawer = drawer || drawerContainer.querySelector('#modal-content') || drawerContainer.querySelector('.visual-search-modal-content');
+          console.log('[Visual Search] ✅ Found data on image selection container');
+        }
+      }
+      
+      // If still not found, try modal content
+      if (!imageFile || !searchInput) {
+        const modalContent = drawerContainer.querySelector('#modal-content');
+        if (modalContent && (modalContent._imageFile || modalContent._searchInput)) {
+          imageFile = imageFile || modalContent._imageFile;
+          searchInput = searchInput || modalContent._searchInput;
+          drawer = drawer || modalContent;
+          console.log('[Visual Search] ✅ Found data on modal content');
+        }
+      }
+      
+      // Last resort: try to find any div with the data
+      if (!imageFile || !searchInput) {
+        const allDivs = drawerContainer.querySelectorAll('div');
+        for (const div of allDivs) {
+          if (div._imageFile || div._searchInput) {
+            imageFile = imageFile || div._imageFile;
+            searchInput = searchInput || div._searchInput;
+            drawer = drawer || div;
+            console.log('[Visual Search] ✅ Found data on div element');
+            break;
+          }
+        }
+      }
+      
+      console.log('[Visual Search] 🔍 Drawer found:', !!drawer);
+      console.log('[Visual Search] 🔍 Image file exists:', !!imageFile);
+      console.log('[Visual Search] 🔍 Search input exists:', !!searchInput);
+      
+      if (!drawer) {
+        console.log('[Visual Search] ❌ Could not find drawer element');
+        return;
+      }
+      
+      if (!imageFile) {
+        console.log('[Visual Search] ❌ No image file found');
+        return;
+      }
+      
+      if (!searchInput) {
+        console.log('[Visual Search] ❌ No search input found');
+        // Try to get searchInput from global scope or window
+        if (window.visualSearchCurrentInput) {
+          searchInput = window.visualSearchCurrentInput;
+          console.log('[Visual Search] ✅ Found searchInput from global scope');
+        } else if (window.visualSearchCurrentSearchInput) {
+          searchInput = window.visualSearchCurrentSearchInput;
+          console.log('[Visual Search] ✅ Found searchInput from backup global scope');
+        } else {
+          // Create a fallback search input if none exists
+          searchInput = createFallbackSearchInput();
+          console.log('[Visual Search] ⚠️ Created fallback searchInput');
+        }
+      }
+      
+      const cropData = getCropData(drawer);
+      if (!cropData) {
+        console.log('[Visual Search] ⚠️ No crop data available for real-time analysis');
+        return;
+      }
+      
+      console.log('[Visual Search] 🔄 Calling immediate API with crop data:', cropData);
+      
+      // Store the data on the drawer temporarily for the API call
+      drawer._imageFile = imageFile;
+      drawer._searchInput = searchInput;
+      
+      // Call the API immediately without any delay
+      await performCroppedImageSearch(drawer, searchInput, cropData);
+      
+    } catch (error) {
+      console.error('[Visual Search] ❌ Real-time crop analysis failed:', error);
+    }
+  }
+
+  // 🚀 NEW FUNCTION: Immediate API call when file is uploaded
+  async function performImmediateImageAnalysis(drawer, imageFile, searchInput) {
+    try {
+      console.log('[Visual Search] 🚀 Starting immediate image analysis...');
+      
+      // Update UI to show we're analyzing
+      updateResultsHeader(drawer, 'Analyzing image...', 'Detecting items in your uploaded image...');
+      clearResults(drawer);
+      showSkeletonLoaders(drawer);
+      
+      // Handle URL-based images differently
+      if (imageFile._imageUrl) {
+        console.log('[Visual Search] 📤 Processing URL-based image:', imageFile._imageUrl);
+        
+        // For URL-based images, we need to fetch and convert to blob first
+        try {
+          const response = await fetch(imageFile._imageUrl);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image from URL: ${response.status}`);
+          }
+          
+          const blob = await response.blob();
+          const file = new File([blob], imageFile.name, { type: blob.type || 'image/jpeg' });
+          
+          // Now proceed with the file upload
+          await performImmediateFileAnalysis(drawer, file, searchInput);
+          
+        } catch (error) {
+          console.error('[Visual Search] ❌ Failed to process URL image:', error);
+          throw new Error('Failed to process image from URL');
+        }
+        
+      } else {
+        // Handle regular file uploads
+        await performImmediateFileAnalysis(drawer, imageFile, searchInput);
+      }
+      
+    } catch (error) {
+      console.error('[Visual Search] ❌ Immediate image analysis error:', error);
+      showError('Failed to analyze image. Please try again.');
+      updateResultsHeader(drawer, 'Analysis failed', 'Something went wrong during image analysis');
+      removeSkeletonLoaders(drawer);
+      const emptyState = drawer.querySelector('#empty-state');
+      if (emptyState) {
+        emptyState.style.display = 'flex';
+      }
+    }
+  }
+  
+  // Helper function to handle actual file analysis
+  async function performImmediateFileAnalysis(drawer, imageFile, searchInput) {
+    // Prepare form data for immediate analysis
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('analyze', 'true');
+    
+    console.log('[Visual Search] 📤 Sending immediate analysis request to:', CONFIG.EXTERNAL_API_URL);
+    console.log('[Visual Search] 📄 File details:', {
+      name: imageFile.name,
+      size: imageFile.size,
+      type: imageFile.type
+    });
+    console.log('[Visual Search] 🏪 Shop domain:', CONFIG.SHOP_DOMAIN);
+    
+    // Make API call immediately
+    const response = await fetch(CONFIG.EXTERNAL_API_URL, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'shopDomainURL': CONFIG.SHOP_DOMAIN
+      }
+    });
+    
+    console.log('[Visual Search] 📥 Immediate analysis response status:', response.status);
+    console.log('[Visual Search] 📥 Response headers:', response.headers);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Visual Search] ❌ Immediate analysis server error:', errorText);
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('[Visual Search] ✅ Immediate analysis API response:', result);
+    
+    // Process results immediately and show to user
+    if (result && (result.products || result.detectedItems || result.length > 0)) {
+      let detectedItems = [];
+      
+      if (Array.isArray(result)) {
+        // Result is directly an array of items
+        detectedItems = result.map((item, index) => ({
+          id: item.productId || item.id || index,
+          image: item.image || item.imageUrl,
+          name: item.name || item.title || `Item ${index + 1}`,
+          confidence: item.confidence || 0.9
+        }));
+      } else if (result.detectedItems) {
+        detectedItems = result.detectedItems;
+      } else if (result.products) {
+        detectedItems = result.products.map((item, index) => ({
+          id: item.productId || item.id || index,
+          image: item.image || item.imageUrl,
+          name: item.name || item.title || `Item ${index + 1}`,
+          confidence: item.confidence || 0.9
+        }));
+      }
+      
+      if (detectedItems.length > 0) {
+        console.log(`[Visual Search] ✅ Found ${detectedItems.length} items immediately`);
+        
+        // Update UI with immediate results
+        updateResultsHeader(drawer, 'Items detected!', `Found ${detectedItems.length} items in your image`);
+        removeSkeletonLoaders(drawer);
+        
+        // Show results immediately without requiring crop selection
+        showSearchResults(drawer, detectedItems, 'immediate', searchInput);
+        
+        // Show success notification
+        showSuccess(`Found ${detectedItems.length} items in your image!`);
+        
+      } else {
+        console.log('[Visual Search] ⚠️ No items detected in immediate analysis');
+        updateResultsHeader(drawer, 'No items detected', 'Try adjusting the crop area or uploading a different image');
+        removeSkeletonLoaders(drawer);
+        const emptyState = drawer.querySelector('#empty-state');
+        if (emptyState) {
+          emptyState.style.display = 'flex';
+        }
+      }
+    } else {
+      throw new Error('No valid response data received');
     }
   }
 
@@ -2002,6 +2188,8 @@
       top: ${cropTop}px;
       width: ${cropWidth}px;
       height: ${cropHeight}px;
+      opacity: 1;
+      transform: scale(1);
     `;
     
     // Create all 4 corner resize handles with mobile-responsive sizing
@@ -2108,7 +2296,7 @@
       justify-content: center;
       opacity: 0.7;
       transition: all 0.2s ease;
-      pointer-events: none;
+      pointer-events: auto;
       z-index: 10;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     `;
@@ -2127,11 +2315,13 @@
     cropBox.addEventListener('mouseenter', () => {
       dragArea.style.opacity = '1';
       dragArea.style.transform = 'translate(-50%, -50%) scale(1.1)';
+      dragArea.style.pointerEvents = 'auto';
     });
     
     cropBox.addEventListener('mouseleave', () => {
       dragArea.style.opacity = '0.7';
       dragArea.style.transform = 'translate(-50%, -50%) scale(1)';
+      // Keep pointer events auto so dragging still works
     });
     
     // Update drag area cursor on mouse down
@@ -2145,12 +2335,12 @@
       dragArea.style.cursor = 'grab';
     });
     
-    // Store image bounds for constraint checking - use safe boundaries
+    // Store image bounds for constraint checking - use actual image boundaries
     cropBox._imageBounds = {
-      left: safeImgLeft,
-      top: safeImgTop,
-      right: safeImgLeft + safeImgWidth,
-      bottom: safeImgTop + safeImgHeight
+      left: imgLeft,
+      top: imgTop,
+      right: imgLeft + imgWidth,
+      bottom: imgTop + imgHeight
     };
     
     // Store mobile state for interaction handling
@@ -2186,39 +2376,41 @@
     function constrainToImage(left, top, width, height) {
       const bounds = cropBox._imageBounds;
       const minSize = cropBox._minCropSize || 50;
-      const handleSize = cropBox._handleSize || 12;
-      const handleOffset = cropBox._handleOffset || 6;
       
-      // Additional safety margin to ensure handles don't extend outside image
-      const safetyMargin = Math.max(handleSize, handleOffset) + 2;
-      const safeBounds = {
-        left: bounds.left,
-        top: bounds.top,
-        right: bounds.right,
-        bottom: bounds.bottom
+      // Get handle dimensions for proper boundary calculation
+      const handleOffset = cropBox._handleOffset || 6;
+      const handleSize = cropBox._handleSize || 12;
+      const handleMargin = handleOffset + (handleSize / 2);
+      
+      // Create effective bounds that account for handle overflow
+      const effectiveBounds = {
+        left: bounds.left + handleMargin,
+        top: bounds.top + handleMargin,
+        right: bounds.right - handleMargin,
+        bottom: bounds.bottom - handleMargin
       };
       
-      // Constrain size first with mobile-aware minimum and safety margins
-      const maxWidth = safeBounds.right - safeBounds.left;
-      const maxHeight = safeBounds.bottom - safeBounds.top;
+      // Constrain size first with minimum size and available space
+      const maxWidth = effectiveBounds.right - effectiveBounds.left;
+      const maxHeight = effectiveBounds.bottom - effectiveBounds.top;
       width = Math.max(minSize, Math.min(width, maxWidth));
       height = Math.max(minSize, Math.min(height, maxHeight));
       
-      // Constrain position to keep crop box (and handles) within safe bounds
-      left = Math.max(safeBounds.left, Math.min(left, safeBounds.right - width));
-      top = Math.max(safeBounds.top, Math.min(top, safeBounds.bottom - height));
+      // Constrain position to keep crop box within effective bounds
+      left = Math.max(effectiveBounds.left, Math.min(left, effectiveBounds.right - width));
+      top = Math.max(effectiveBounds.top, Math.min(top, effectiveBounds.bottom - height));
       
       // Double-check that the position + size doesn't exceed boundaries
-      if (left + width > safeBounds.right) {
-        left = safeBounds.right - width;
+      if (left + width > effectiveBounds.right) {
+        left = effectiveBounds.right - width;
       }
-      if (top + height > safeBounds.bottom) {
-        top = safeBounds.bottom - height;
+      if (top + height > effectiveBounds.bottom) {
+        top = effectiveBounds.bottom - height;
       }
       
-      // Final safety check to ensure we're within bounds
-      left = Math.max(safeBounds.left, left);
-      top = Math.max(safeBounds.top, top);
+      // Final safety check to ensure we're within effective bounds
+      left = Math.max(effectiveBounds.left, left);
+      top = Math.max(effectiveBounds.top, top);
       
       return { left, top, width, height };
     }
@@ -2365,10 +2557,9 @@
         cropBox.style.transform = ''; // Remove transform after drag
         container.style.cursor = '';
         
-        // Trigger auto search after drag
-        setTimeout(() => {
-          triggerAutoSearch(container);
-        }, 300);
+        // 🚀 IMMEDIATE API CALL: Call API right away when user drags crop box
+        console.log('[Visual Search] 🎯 User finished dragging - calling immediate API');
+        performRealTimeCropAnalysis(container);
       }
       if (isResizing) {
         // Reset visual feedback for all handles
@@ -2387,10 +2578,9 @@
         });
         container.style.cursor = '';
         
-        // Trigger auto search after resize
-        setTimeout(() => {
-          triggerAutoSearch(container);
-        }, 300);
+        // 🚀 IMMEDIATE API CALL: Call API right away when user resizes crop box
+        console.log('[Visual Search] 🎯 User finished resizing - calling immediate API');
+        performRealTimeCropAnalysis(container);
       }
       
       isDragging = false;
@@ -2469,6 +2659,7 @@
       
       console.log('[Visual Search] Sending cropped analysis request to:', CONFIG.EXTERNAL_API_URL);
       console.log('[Visual Search] Crop data:', cropData);
+      console.log('[Visual Search] Shop domain:', CONFIG.SHOP_DOMAIN);
       
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
@@ -2479,8 +2670,13 @@
         }
       });
       
+      console.log('[Visual Search] Response status:', response.status);
+      console.log('[Visual Search] Response headers:', response.headers);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('[Visual Search] Server error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
       
       const result = await response.json();
@@ -2494,20 +2690,41 @@
         if (Array.isArray(result)) {
           detectedItems = result.map((item, index) => ({
             id: item.productId || item.id || index,
-            image: item.image || item.imageUrl
+            image: item.image || item.imageUrl,
+            name: item.name || item.title || `Item ${index + 1}`,
+            confidence: item.confidence || 0.9,
+            price: item.price,
+            url: item.url
           }));
         } else if (result.detectedItems) {
           detectedItems = result.detectedItems;
         } else if (result.products) {
           detectedItems = result.products.map((item, index) => ({
             id: item.productId || item.id || index,
-            image: item.image || item.imageUrl
+            image: item.image || item.imageUrl,
+            name: item.name || item.title || `Item ${index + 1}`,
+            confidence: item.confidence || 0.9,
+            price: item.price,
+            url: item.url
           }));
         }
         
         if (detectedItems.length > 0) {
+          console.log(`[Visual Search] ✅ Found ${detectedItems.length} items in cropped area`);
+          
+          // Update UI with cropped area results
+          updateResultsHeader(drawer, `Found ${detectedItems.length} items`, `Items detected in your selected area`);
+          removeSkeletonLoaders(drawer);
+          
+          // Show the detected items directly as results
+          displayAllResults(drawer, detectedItems);
+          
+          // Store the results
           drawer._detectedItems = detectedItems;
-          performVisualSearch(drawer, detectedItems, searchInput, 'cropped area');
+          
+          // Show success notification
+          showSuccess(`Found ${detectedItems.length} items in the selected area!`);
+          
         } else {
           showError('No items detected in the selected area. Try adjusting the crop area.');
           updateResultsHeader(drawer, 'No items detected', 'Try adjusting the crop area');
@@ -2562,91 +2779,6 @@
     const emptyState = drawer.querySelector('#empty-state');
     if (emptyState) {
       emptyState.style.display = 'flex';
-    }
-  }
-
-  async function analyzeUploadedImage(drawer, searchInput) {
-    try {
-      updateResultsHeader(drawer, 'Analyzing image...', 'Detecting items in your image...');
-      
-      const formData = new FormData();
-      formData.append('image', drawer._imageFile);
-      formData.append('analyze', 'true');
-      
-      console.log('[Visual Search] Sending analysis request to:', CONFIG.EXTERNAL_API_URL);
-      console.log('[Visual Search] Shop domain header:', CONFIG.SHOP_DOMAIN);
-      
-      const response = await fetch(CONFIG.EXTERNAL_API_URL, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'shopDomainURL': CONFIG.SHOP_DOMAIN
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      console.log('[Visual Search] Analysis API Response:', result);
-      
-      // Handle the new API response format with product IDs and images array
-      if (result && (result.products || result.detectedItems || result.length > 0)) {
-        let detectedItems = [];
-        
-        // If result is an array, convert it to detectedItems format
-        if (Array.isArray(result)) {
-          detectedItems = result.map((item, index) => ({
-            id: item.productId || item.id || index,
-            image: item.image || item.imageUrl
-          }));
-        } 
-        // If result has detectedItems property
-        else if (result.detectedItems) {
-          detectedItems = result.detectedItems;
-        }
-        // If result has products property
-        else if (result.products) {
-          detectedItems = result.products.map((item, index) => ({
-            id: item.productId || item.id || index,
-            image: item.image || item.imageUrl
-          }));
-        }
-        
-        if (detectedItems.length > 0) {
-          drawer._detectedItems = detectedItems;
-          // Automatically perform search with all detected items
-          performVisualSearch(drawer, detectedItems, searchInput, 'detected items');
-        } else {
-          showError('No items detected in the image. Please try a different image.');
-          updateResultsHeader(drawer, 'No items detected', 'Try uploading a clearer image');
-          // Show empty state when no items detected
-          const emptyState = drawer.querySelector('#empty-state');
-          if (emptyState) {
-            emptyState.style.display = 'flex';
-          }
-        }
-      } else {
-        showError(result.error || 'Could not analyze image. Please try again.');
-        updateResultsHeader(drawer, 'Analysis failed', 'Could not detect items in the image');
-        // Show empty state when analysis fails
-        const emptyState = drawer.querySelector('#empty-state');
-        if (emptyState) {
-          emptyState.style.display = 'flex';
-        }
-      }
-    } catch (error) {
-      console.error('Visual search error:', error);
-      showError('Something went wrong. Please try again.');
-      updateResultsHeader(drawer, 'Analysis failed', 'Something went wrong during analysis');
-      // Show empty state when error occurs
-      const emptyState = drawer.querySelector('#empty-state');
-      if (emptyState) {
-        emptyState.style.display = 'flex';
-      }
     }
   }
 
@@ -2711,8 +2843,13 @@
         }
       });
       
+      console.log('[Visual Search] Search response status:', response.status);
+      console.log('[Visual Search] Search response headers:', response.headers);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('[Visual Search] Search server error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
       
       const result = await response.json();
@@ -2869,7 +3006,6 @@
       overflow: hidden;
       border: 1px solid #e9e9e9;
       transition: all 0.2s ease;
-      cursor: pointer;
       position: relative;
     `;
     
@@ -2953,15 +3089,103 @@
       cameraOverlay.style.pointerEvents = 'none';
     });
     
-    // Add click handler for search by image functionality
-    card.addEventListener('click', (e) => {
+    // Add click handler specifically for the camera overlay icon
+    const cameraOverlay = card.querySelector('.camera-overlay');
+    cameraOverlay.addEventListener('click', (e) => {
+      // Prevent event bubbling to avoid triggering any parent click handlers
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('[Visual Search] 📷 Camera icon clicked for search by image');
+      
       // Check if we're in a drawer context
       const drawer = card.closest('.visual-search-drawer');
       if (drawer) {
-        const drawerContent = drawer.querySelector('div');
-        if (drawerContent && drawerContent._searchInput) {
+        // Try to find the drawer content with search input data
+        let drawerContent = null;
+        let searchInput = null;
+        
+        // Method 1: Try to find data on drawer overlay (most reliable)
+        if (drawer._searchInput) {
+          searchInput = drawer._searchInput;
+          drawerContent = drawer.querySelector('#modal-content') || drawer.querySelector('.visual-search-modal-content');
+          console.log('[Visual Search] ✅ Found searchInput on drawer overlay');
+        }
+        
+        // Method 2: Try to find data on main drawer div
+        if (!searchInput) {
+          const mainDrawer = drawer.querySelector('div[style*="background: white"]');
+          if (mainDrawer && mainDrawer._searchInput) {
+            searchInput = mainDrawer._searchInput;
+            drawerContent = mainDrawer.querySelector('#modal-content') || mainDrawer;
+            console.log('[Visual Search] ✅ Found searchInput on main drawer div');
+          }
+        }
+        
+        // Method 3: Try to find data on modal content
+        if (!searchInput) {
+          const modalContent = drawer.querySelector('#modal-content');
+          if (modalContent && modalContent._searchInput) {
+            searchInput = modalContent._searchInput;
+            drawerContent = modalContent;
+            console.log('[Visual Search] ✅ Found searchInput on modal content');
+          }
+        }
+        
+        // Method 4: Try to find data on image selection container
+        if (!searchInput) {
+          const imageContainer = drawer.querySelector('#image-selection-container');
+          if (imageContainer && imageContainer._searchInput) {
+            searchInput = imageContainer._searchInput;
+            drawerContent = drawer.querySelector('#modal-content') || drawer.querySelector('.visual-search-modal-content');
+            console.log('[Visual Search] ✅ Found searchInput on image container');
+          }
+        }
+        
+        // Method 5: Try to find any div with search input data
+        if (!searchInput) {
+          const allDivs = drawer.querySelectorAll('div');
+          for (const div of allDivs) {
+            if (div._searchInput) {
+              searchInput = div._searchInput;
+              drawerContent = div;
+              console.log('[Visual Search] ✅ Found searchInput on div element');
+              break;
+            }
+          }
+        }
+        
+        // Method 6: Try global scope as fallback
+        if (!searchInput && window.visualSearchCurrentInput) {
+          searchInput = window.visualSearchCurrentInput;
+          drawerContent = drawer.querySelector('#modal-content') || drawer.querySelector('.visual-search-modal-content');
+          console.log('[Visual Search] ✅ Found searchInput from global scope');
+        }
+        
+        // Method 7: Try backup global scope
+        if (!searchInput && window.visualSearchCurrentSearchInput) {
+          searchInput = window.visualSearchCurrentSearchInput;
+          drawerContent = drawer.querySelector('#modal-content') || drawer.querySelector('.visual-search-modal-content');
+          console.log('[Visual Search] ✅ Found searchInput from backup global scope');
+        }
+        
+        // Method 8: Create fallback if still not found
+        if (!searchInput) {
+          searchInput = createFallbackSearchInput();
+          drawerContent = drawer.querySelector('#modal-content') || drawer.querySelector('.visual-search-modal-content');
+          console.log('[Visual Search] ⚠️ Created fallback searchInput for camera icon click');
+        }
+        
+        console.log('[Visual Search] 🔍 Search input found:', !!searchInput);
+        console.log('[Visual Search] 🔍 Drawer content found:', !!drawerContent);
+        console.log('[Visual Search] 📸 Product image URL:', product.image);
+        
+        if (searchInput && drawerContent) {
           // Use the result image for a new search
-          searchByResultImage(product.image, drawerContent._searchInput, drawerContent);
+          searchByResultImage(product.image, searchInput, drawerContent);
+        } else {
+          console.log('[Visual Search] ❌ Could not find search input or drawer content for search by image');
+          showError('Could not start new search. Please try again.');
         }
       }
     });
@@ -2977,9 +3201,14 @@
     skeletonCard.innerHTML = `
       <div style="
         aspect-ratio: 1;
+        width: 100%;
+        height: 100%;
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
         background-size: 200% 100%;
         animation: visual-search-skeleton-pulse 1.5s ease-in-out infinite;
+        object-fit: cover;
+        border-radius: 12px 12px 0 0;
+        display: block;
       "></div>
       <div style="padding: 12px;">
         <div style="
@@ -3008,8 +3237,26 @@
   // SEARCH BY RESULT IMAGE
   // ====================================================================
   
+  // Helper function to create a fallback search input
+  function createFallbackSearchInput() {
+    return {
+      value: '',
+      type: 'search',
+      name: 'q',
+      placeholder: 'Search products...',
+      addEventListener: function() {}, // Mock function
+      dispatchEvent: function() {}, // Mock function
+      focus: function() {} // Mock function
+    };
+  }
+  
   async function searchByResultImage(imageUrl, searchInput, drawer) {
     try {
+      console.log('[Visual Search] 🖼️ Starting search by result image');
+      console.log('[Visual Search] 📸 Image URL:', imageUrl);
+      console.log('[Visual Search] 🔍 Search input exists:', !!searchInput);
+      console.log('[Visual Search] 📦 Drawer exists:', !!drawer);
+      
       // Show feedback to user
       showNotification('Using this image for new search...', 'info');
       
@@ -3181,6 +3428,9 @@
       // Show image preview immediately
       showImagePreview(drawer, fakeFile, searchInput);
       
+      // 🚀 IMMEDIATE API CALL for URL-based images too
+      performImmediateImageAnalysis(drawer, fakeFile, searchInput);
+      
       // Update the image container to use URL instead of file reader
       const imageContainer = drawer.querySelector('#image-selection-container');
       imageContainer.innerHTML = `
@@ -3200,8 +3450,6 @@
           this.parentElement.innerHTML='<div style=\\'color: #666; text-align: center; padding: 40px;\\'>Failed to load image from URL</div>';
         ">
       `;
-      
-      updateResultsHeader(drawer, 'Image loaded', 'Analyzing image and searching for similar products...');
       
     } catch (error) {
       console.error('Visual search error:', error);
@@ -3394,39 +3642,20 @@
       document.addEventListener(event, () => setTimeout(injectVisualSearchIcon, 1000));
     });
     
-    // Mutation observer for dynamic content
-    const observer = new MutationObserver(debounce((mutations) => {
-      let shouldReinject = false;
-      mutations.forEach(mutation => {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach(node => {
-            if (node.nodeType === 1) { // Element node
-              const hasSearchInput = node.matches?.(CONFIG.SEARCH_SELECTORS.join(',')) ||
-                                   node.querySelector?.(CONFIG.SEARCH_SELECTORS.join(','));
-              if (hasSearchInput) {
-                shouldReinject = true;
-              }
-            }
-          });
-        }
-      });
-      
-      if (shouldReinject) {
-        setTimeout(injectVisualSearchIcon, 500);
-      }
-    }, 250));
-    
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-    
     // Expose API for manual control
     window.visualSearchUnified = {
       inject: injectVisualSearchIcon,
-      openDrawer: openVisualSearchDrawer,
+      openDrawer: (searchInput) => {
+        // If no searchInput provided, create a fallback
+        if (!searchInput) {
+          searchInput = createFallbackSearchInput();
+          console.log('[Visual Search] 🔧 Manual drawer open with fallback searchInput');
+        }
+        return openVisualSearchDrawer(searchInput);
+      },
       openSearch: openVisualSearch,
-      config: CONFIG
+      config: CONFIG,
+      createFallbackSearchInput: createFallbackSearchInput // Expose helper function
     };
     
     console.log('[Visual Search] Initialization complete');

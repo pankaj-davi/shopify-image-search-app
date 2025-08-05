@@ -1,58 +1,78 @@
 {%- comment -%}
   Visual Search Icon Block for Shopify Theme 2.0
-  Simple app block that can be added to any section
+  Simplified app block for easy theme integration
 {%- endcomment -%}
 
 {%- liquid
   assign icon_size = block.settings.icon_size | default: 24
   assign icon_color = block.settings.icon_color | default: '#5f6368'
+  assign hover_color = block.settings.hover_color | default: '#202124'
 -%}
 
-<div class="visual-search-app-block" {{ block.shopify_attributes }} data-visual-search-trigger>
+<div class="visual-search-app-block" {{ block.shopify_attributes }} data-visual-search-trigger tabindex="0" role="button" aria-label="Open Visual Search">
   <style>
-    .visual-search-app-block[data-visual-search-trigger] {
+    /* Override Shopify app block default full-width behavior */
+    .shopify-app-block {
+      width: auto !important;
+      display: inline-block !important;
+      max-width: none !important;
+    }
+    
+    .visual-search-app-block {
       width: {{ icon_size }}px;
       height: {{ icon_size }}px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: {{ block.settings.border_radius | default: 4 }}px;
       transition: all 0.2s ease;
       color: {{ icon_color }};
-      background: transparent;
-      padding: 8px;
-      margin: 4px;
+      background: {{ block.settings.background_color | default: 'transparent' }};
+      padding: {{ block.settings.padding | default: 8 }}px;
+      margin: {{ block.settings.margin | default: 4 }}px;
+      border: {{ block.settings.border_width | default: 0 }}px solid {{ block.settings.border_color | default: 'transparent' }};
     }
 
-    .visual-search-app-block[data-visual-search-trigger]:hover {
-      color: #202124;
-      background: rgba(95, 99, 104, 0.08);
-      transform: scale(1.1);
+    .visual-search-app-block:hover {
+      color: {{ hover_color }};
+      background: {{ block.settings.hover_background | default: 'rgba(95, 99, 104, 0.08)' }};
+      transform: scale({{ block.settings.hover_scale | default: 1.1 }});
     }
 
-    .visual-search-app-block[data-visual-search-trigger]:active {
-      transform: scale(0.9);
+    .visual-search-app-block:active {
+      transform: scale(0.95);
+    }
+    
+    .visual-search-app-block:focus {
+      outline: 2px solid {{ block.settings.focus_color | default: '#008060' }};
+      outline-offset: 2px;
     }
   </style>
 
+  <!-- Load Visual Search Script -->
+  <script src="{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}" defer></script>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const iconElement = document.querySelector('[data-visual-search-trigger]');
+      const trigger = document.querySelector('[data-visual-search-trigger]');
       
-      if (iconElement) {
-        iconElement.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Simple visual search trigger
-          console.log('Visual Search activated!');
-          
-          // Check if custom handler exists
-          if (window.handleVisualSearchClick) {
-            window.handleVisualSearchClick(this);
-          } else {
-            alert('Visual Search clicked! Connect to your visual search backend here.');
+      function openVisualSearch(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (window.visualSearchUnified?.openDrawer) {
+          window.visualSearchUnified.openDrawer();
+        } else {
+          console.warn('Visual Search not ready yet');
+        }
+      }
+      
+      if (trigger) {
+        trigger.addEventListener('click', openVisualSearch);
+        trigger.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            openVisualSearch(e);
           }
         });
       }
@@ -71,6 +91,12 @@
         <circle cx="11" cy="11" r="8"/>
         <path d="M21 21l-4.35-4.35"/>
       </svg>
+    {%- when 'image' -%}
+      <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21,15 16,10 5,21"/>
+      </svg>
     {%- else -%}
       <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="currentColor">
         <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
@@ -85,6 +111,10 @@
   "target": "section",
   "settings": [
     {
+      "type": "header",
+      "content": "Icon Settings"
+    },
+    {
       "type": "select",
       "id": "icon_style",
       "label": "Icon Style",
@@ -96,9 +126,27 @@
         {
           "value": "search",
           "label": "Search"
+        },
+        {
+          "value": "image",
+          "label": "Image Search"
         }
       ],
       "default": "camera"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon Size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "default": 24,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
     },
     {
       "type": "color",
@@ -107,14 +155,91 @@
       "default": "#5f6368"
     },
     {
+      "type": "color",
+      "id": "hover_color",
+      "label": "Hover Color",
+      "default": "#202124"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "transparent"
+    },
+    {
+      "type": "color",
+      "id": "hover_background",
+      "label": "Hover Background",
+      "default": "rgba(95, 99, 104, 0.08)"
+    },
+    {
+      "type": "color",
+      "id": "focus_color",
+      "label": "Focus Outline Color",
+      "default": "#008060"
+    },
+    {
+      "type": "header",
+      "content": "Spacing & Border"
+    },
+    {
       "type": "range",
-      "id": "icon_size",
-      "label": "Icon Size",
-      "min": 16,
-      "max": 32,
-      "step": 2,
-      "default": 24,
+      "id": "padding",
+      "label": "Padding",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8,
       "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin",
+      "label": "Margin",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 4,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border Radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 4,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border Width",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "transparent"
+    },
+    {
+      "type": "header",
+      "content": "Animation"
+    },
+    {
+      "type": "range",
+      "id": "hover_scale",
+      "label": "Hover Scale",
+      "min": 1.0,
+      "max": 1.3,
+      "step": 0.1,
+      "default": 1.1
     }
   ]
 }
