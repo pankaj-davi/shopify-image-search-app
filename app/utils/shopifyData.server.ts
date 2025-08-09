@@ -11,8 +11,8 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
   console.log("Store exists in database:", storeExists);
   
   if (storeExists) {
-    // Script injection is now optional - merchants can choose automatic or app blocks
-    // Visual search script injection moved to manual control via /app/visual-search
+    // Visual search now uses App Blocks integration for Theme 2.0 stores
+    // Theme configuration saved for use with app blocks
     
     // Get store with associated products for better data consistency
     const storeWithProducts = await appDatabase.getStoreWithProducts(shopDomain, 25);
@@ -239,9 +239,9 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     storeData.data.products.edges.map((edge: any) => edge.node)
   );
 
-  // Script injection is now optional - merchants can choose automatic or app blocks
-  // Visual search script injection moved to manual control via /app/visual-search
-  // Use /app/visual-search to enable automatic injection or /app/app-blocks for manual integration
+  // Visual search now uses App Blocks integration for Theme 2.0 stores
+  // Theme configuration saved for use with app blocks
+  // Use /app/app-blocks for Theme 2.0 integration and configuration
 
   return {
     store: storeData.data.shop,

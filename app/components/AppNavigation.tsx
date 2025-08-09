@@ -27,45 +27,18 @@ const DEFAULT_SECTIONS: NavigationSection[] = [
     description: "Jump to the most used features",
     links: [
       {
-        url: "/app/preview",
-        label: "Theme Preview & Customization",
-        icon: "🎨",
+        url: "/app/app-blocks",
+        label: "App Block Setup",
+        icon: "📦",
         variant: "primary",
-        description: "Customize icon positioning, colors, and preview changes"
+        description: "Add visual search blocks to your theme using Shopify's theme editor"
       },
       {
         url: "/app/visual-search", 
         label: "Visual Search Settings",
         icon: "🔍",
         variant: "secondary",
-        description: "Manage visual search functionality and script injection"
-      },
-      {
-        url: "/app/additional",
-        label: "Analytics & Reports", 
-        icon: "📊",
-        variant: "secondary",
-        description: "View usage statistics and performance metrics"
-      }
-    ]
-  },
-  {
-    title: "Tools & Testing",
-    description: "Development and testing utilities",
-    links: [
-      {
-        url: "/app/verify-integration",
-        label: "Verify Integration",
-        icon: "✅",
-        variant: "secondary",
-        description: "Check if visual search is properly installed"
-      },
-      {
-        url: "/app/testing-tools",
-        label: "Testing Tools",
-        icon: "🛠️",
-        variant: "secondary", 
-        description: "Debug and test visual search functionality"
+        description: "Manage visual search functionality and configuration"
       }
     ]
   },

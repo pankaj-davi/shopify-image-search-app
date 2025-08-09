@@ -1,22 +1,23 @@
 # Visual Search App Blocks - Setup Guide
 
-This Shopify app provides two ways to add visual search functionality to your theme:
+This Shopify app provides visual search functionality through App Blocks integration.
 
-## Option 1: Global Visual Search (Recommended for most stores)
+## App Block Integration
 
 **App Block:** "Visual Search"
 
-This automatically detects and adds visual search icons to all search input fields on your store.
+This adds a visual search button/icon that customers can use to search with images.
 
 ### How to use:
-1. Go to your theme editor
-2. Add the "Visual Search" app block to any section
+1. Go to your theme editor (Online Store → Themes → Customize)
+2. Add the "Visual Search" app block to desired section/location
 3. Configure the settings in the theme editor
-4. The visual search icon will automatically appear in all search fields
+4. Save and publish
 
 ### Settings available:
+- **Icon Style**: Choose camera, search, or custom icon
 - **Icon Appearance**: Colors, style, size
-- **Icon Position**: Left/right side, offset distance
+- **Placement**: Position and spacing options
 - **Button Colors**: Primary and hover colors
 - **Advanced Settings**: Animations, file size limits
 - **Search Field Targeting**: Choose which fields to target
@@ -27,68 +28,52 @@ This automatically detects and adds visual search icons to all search input fiel
 
 This allows you to place a visual search icon exactly where you want it, with precise control over positioning and styling.
 
-### How to use:
-1. Identify the input field you want to target (you'll need its CSS selector)
-2. Go to theme editor and add the "Visual Search Input Icon" block
-3. Place the block near or inside the container of your search input
-4. Configure the target input selector and positioning
-5. Customize the appearance and behavior
+## App Block Features
 
-### Key settings:
-- **Target Input Selector**: CSS selector for the specific input field
-- **Icon Style**: Choose from camera, search, image, or custom icons
-- **Position & Layout**: Precise positioning controls
-- **Background & Border**: Custom styling options
-- **Interaction**: Click, hover, or focus triggers
-- **Tooltip**: Optional hover tooltips
+### Visual Search Interface:
+- Clean, responsive search interface
+- Camera icon that opens the visual search drawer
+- Pinterest-style interface for image uploads and cropping
+- Mobile-optimized design
 
-## CSS Selectors Examples
+### Integration Benefits:
+- Native Shopify 2.0 app block integration
+- Complete control over placement and styling
+- Works with all Theme 2.0 stores
+- No script injection required
+- Future-proof architecture
 
-Here are common CSS selectors for popular Shopify themes:
+## Setup Instructions
 
-### Dawn Theme:
-- Main search: `input[name="q"]`
-- Header search: `.header__search input`
-- Predictive search: `.predictive-search__input`
+### Step 1: Add App Block
+1. Go to Online Store → Themes → Customize
+2. Navigate to where you want visual search
+3. Click "Add Block" → Apps → Visual Search
+4. Configure settings as needed
+5. Save and publish
 
-### Debut Theme:
-- Header search: `.search-bar__input`
-- Page search: `#Search`
+### Step 2: Configuration Options
+- **Icon Style**: Camera, search, or custom icon
+- **Colors**: Customize to match your theme
+- **Size**: Adjust button/icon size
+- **Position**: Control placement within section
 
-### Brooklyn Theme:
-- Header search: `.site-header__search-input`
-- Search page: `.search__input`
-
-### Custom selectors:
-- By ID: `#my-search-input`
-- By class: `.my-search-class`
-- By attribute: `[name="search"]`
-- By type: `input[type="search"]`
-
-## Configuration Tips
-
-### For Global Setup (Option 1):
-1. Use "Automatic - All search fields" for most stores
-2. Use "Specific selectors only" if you want to exclude certain search fields
-3. Use "Manual placement" if you're also using Option 2
-
-### For Precise Control (Option 2):
-1. Use browser developer tools to find the exact CSS selector
-2. Test the selector in browser console: `document.querySelector('your-selector')`
-3. Place the block close to the input field's container
-4. Use "absolute" positioning for most cases
-5. Adjust z-index if the icon appears behind other elements
+### Step 3: Testing
+1. Visit your store frontend
+2. Find the visual search button/icon
+3. Click to test image upload functionality
+4. Verify search results display correctly
 
 ## Responsive Design
 
-Both blocks automatically adjust for mobile devices:
-- Icons become slightly smaller on mobile
+The app block automatically adjusts for mobile devices:
+- Icons scale appropriately on mobile
 - Touch targets are optimized for mobile interaction
-- Positioning adjusts for different screen sizes
+- Responsive layout for different screen sizes
 
 ## Accessibility Features
 
-Both blocks include accessibility support:
+The app block includes accessibility support:
 - High contrast mode compatibility
 - Reduced motion support for users with motion sensitivity
 - Proper focus management for keyboard navigation
@@ -96,22 +81,23 @@ Both blocks include accessibility support:
 
 ## Troubleshooting
 
-### Icon not appearing:
-1. Check the CSS selector is correct
-2. Verify the input field exists on the page
-3. Check z-index settings
-4. Ensure the block is enabled and saved
+### Visual search not appearing:
+1. Check that the app block is properly added
+2. Verify the block is enabled and saved
+3. Clear browser cache and refresh
+4. Check browser console for any errors
 
-### Icon positioning issues:
-1. Try different positioning methods (absolute/relative)
-2. Adjust the offset values
-3. Check if parent container has position styling
-4. Test responsive behavior on different screen sizes
+### Functionality issues:
+1. Verify JavaScript is enabled in browser
+2. Test on different devices/browsers
+3. Check that the app is properly installed
+4. Ensure Theme 2.0 compatibility
 
 ### Performance considerations:
-1. Use Global setup (Option 1) for better performance
-2. Avoid multiple Input Icon blocks targeting the same field
-3. Consider disabling animations on slow devices
+1. App blocks load natively with the theme
+2. Minimal JavaScript footprint
+3. Optimized for fast page loading
+4. Works efficiently on mobile devices
 4. Set appropriate file size limits for uploads
 
 ## Best Practices

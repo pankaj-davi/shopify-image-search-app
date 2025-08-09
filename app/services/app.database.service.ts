@@ -282,6 +282,28 @@ export class AppDatabaseService {
     }
   }
 
+  async recordStoreEvent(shopDomain: string, eventType: string, eventData: any): Promise<void> {
+    try {
+      const event = {
+        shopDomain,
+        eventType,
+        eventData,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log(`📊 [Database] Recording store event:`, event);
+      
+      // If your database supports event logging, implement it here
+      // For now, just log the event
+      // const db = await this.getDB();
+      // await db.recordEvent?.(event);
+      
+    } catch (error) {
+      console.error('[Database] Error recording store event:', error);
+      // Don't throw - this is for analytics only
+    }
+  }
+
   // Product operations
   async syncProductFromShopify(shopifyProduct: any, shopDomain: string) {
     const db = await this.getDB();

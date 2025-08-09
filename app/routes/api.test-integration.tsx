@@ -10,9 +10,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   try {
     switch (testType) {
-      case "script":
+      case "script": {
         // Test if the visual search script is accessible
-        const scriptUrl = `${appUrl}/visual-search-script.js`;
+        const scriptUrl = `${appUrl}/visual-search-unified.js?shop=test-shop.myshopify.com`;
         
         try {
           const scriptResponse = await fetch(scriptUrl);
@@ -23,7 +23,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
             success: scriptResponse.ok,
             status: scriptResponse.status,
             contentLength: scriptContent.length,
-            hasVisualSearchCode: scriptContent.includes("injectVisualSearchIcon"),
+            hasVisualSearchCode: scriptContent.includes("visualSearchUnified"),
             scriptUrl,
             timestamp: new Date().toISOString()
           });
@@ -36,8 +36,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
             timestamp: new Date().toISOString()
           });
         }
+      }
 
-      case "api":
+      case "api": {
         // Test the visual search API endpoint
         const testImageData = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
         
@@ -73,8 +74,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
             timestamp: new Date().toISOString()
           });
         }
+      }
 
-      case "config":
+      case "config": {
         // Test configuration
         return json({
           test: "Configuration",
@@ -87,8 +89,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
           },
           timestamp: new Date().toISOString()
         });
+      }
 
-      default:
+      default: {
         return json({
           test: "Unknown",
           success: false,
@@ -96,6 +99,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           availableTests: ["script", "api", "config"],
           timestamp: new Date().toISOString()
         });
+      }
     }
   } catch (error) {
     return json({

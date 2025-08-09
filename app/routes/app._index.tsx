@@ -61,64 +61,29 @@ export default function Index() {
         </Card>
 
         <InlineStack gap="400" align="start">
-          {/* Automatic Setup */}
-          <Card>
-            <Box padding="500">
-              <BlockStack gap="400">
-                <InlineStack gap="300" align="start">
-                  <Text as="span" variant="headingLg">⚡</Text>
-                  <BlockStack gap="100">
-                    <Text as="h2" variant="headingMd">Automatic Setup</Text>
-                    <Text as="p" variant="bodyMd" fontWeight="medium" tone="success">
-                      Recommended for most stores
-                    </Text>
-                  </BlockStack>
-                </InlineStack>
-                
-                <Text as="p" variant="bodyMd">
-                  Visual search appears automatically in all search bars. Works with ALL themes.
-                </Text>
-                
-                <BlockStack gap="100">
-                  <Text as="p" variant="bodyMd">✅ Works with Theme 1.0 & 2.0</Text>
-                  <Text as="p" variant="bodyMd">✅ No configuration needed</Text>
-                  <Text as="p" variant="bodyMd">✅ Instant activation</Text>
-                </BlockStack>
-                
-                <Button
-                  url="/app/visual-search"
-                  variant="primary"
-                  size="large"
-                  fullWidth
-                >
-                  🚀 Set Up Automatic
-                </Button>
-              </BlockStack>
-            </Box>
-          </Card>
-
-          {/* App Block Setup */}
+          {/* App Block Setup - Now the primary option */}
           <Card>
             <Box padding="500">
               <BlockStack gap="400">
                 <InlineStack gap="300" align="start">
                   <Text as="span" variant="headingLg">🎨</Text>
                   <BlockStack gap="100">
-                    <Text as="h2" variant="headingMd">App Block Setup</Text>
-                    <Text as="p" variant="bodyMd" fontWeight="medium">
-                      Theme 2.0 stores only
+                    <Text as="h2" variant="headingMd">App Block Integration</Text>
+                    <Text as="p" variant="bodyMd" fontWeight="medium" tone="success">
+                      Professional integration method
                     </Text>
                   </BlockStack>
                 </InlineStack>
                 
                 <Text as="p" variant="bodyMd">
-                  Add through theme editor with full control over placement and styling.
+                  Visual search through theme editor with full control over appearance and placement.
                 </Text>
                 
                 <BlockStack gap="100">
-                  <Text as="p" variant="bodyMd">🎯 Precise placement control</Text>
-                  <Text as="p" variant="bodyMd">🎯 Custom colors & styling</Text>
-                  <Text as="p" variant="bodyMd">🎯 Native theme editor</Text>
+                  <Text as="p" variant="bodyMd">✅ Works with Theme 2.0</Text>
+                  <Text as="p" variant="bodyMd">✅ Custom styling options</Text>
+                  <Text as="p" variant="bodyMd">✅ Precise placement control</Text>
+                  <Text as="p" variant="bodyMd">✅ Native Shopify experience</Text>
                 </BlockStack>
                 
                 <Button
@@ -127,7 +92,7 @@ export default function Index() {
                   size="large"
                   fullWidth
                 >
-                  🎨 Set Up App Block
+                  🎨 Set Up App Blocks
                 </Button>
               </BlockStack>
             </Box>
@@ -141,22 +106,16 @@ export default function Index() {
             
             <InlineStack gap="300" wrap>
               <Button
-                url="/app/preview"
-                variant="secondary"
+                url="/app/app-blocks"
+                variant="primary"
               >
-                🎨 Preview & Customize
+                📦 Setup App Blocks
               </Button>
               <Button
-                url="/app/testing-tools"
+                url="/app/block-stats"
                 variant="secondary"
               >
-                🧪 Testing Tools
-              </Button>
-              <Button
-                url="/app/additional"
-                variant="secondary"
-              >
-                📊 Analytics
+                📊 View Analytics
               </Button>
             </InlineStack>
           </BlockStack>

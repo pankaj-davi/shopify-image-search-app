@@ -19,10 +19,10 @@
   // ====================================================================
   
   const CONFIG = {
-    // App configuration - Static values
-    APP_URL: 'https://pixel-dress-store.myshopify.com/',
+    // App configuration - Dynamic values from Liquid template
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://programmers-acre-clip-foo.trycloudflare.com',
     EXTERNAL_API_URL: 'http://localhost:3000/visual-search',
-    SHOP_DOMAIN: 'pixel-dress-store.myshopify.com',
+    SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Theme customization - Static theme values
     THEME: {
@@ -1401,27 +1401,118 @@
   // UTILITY FUNCTIONS
   // ====================================================================
   
+  // ====================================================================
+  // THEME CONFIGURATION READER
+  // ====================================================================
+  
+  function getThemeConfigFromAppBlocks() {
+    console.log('[Visual Search] 🎨 Reading theme configuration from app blocks...');
+    
+    // Try to find app block with theme configuration
+    const appBlockSelectors = [
+      '[data-visual-search-trigger]',
+      '[data-app-block="visual-search"]',
+      '.visual-search-app-block'
+    ];
+    
+    const themeConfig = {};
+    let configSource = 'app-block';
+    
+    // Read from app block styles directly
+    for (const selector of appBlockSelectors) {
+      const appBlock = document.querySelector(selector);
+      if (appBlock) {
+        console.log('[Visual Search] 📦 Found app block:', appBlock);
+        
+        // Try to read computed styles from the app block
+        const computedStyle = window.getComputedStyle(appBlock);
+        const color = computedStyle.color;
+        
+        if (color && color !== 'rgb(0, 0, 0)' && color !== 'rgba(0, 0, 0, 0)') {
+          themeConfig.iconColor = color;
+          configSource = 'app-block-computed';
+          console.log('[Visual Search] ✅ Read icon color from app block computed style:', color);
+        }
+        
+        // Try to read from CSS custom properties on the app block
+        const iconColorProperty = computedStyle.getPropertyValue('--vs-icon-color').trim();
+        const hoverColorProperty = computedStyle.getPropertyValue('--vs-hover-color').trim();
+        const primaryColorProperty = computedStyle.getPropertyValue('--vs-primary-color').trim();
+        
+        if (iconColorProperty) {
+          themeConfig.iconColor = iconColorProperty;
+          configSource = 'app-block-css-vars';
+          console.log('[Visual Search] ✅ Read icon color from app block CSS variable:', iconColorProperty);
+        }
+        
+        if (hoverColorProperty) {
+          themeConfig.iconColorHover = hoverColorProperty;
+          console.log('[Visual Search] ✅ Read hover color from app block CSS variable:', hoverColorProperty);
+        }
+        
+        if (primaryColorProperty) {
+          themeConfig.primaryColor = primaryColorProperty;
+          console.log('[Visual Search] ✅ Read primary color from app block CSS variable:', primaryColorProperty);
+        }
+        
+        break; // Use first found app block
+      }
+    }
+    
+    // App block-only mode - theme config comes from app block settings
+    console.log('[Visual Search] ℹ️ App block mode - using block-level configuration only');
+    
+    // Apply theme config if we found any
+    if (Object.keys(themeConfig).length > 0) {
+      updateThemeConfig(themeConfig, configSource);
+    } else {
+      console.log('[Visual Search] ℹ️ Using static theme configuration');
+    }
+    
+    return themeConfig;
+  }
+  
+  function updateThemeConfig(newConfig, source = 'unknown') {
+    console.log('[Visual Search] 🎨 Updating theme configuration from source:', source);
+    console.log('[Visual Search] 📝 New config:', newConfig);
+    
+    // Update CONFIG.THEME with new values
+    if (newConfig.iconColor) {
+      CONFIG.THEME.ICON_COLOR = newConfig.iconColor;
+    }
+    if (newConfig.iconColorHover) {
+      CONFIG.THEME.ICON_COLOR_HOVER = newConfig.iconColorHover;
+    }
+    if (newConfig.primaryColor) {
+      CONFIG.THEME.PRIMARY_COLOR = newConfig.primaryColor;
+    }
+    if (newConfig.iconPosition) {
+      CONFIG.THEME.ICON_POSITION = newConfig.iconPosition;
+    }
+    if (newConfig.iconOffset !== undefined) {
+      CONFIG.THEME.ICON_OFFSET = newConfig.iconOffset;
+    }
+    if (newConfig.iconSizeMultiplier !== undefined) {
+      CONFIG.THEME.ICON_SIZE_MULTIPLIER = newConfig.iconSizeMultiplier;
+    }
+    
+    console.log('[Visual Search] ✅ Updated CONFIG.THEME:', CONFIG.THEME);
+    
+    console.log('[Visual Search] ✅ Theme configuration updated');
+  }
+  
   function addGlobalStyles() {
     if (document.querySelector('#visual-search-global-styles')) return;
+    
+    // Read theme configuration before adding styles
+    getThemeConfigFromAppBlocks();
     
     const style = document.createElement('style');
     style.id = 'visual-search-global-styles';
     style.textContent = STYLES.spinnerKeyframes + STYLES.responsiveStyles + STYLES.cropBoxKeyframes;
     document.head.appendChild(style);
   }
-  
-  function createSVGIcon() {
-    // Simple camera icon for visual search
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M9 2l.75 3h4.5L15 2z" fill="currentColor" opacity="0.8"/>
-      <rect x="2" y="6" width="20" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-      <rect x="3" y="7" width="18" height="10" rx="1" ry="1" fill="currentColor" opacity="0.1"/>
-      <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-      <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.3"/>
-      <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
-    </svg>`;
-  }
-  
+
   function isMobileDevice() {
     return window.innerWidth <= 768;
   }
@@ -1480,42 +1571,138 @@
   // ====================================================================
   // LOADING STATES
   // ====================================================================
-  
-  function showLoadingState(input) {
-    const icon = input.parentElement?.querySelector('.visual-search-icon');
-    if (icon) {
-      icon.style.opacity = '0.3';
-      icon.style.pointerEvents = 'none';
-      icon.innerHTML = `<div style="${STYLES.spinner}"></div>`;
-    }
-  }
-  
-  function hideLoadingState(input) {
-    const icon = input.parentElement?.querySelector('.visual-search-icon');
-    if (icon) {
-      icon.style.opacity = '0.7';
-      icon.style.pointerEvents = 'auto';
-      icon.innerHTML = createSVGIcon();
-      // Restore theme colors
-      icon.style.color = CONFIG.THEME.ICON_COLOR;
-    }
-  }
-  
-  // ====================================================================
   // VISUAL SEARCH ICON CREATION & INJECTION
   // ====================================================================
   
-  function injectVisualSearchIcon() {
-    console.log('[Visual Search] Search selector injection disabled in this version');
-    return; // Early return - no search selector injection
-  }
+  // ====================================================================
+  // THEME COLOR APPLICATION
+  // ====================================================================
   
+  function applyThemeColorsToDrawer(drawer) {
+    console.log('[Visual Search] 🎨 Applying theme colors to drawer...');
+    console.log('[Visual Search] 📋 Current theme config:', CONFIG.THEME);
+    
+    try {
+      // Apply primary color to the main icon background
+      const iconBackground = drawer.querySelector('div[style*="background: #e60023"]');
+      if (iconBackground) {
+        iconBackground.style.background = CONFIG.THEME.PRIMARY_COLOR;
+        iconBackground.style.boxShadow = `0 4px 16px ${CONFIG.THEME.PRIMARY_COLOR}33`; // 20% opacity
+        console.log('[Visual Search] ✅ Applied primary color to icon background:', CONFIG.THEME.PRIMARY_COLOR);
+      }
+      
+      // Apply colors to any upload buttons
+      const uploadButtons = drawer.querySelectorAll('button[style*="background"]');
+      uploadButtons.forEach(button => {
+        if (button.style.background.includes('#e60023') || button.style.backgroundColor.includes('#e60023')) {
+          button.style.background = CONFIG.THEME.PRIMARY_COLOR;
+          button.style.backgroundColor = CONFIG.THEME.PRIMARY_COLOR;
+          
+          // Update hover states if they exist
+          const originalOnMouseOver = button.onmouseover;
+          button.onmouseover = function() {
+            this.style.background = CONFIG.THEME.PRIMARY_COLOR_DARK || CONFIG.THEME.PRIMARY_COLOR;
+            this.style.backgroundColor = CONFIG.THEME.PRIMARY_COLOR_DARK || CONFIG.THEME.PRIMARY_COLOR;
+            if (originalOnMouseOver) originalOnMouseOver.call(this);
+          };
+          
+          const originalOnMouseOut = button.onmouseout;
+          button.onmouseout = function() {
+            this.style.background = CONFIG.THEME.PRIMARY_COLOR;
+            this.style.backgroundColor = CONFIG.THEME.PRIMARY_COLOR;
+            if (originalOnMouseOut) originalOnMouseOut.call(this);
+          };
+          
+          console.log('[Visual Search] ✅ Applied primary color to button');
+        }
+      });
+      
+      // Apply colors to any elements with Pinterest red
+      const pinterestRedElements = drawer.querySelectorAll('*');
+      pinterestRedElements.forEach(element => {
+        const computedStyle = window.getComputedStyle(element);
+        if (computedStyle.backgroundColor.includes('rgb(230, 0, 35)') || 
+            computedStyle.color.includes('rgb(230, 0, 35)') ||
+            element.style.background.includes('#e60023') ||
+            element.style.color.includes('#e60023')) {
+          
+          if (element.style.background.includes('#e60023')) {
+            element.style.background = element.style.background.replace('#e60023', CONFIG.THEME.PRIMARY_COLOR);
+          }
+          if (element.style.backgroundColor.includes('#e60023')) {
+            element.style.backgroundColor = CONFIG.THEME.PRIMARY_COLOR;
+          }
+          if (element.style.color.includes('#e60023')) {
+            element.style.color = CONFIG.THEME.PRIMARY_COLOR;
+          }
+          
+          console.log('[Visual Search] ✅ Applied primary color to element');
+        }
+      });
+      
+      // Apply CSS custom properties for any future elements
+      drawer.style.setProperty('--vs-primary-color', CONFIG.THEME.PRIMARY_COLOR);
+      drawer.style.setProperty('--vs-primary-color-dark', CONFIG.THEME.PRIMARY_COLOR_DARK || CONFIG.THEME.PRIMARY_COLOR);
+      drawer.style.setProperty('--vs-icon-color', CONFIG.THEME.ICON_COLOR);
+      drawer.style.setProperty('--vs-icon-color-hover', CONFIG.THEME.ICON_COLOR_HOVER);
+      
+      console.log('[Visual Search] ✅ Applied CSS custom properties to drawer');
+      
+      // Set up a mutation observer to apply colors to dynamically added elements
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const element = node;
+              // Apply colors to any new buttons with Pinterest red
+              if (element.style?.background?.includes('#e60023') || 
+                  element.style?.backgroundColor?.includes('#e60023')) {
+                element.style.background = element.style.background?.replace('#e60023', CONFIG.THEME.PRIMARY_COLOR) || CONFIG.THEME.PRIMARY_COLOR;
+                element.style.backgroundColor = CONFIG.THEME.PRIMARY_COLOR;
+                console.log('[Visual Search] ✅ Applied colors to dynamically added element');
+              }
+              
+              // Also check child elements
+              const childButtons = element.querySelectorAll?.('button[style*="#e60023"], *[style*="#e60023"]');
+              childButtons?.forEach(childElement => {
+                if (childElement.style.background.includes('#e60023')) {
+                  childElement.style.background = childElement.style.background.replace('#e60023', CONFIG.THEME.PRIMARY_COLOR);
+                }
+                if (childElement.style.backgroundColor.includes('#e60023')) {
+                  childElement.style.backgroundColor = CONFIG.THEME.PRIMARY_COLOR;
+                }
+                console.log('[Visual Search] ✅ Applied colors to dynamically added child element');
+              });
+            }
+          });
+        });
+      });
+      
+      observer.observe(drawer, { 
+        childList: true, 
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style']
+      });
+      
+      // Store observer for cleanup
+      drawer._themeObserver = observer;
+      
+    } catch (error) {
+      console.error('[Visual Search] ❌ Error applying theme colors:', error);
+    }
+  }
+
   // ====================================================================
   // PINTEREST-STYLE DRAWER
   // ====================================================================
   
   function openVisualSearchDrawer(searchInput) {
     console.log('[Visual Search] 🚪 Opening drawer with searchInput:', !!searchInput, searchInput);
+    
+    // Read theme configuration from app blocks before creating drawer
+    console.log('[Visual Search] 🎨 Reading theme configuration before opening drawer...');
+    getThemeConfigFromAppBlocks();
     
     // If searchInput is null/undefined, create a fallback
     if (!searchInput) {
@@ -1560,6 +1747,9 @@
     overlay.appendChild(drawer);
     document.body.appendChild(overlay);
 
+    // Apply dynamic theme colors to the drawer
+    applyThemeColorsToDrawer(drawer);
+
     // Store the searchInput reference on multiple elements for easy access
     overlay._searchInput = searchInput;
     drawer._searchInput = searchInput;
@@ -1602,6 +1792,13 @@
         drawer.style.transform = 'translateY(100%)';
       } else {
         drawer.style.transform = 'translateY(32px) scale(0.96)';
+      }
+      
+      // Clean up mutation observer
+      if (drawer._themeObserver) {
+        drawer._themeObserver.disconnect();
+        drawer._themeObserver = null;
+        console.log('[Visual Search] 🧹 Theme mutation observer cleaned up');
       }
       
       // Restore original z-index values
@@ -2817,87 +3014,6 @@
     skeletonCards.forEach(card => card.remove());
   }
 
-  async function performVisualSearch(drawer, items, searchInput, searchType) {
-    try {
-      updateResultsHeader(drawer, 'Searching...', 'Finding similar products...');
-      clearResults(drawer);
-      
-      // Show skeleton loaders for first two rows (mobile: 2x2=4, desktop: could be more)
-      showSkeletonLoaders(drawer);
-      
-      const formData = new FormData();
-      formData.append('image', drawer._imageFile);
-      formData.append('items', JSON.stringify(items));
-      formData.append('search', 'true');
-      
-      console.log('[Visual Search] Sending search request to:', CONFIG.EXTERNAL_API_URL);
-      console.log('[Visual Search] Shop domain header:', CONFIG.SHOP_DOMAIN);
-      console.log('[Visual Search] Selected items:', items);
-      
-      const response = await fetch(CONFIG.EXTERNAL_API_URL, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'shopDomainURL': CONFIG.SHOP_DOMAIN
-        }
-      });
-      
-      console.log('[Visual Search] Search response status:', response.status);
-      console.log('[Visual Search] Search response headers:', response.headers);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[Visual Search] Search server error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-      }
-      
-      const result = await response.json();
-      
-      console.log('[Visual Search] Search API Response:', result);
-      
-      // Handle the new API response format with product IDs and images array
-      let products = [];
-      
-      if (Array.isArray(result)) {
-        // If result is an array of products
-        products = result.map((item, index) => ({
-          id: item.productId || item.id || index,
-          image: item.image || item.imageUrl
-        }));
-      } else if (result.success && result.products) {
-        // If result has success flag and products array
-        products = result.products;
-      } else if (result.products) {
-        // If result directly has products array
-        products = result.products;
-      }
-      
-      if (products.length > 0) {
-        showSearchResults(drawer, products, searchType, searchInput);
-      } else {
-        showError(result.error || 'No similar items found.');
-        updateResultsHeader(drawer, 'No results', 'Try uploading a different image');
-        // Remove skeleton loaders and show empty state when no search results found
-        removeSkeletonLoaders(drawer);
-        const emptyState = drawer.querySelector('#empty-state');
-        if (emptyState) {
-          emptyState.style.display = 'flex';
-        }
-      }
-    } catch (error) {
-      console.error('Visual search error:', error);
-      showError('Search failed. Please try again.');
-      updateResultsHeader(drawer, 'Search failed', 'Something went wrong. Please try again.');
-      // Remove skeleton loaders and show empty state when search fails
-      removeSkeletonLoaders(drawer);
-      const emptyState = drawer.querySelector('#empty-state');
-      if (emptyState) {
-        emptyState.style.display = 'flex';
-      }
-    }
-  }
-
   function showSearchResults(drawer, products, searchType, searchInput) {
     // Store data for infinite scroll
     drawer._allProducts = products;
@@ -2993,7 +3109,7 @@
     updateResultsHeader(drawer, 'Search results', `Showing ${displayedCount} of ${drawer._allProducts.length} products`);
   }
 
-  function setupResultsHandlers(drawer, searchInput) {
+  function setupResultsHandlers(_drawer, _searchInput) {
     // Results section is now always visible in the right panel
     // No need for back navigation in the new layout
   }
@@ -3458,59 +3574,6 @@
     }
   }
 
-  async function processImageFromUrl(url, searchInput) {
-    try {
-      showLoadingState(searchInput);
-      
-      const formData = new FormData();
-      formData.append('imageUrl', url);
-      formData.append('shop', CONFIG.SHOP_DOMAIN);
-      
-      const response = await fetch(`${CONFIG.APP_URL}/api/visual-search`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && result.searchQuery) {
-        searchInput.value = result.searchQuery;
-        searchInput.focus();
-        
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-        searchInput.dispatchEvent(new Event('change', { bubbles: true }));
-        
-        setTimeout(() => {
-          const form = searchInput.closest('form');
-          if (form) {
-            form.dispatchEvent(new Event('submit', { bubbles: true }));
-          } else {
-            const searchButton = searchInput.parentElement?.querySelector('button[type="submit"], .search-button, [aria-label*="search" i]');
-            if (searchButton) {
-              searchButton.click();
-            }
-          }
-        }, 100);
-        
-        showSuccess(`Found: "${result.searchQuery}"`);
-      } else {
-        showError(result.error || 'Could not process image from URL. Please try again.');
-      }
-    } catch (error) {
-      console.error('Visual search error:', error);
-      showError('Could not load image from URL. Please check the URL and try again.');
-    } finally {
-      hideLoadingState(searchInput);
-    }
-  }
-  
   // ====================================================================
   // FILE UPLOAD & PROCESSING
   // ====================================================================
@@ -3528,80 +3591,394 @@
     
     return true;
   }
+
+  // ====================================================================
+  // APP BLOCK CLEANUP SYSTEM
+  // ====================================================================
   
-  function openVisualSearch(searchInput, useCamera = false) {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = CONFIG.ACCEPTED_TYPES.join(',');
-    if (useCamera) {
-      fileInput.capture = 'environment';
+  // Global cleanup function that can be called from anywhere
+  let globalCleanupPerformed = false;
+  
+  function performGlobalCleanup() {
+    if (globalCleanupPerformed) {
+      console.log('[Visual Search] 🧹 Global cleanup already performed, skipping');
+      return true;
     }
-    fileInput.style.display = 'none';
     
-    fileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file || !validateFile(file)) return;
+    console.log('[Visual Search] 🧹 Performing global cleanup - app block removed');
+    globalCleanupPerformed = true;
+    
+    // Remove global styles
+    const globalStyles = document.querySelector('#visual-search-global-styles');
+    if (globalStyles) {
+      globalStyles.remove();
+      console.log('[Visual Search] ✅ Global styles removed');
+    }
+    
+    // Close any open drawers
+    const existingDrawers = document.querySelectorAll('.visual-search-drawer');
+    existingDrawers.forEach(drawer => {
+      drawer.remove();
+      console.log('[Visual Search] ✅ Open drawer closed');
+    });
+    
+    // Remove any overlays
+    const overlays = document.querySelectorAll('.visual-search-overlay');
+    overlays.forEach(overlay => {
+      overlay.remove();
+      console.log('[Visual Search] ✅ Overlay removed');
+    });
+    
+    // Remove any injected icons (backup cleanup)
+    const visualSearchIcons = document.querySelectorAll('.visual-search-icon');
+    visualSearchIcons.forEach(icon => {
+      icon.remove();
+      console.log('[Visual Search] ✅ Injected icon removed');
+    });
+    
+    // Clear global variables
+    if (window.visualSearchCurrentInput) {
+      delete window.visualSearchCurrentInput;
+    }
+    if (window.visualSearchCurrentSearchInput) {
+      delete window.visualSearchCurrentSearchInput;
+    }
+    if (window.visualSearchUnified) {
+      delete window.visualSearchUnified;
+    }
+    
+    // Send cleanup notification to app
+    sendGlobalCleanupNotification();
+    
+    console.log('[Visual Search] ✅ Global cleanup completed successfully');
+    return true;
+  }
+  
+  function sendGlobalCleanupNotification() {
+    try {
+      // Ensure proper URL construction without double slashes
+      const baseUrl = CONFIG.APP_URL.endsWith('/') ? CONFIG.APP_URL.slice(0, -1) : CONFIG.APP_URL;
       
-      try {
-        showLoadingState(searchInput);
+      fetch(`${baseUrl}/api/cleanup-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          shop: CONFIG.SHOP_DOMAIN,
+          action: 'app_block_removed',
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          url: window.location.href,
+          metadata: {
+            cleanupMethod: 'enhanced_monitoring',
+            checkCount: window.visualSearchCleanupAttempts || 0,
+            lastActive: localStorage.getItem('vs_last_active') || null
+          }
+        })
+      }).then(() => {
+        console.log('[Visual Search] 📡 Cleanup notification sent to app');
+      }).catch(error => {
+        console.log('[Visual Search] ⚠️ Cleanup notification failed:', error);
+      });
+    } catch (error) {
+      console.log('[Visual Search] ⚠️ Cleanup notification error:', error);
+    }
+  }
+
+  // 🆕 TRACK APP BLOCK USAGE
+  function trackAppBlockUsage(action, metadata = {}) {
+    try {
+      // Store locally for backup
+      localStorage.setItem('vs_last_active', new Date().toISOString());
+      
+      // Ensure proper URL construction without double slashes
+      const baseUrl = CONFIG.APP_URL.endsWith('/') ? CONFIG.APP_URL.slice(0, -1) : CONFIG.APP_URL;
+      const finalUrl = `${baseUrl}/api/cleanup-notification`;
+      
+      console.log(`[Visual Search] 📊 Tracking ${action} to:`, finalUrl);
+      console.log('[Visual Search] 🔧 CONFIG.APP_URL:', CONFIG.APP_URL);
+      console.log('[Visual Search] 🔧 window.VISUAL_SEARCH_CONFIG:', window.VISUAL_SEARCH_CONFIG);
+      
+      fetch(finalUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          shop: CONFIG.SHOP_DOMAIN,
+          action: `app_block_${action}`,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          url: window.location.href,
+          metadata: {
+            action,
+            ...metadata,
+            sessionId: sessionStorage.getItem('vs_session_id') || Math.random().toString(36).substr(2, 9)
+          }
+        })
+      }).then(() => {
+        console.log(`[Visual Search] 📊 App block ${action} tracked`);
+      }).catch(error => {
+        console.log(`[Visual Search] ⚠️ Failed to track ${action}:`, error);
+      });
+    } catch (error) {
+      console.log(`[Visual Search] ⚠️ Tracking error for ${action}:`, error);
+    }
+  }
+
+  function initializeCleanupSystem() {
+    console.log('[Visual Search] 🧹 Starting enhanced cleanup monitoring system...');
+    
+    let cleanupAttempts = 0;
+    const maxCleanupAttempts = 5; // Reduced for faster cleanup
+    let monitoringInterval = null;
+    let cleanupPerformed = false;
+    
+    function checkAppBlockPresence() {
+      // Enhanced selectors to detect app blocks more reliably
+      const appBlockSelectors = [
+        '[data-visual-search-trigger]',
+        '[data-app-block="visual-search"]',
+        '.visual-search-app-block',
+        '[data-vs-shop]',
+        '[data-vs-block-id]',
+        // Add Shopify-specific app block selectors
+        '.shopify-app-block[data-block-type*="visual"]',
+        '.shopify-section__app-block[data-block-type*="visual"]',
+        // Look for the specific block name
+        '[data-shopify-app-block*="visual-search"]'
+      ];
+      
+      let totalFound = 0;
+      const detection = {};
+      
+      appBlockSelectors.forEach(selector => {
+        try {
+          const elements = document.querySelectorAll(selector);
+          detection[selector] = elements.length;
+          totalFound += elements.length;
+        } catch (e) {
+          // Ignore selector errors
+          detection[selector] = 0;
+        }
+      });
+      
+      console.log('[Visual Search] 🔍 Enhanced app block presence check:', {
+        selectors: detection,
+        totalFound,
+        cleanupAttempts,
+        timestamp: new Date().toISOString()
+      });
+      
+      return totalFound > 0;
+    }
+    
+    function performCleanup() {
+      if (cleanupPerformed) {
+        console.log('[Visual Search] 🧹 Cleanup already performed, skipping');
+        return true;
+      }
+      
+      console.log('[Visual Search] 🧹 Performing cleanup - app block removed');
+      cleanupPerformed = true;
+      
+      // Stop monitoring immediately
+      if (monitoringInterval) {
+        clearInterval(monitoringInterval);
+        monitoringInterval = null;
+      }
+      
+      // Call the global cleanup function
+      const success = performGlobalCleanup();
+      
+      // Set a flag to prevent re-initialization
+      window.visualSearchCleanedUp = true;
+      
+      return success;
+    }
+    
+    function monitorAppBlocks() {
+      // Don't monitor if cleanup already performed
+      if (cleanupPerformed || window.visualSearchCleanedUp) {
+        return true;
+      }
+      
+      const hasAppBlocks = checkAppBlockPresence();
+      
+      if (!hasAppBlocks) {
+        cleanupAttempts++;
+        console.log('[Visual Search] ⚠️ No app blocks found, attempt:', cleanupAttempts);
         
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('shop', CONFIG.SHOP_DOMAIN);
+        // Trigger cleanup after just 2 consecutive checks (faster cleanup)
+        if (cleanupAttempts >= 2) {
+          console.log('[Visual Search] 🚨 Triggering cleanup after', cleanupAttempts, 'attempts');
+          return performCleanup();
+        }
+      } else {
+        // Reset cleanup attempts if app blocks are found
+        cleanupAttempts = 0;
+      }
+      
+      return false;
+    }
+    
+    // Initial check with faster response
+    if (!checkAppBlockPresence()) {
+      console.log('[Visual Search] 🔍 No app blocks detected on initial load');
+      cleanupAttempts = 1;
+      
+      // Quick followup check
+      setTimeout(() => {
+        if (!checkAppBlockPresence()) {
+          console.log('[Visual Search] 🚨 Still no app blocks after 2 seconds - triggering cleanup');
+          performCleanup();
+        }
+      }, 2000);
+    }
+    
+    // Set up monitoring interval with faster frequency
+    monitoringInterval = setInterval(() => {
+      const shouldStop = monitorAppBlocks();
+      
+      if (shouldStop || cleanupAttempts >= maxCleanupAttempts) {
+        if (monitoringInterval) {
+          clearInterval(monitoringInterval);
+          monitoringInterval = null;
+        }
+        console.log('[Visual Search] 🛑 Monitoring stopped');
+      }
+    }, 5000); // Check every 5 seconds for faster response
+    
+    // Enhanced MutationObserver for immediate detection
+    if (typeof MutationObserver !== 'undefined') {
+      const immediateObserver = new MutationObserver((mutations) => {
+        let potentialRemoval = false;
         
-        const response = await fetch(`${CONFIG.APP_URL}/api/visual-search`, {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+        mutations.forEach((mutation) => {
+          // Check if any nodes were removed
+          if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
+            mutation.removedNodes.forEach((node) => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // Check if removed node contained app blocks
+                if (node.matches && (
+                  node.matches('[data-visual-search-trigger]') ||
+                  node.matches('[data-app-block="visual-search"]') ||
+                  node.matches('.visual-search-app-block') ||
+                  node.matches('[data-shopify-app-block*="visual"]') ||
+                  node.querySelector('[data-visual-search-trigger]') ||
+                  node.querySelector('[data-app-block="visual-search"]') ||
+                  node.querySelector('.visual-search-app-block') ||
+                  node.querySelector('[data-shopify-app-block*="visual"]')
+                )) {
+                  potentialRemoval = true;
+                  console.log('[Visual Search] 🚨 Potential app block removal detected:', node);
+                }
+              }
+            });
+          }
+          
+          // Also check for attribute changes that might indicate app block changes
+          if (mutation.type === 'attributes' && 
+              (mutation.attributeName === 'data-app-block' ||
+               mutation.attributeName === 'data-visual-search-trigger' ||
+               mutation.attributeName === 'data-shopify-app-block')) {
+            potentialRemoval = true;
+            console.log('[Visual Search] 🚨 App block attribute change detected');
           }
         });
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        
-        if (result.success && result.searchQuery) {
-          // Fill search input
-          searchInput.value = result.searchQuery;
-          searchInput.focus();
-          
-          // Trigger events
-          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-          searchInput.dispatchEvent(new Event('change', { bubbles: true }));
-          
-          // Auto-submit search
+        if (potentialRemoval) {
+          // Immediate check
           setTimeout(() => {
-            const form = searchInput.closest('form');
-            if (form) {
-              form.dispatchEvent(new Event('submit', { bubbles: true }));
+            console.log('[Visual Search] 🔍 Checking app block presence after potential removal...');
+            if (!checkAppBlockPresence()) {
+              console.log('[Visual Search] 🧹 Confirmed: App blocks removed - triggering immediate cleanup');
+              performCleanup();
             } else {
-              const searchButton = searchInput.parentElement?.querySelector('button[type="submit"], .search-button, [aria-label*="search" i]');
-              if (searchButton) {
-                searchButton.click();
-              }
+              console.log('[Visual Search] ✅ App blocks still present after mutation');
             }
-          }, 100);
+          }, 500); // Very quick response
           
-          showSuccess(`Found: "${result.searchQuery}"`);
-        } else {
-          showError(result.error || 'Could not process image. Please try again.');
+          // Followup check
+          setTimeout(() => {
+            if (!cleanupPerformed && !checkAppBlockPresence()) {
+              console.log('[Visual Search] 🧹 Followup: App blocks still missing - triggering cleanup');
+              performCleanup();
+            }
+          }, 2000);
         }
-      } catch (error) {
-        console.error('Visual search error:', error);
-        showError('Something went wrong. Please try again.');
-      } finally {
-        hideLoadingState(searchInput);
+      });
+      
+      // Observe the entire document with comprehensive options
+      immediateObserver.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: [
+          'data-app-block',
+          'data-visual-search-trigger', 
+          'data-shopify-app-block',
+          'data-vs-shop',
+          'class'
+        ]
+      });
+      
+      console.log('[Visual Search] 👁️ Enhanced immediate cleanup detection active');
+    }
+    
+    // Enhanced Shopify theme editor event handling
+    const themeEditorEvents = [
+      'shopify:section:load',
+      'shopify:section:unload',
+      'shopify:section:reorder',
+      'shopify:section:select',
+      'shopify:section:deselect',
+      'shopify:block:select',
+      'shopify:block:deselect',
+      'shopify:block:load',
+      'shopify:block:unload'
+    ];
+    
+    themeEditorEvents.forEach(event => {
+      document.addEventListener(event, (e) => {
+        console.log('[Visual Search] 🎨 Shopify theme event detected:', event, e.detail);
+        
+        // Quick check after theme events
+        setTimeout(() => {
+          if (!cleanupPerformed && !checkAppBlockPresence()) {
+            console.log('[Visual Search] 🧹 No app blocks after Shopify theme event - triggering cleanup');
+            performCleanup();
+          }
+        }, 1000);
+      });
+    });
+    
+    // Page visibility change detection
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !cleanupPerformed) {
+        setTimeout(() => {
+          if (!checkAppBlockPresence()) {
+            console.log('[Visual Search] 🧹 No app blocks after page became visible - checking for cleanup');
+            cleanupAttempts++;
+            if (cleanupAttempts >= 2) {
+              performCleanup();
+            }
+          }
+        }, 1000);
       }
     });
     
-    document.body.appendChild(fileInput);
-    fileInput.click();
-    document.body.removeChild(fileInput);
+    // Window focus event (additional safety check)
+    window.addEventListener('focus', () => {
+      if (!cleanupPerformed) {
+        setTimeout(() => {
+          monitorAppBlocks();
+        }, 500);
+      }
+    });
   }
-  
+
   // ====================================================================
   // INITIALIZATION & EVENT LISTENERS
   // ====================================================================
@@ -3609,22 +3986,63 @@
   function initialize() {
     console.log('[Visual Search] Initializing unified script...');
     
-    // Add global styles
+    // Check for app blocks before proceeding
+    const appBlockSelectors = [
+      '[data-visual-search-trigger]',
+      '[data-app-block="visual-search"]',
+      '.visual-search-app-block',
+      '[data-vs-shop]'
+    ];
+    
+    const hasAppBlocks = appBlockSelectors.some(selector => 
+      document.querySelectorAll(selector).length > 0
+    );
+    
+    if (!hasAppBlocks) {
+      console.log('[Visual Search] ⚠️ No app blocks detected, starting cleanup monitoring only');
+      initializeCleanupSystem();
+      return;
+    }
+    
+    console.log('[Visual Search] ✅ App blocks detected, proceeding with full initialization');
+    
+    // 🆕 TRACK APP BLOCK PRESENCE
+    trackAppBlockUsage('viewed', {
+      feature: 'app_block_detected',
+      blockCount: appBlockSelectors.reduce((count, selector) => {
+        return count + document.querySelectorAll(selector).length;
+      }, 0),
+      pageUrl: window.location.href
+    });
+    
+    // Add global styles only if app blocks are present
     addGlobalStyles();
     
-    // Inject icons
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', injectVisualSearchIcon);
-    } else {
-      injectVisualSearchIcon();
-    }
+    // Initialize cleanup monitoring
+    initializeCleanupSystem();
+    
+    // Inject icons (currently disabled in your version)
+    // Uncomment these lines if you want to re-enable automatic injection
+    // if (document.readyState === 'loading') {
+    //   document.addEventListener('DOMContentLoaded', injectVisualSearchIcon);
+    // } else {
+    //   injectVisualSearchIcon();
+    // }
     
     // Watch for navigation changes (SPA support)
     let currentUrl = location.href;
     const checkUrlChange = debounce(() => {
       if (location.href !== currentUrl) {
         currentUrl = location.href;
-        setTimeout(injectVisualSearchIcon, 1000);
+        // Re-check app blocks on navigation
+        setTimeout(() => {
+          const stillHasBlocks = appBlockSelectors.some(selector => 
+            document.querySelectorAll(selector).length > 0
+          );
+          if (!stillHasBlocks) {
+            console.log('[Visual Search] 🔍 No app blocks after navigation - may have been removed');
+          }
+        }, 1000);
       }
     }, 100);
     
@@ -3639,12 +4057,21 @@
     ];
     
     shopifyEvents.forEach(event => {
-      document.addEventListener(event, () => setTimeout(injectVisualSearchIcon, 1000));
+      document.addEventListener(event, () => {
+        setTimeout(() => {
+          // Re-check app blocks after theme events
+          const stillHasBlocks = appBlockSelectors.some(selector => 
+            document.querySelectorAll(selector).length > 0
+          );
+          if (!stillHasBlocks) {
+            console.log('[Visual Search] 🔍 No app blocks after theme event - may have been removed');
+          }
+        }, 1000);
+      });
     });
     
     // Expose API for manual control
     window.visualSearchUnified = {
-      inject: injectVisualSearchIcon,
       openDrawer: (searchInput) => {
         // If no searchInput provided, create a fallback
         if (!searchInput) {
@@ -3653,12 +4080,21 @@
         }
         return openVisualSearchDrawer(searchInput);
       },
-      openSearch: openVisualSearch,
       config: CONFIG,
-      createFallbackSearchInput: createFallbackSearchInput // Expose helper function
+      createFallbackSearchInput: createFallbackSearchInput, // Expose helper function
+      checkAppBlocks: () => {
+        return appBlockSelectors.some(selector => 
+          document.querySelectorAll(selector).length > 0
+        );
+      },
+      // Manual cleanup function for debugging
+      forceCleanup: () => {
+        console.log('[Visual Search] 🔧 Manual cleanup triggered');
+        return performGlobalCleanup();
+      }
     };
     
-    console.log('[Visual Search] Initialization complete');
+    console.log('[Visual Search] ✅ Initialization complete');
   }
   
   // Start the magic

@@ -26,10 +26,8 @@ export default function App() {
           🏠 Dashboard
         </Link>
         <Link to="/app/visual-search">⚡ Quick Setup</Link>
-        <Link to="/app/app-blocks">� Advanced Setup</Link>
-        <Link to="/app/preview">👀 Preview & Test</Link>
-        <Link to="/app/testing-tools">🔧 Help & Tools</Link>
-        <Link to="/app/additional">📊 Analytics</Link>
+        <Link to="/app/app-blocks">🎯 App Blocks Setup</Link>
+        <Link to="/app/block-stats">� Analytics</Link>
       </NavMenu>
       <AppLayout>
         <Outlet />

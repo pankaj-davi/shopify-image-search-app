@@ -27,52 +27,38 @@ export default function NavigationPage() {
   // Custom navigation sections with dynamic URLs
   const customSections: NavigationSection[] = [
     {
-      title: "Visual Search Features",
-      description: "Core functionality and customization",
+      title: "App Block Setup",
+      description: "Configure visual search through Shopify's theme editor",
       links: [
         {
-          url: "/app/preview",
-          label: "Live Preview & Theme Customization",
-          icon: "🎨",
+          url: "/app/app-blocks",
+          label: "App Block Integration",
+          icon: "📦",
           variant: "primary",
-          description: "Real-time preview with positioning controls, color themes, and configuration generator"
+          description: "Add visual search blocks to your theme using Shopify's native theme editor"
         },
         {
           url: "/app/visual-search", 
           label: "Visual Search Management",
           icon: "🔍",
           variant: "secondary",
-          description: "Script injection, cleanup, and core visual search settings"
-        },
-        {
-          url: "/app/additional",
-          label: "Analytics Dashboard", 
-          icon: "📊",
-          variant: "secondary",
-          description: "Usage statistics, performance metrics, and user behavior insights"
+          description: "Theme configuration and visual search settings"
         }
       ]
     },
     {
-      title: "Development & Testing",
-      description: "Tools for developers and store owners",
+      title: "Analytics & Insights",
+      description: "Track and analyze performance",
       links: [
         {
-          url: "/app/verify-integration",
-          label: "Integration Verification",
-          icon: "✅",
-          variant: "secondary",
-          description: "Check installation status and troubleshoot common issues"
-        },
-        {
-          url: "/app/testing-tools",
-          label: "Testing & Debug Tools",
-          icon: "🛠️",
-          variant: "secondary", 
-          description: "Debug visual search functionality and test different scenarios"
+          url: "/app/block-stats",
+          label: "App Block Analytics",
+          icon: "📊",
+          variant: "primary",
+          description: "Track app block usage and performance metrics"
         }
       ]
-    },
+    }
   ];
 
   return (

@@ -265,7 +265,6 @@ export class FirebaseDatabase implements DatabaseInterface {
         timezoneOffset: data.timezoneOffset,
         timezoneOffsetMinutes: data.timezoneOffsetMinutes,
         plan: data.plan,
-        themeConfig: data.themeConfig, // Include theme configuration
         productCount: data.productCount,
         lastSyncAt: data.lastSyncAt ? safeToDate(data.lastSyncAt) : undefined,
         createdAt: safeToDate(data.createdAt),
@@ -544,6 +543,202 @@ export class FirebaseDatabase implements DatabaseInterface {
       console.log(`🔥 Store event successfully recorded: ${eventType} for ${shopDomain}`);
     } catch (error) {
       console.error('❌ Error recording store event in Firebase:', error);
+      throw error;
+    }
+  }
+
+  // ===============================
+  // APP BLOCK TRACKING METHODS
+  // ===============================
+
+  async createAppBlockUsage(usage: any): Promise<{ id: string }> {
+    try {
+      const usageData = sanitizeData({
+        shopDomain: usage.shopDomain,
+        blockType: usage.blockType,
+        action: usage.action,
+        url: usage.url || null,
+        userAgent: usage.userAgent || null,
+        metadata: usage.metadata ? JSON.stringify(usage.metadata) : null,
+        sessionId: usage.sessionId || null,
+        timestamp: FieldValue.serverTimestamp(),
+      });
+
+      const docRef = await this.firestore.collection('appBlockUsage').add(usageData);
+      
+      console.log('🔥 App block usage created in Firebase:', {
+        id: docRef.id,
+        shopDomain: usage.shopDomain,
+        action: usage.action,
+        blockType: usage.blockType
+      });
+
+      return { id: docRef.id };
+    } catch (error) {
+      console.error('❌ Error creating app block usage in Firebase:', error);
+      throw error;
+    }
+  }
+
+  async getAppBlockUsageStats(shopDomain: string, since: Date): Promise<any> {
+    try {
+      const query = this.firestore
+        .collection('appBlockUsage')
+        .where('shopDomain', '==', shopDomain)
+        .where('timestamp', '>=', since);
+
+      const snapshot = await query.get();
+      
+      const stats = {
+        totalUsage: 0,
+        byAction: {} as Record<string, number>,
+        dailyUsage: [] as any[],
+        lastUsed: null as string | null
+      };
+
+      let lastTimestamp: Date | null = null;
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        stats.totalUsage++;
+        
+        // Count by action
+        const action = data.action || 'unknown';
+        stats.byAction[action] = (stats.byAction[action] || 0) + 1;
+        
+        // Track last used
+        const timestamp = safeToDate(data.timestamp);
+        if (!lastTimestamp || timestamp > lastTimestamp) {
+          lastTimestamp = timestamp;
+        }
+      });
+
+      if (lastTimestamp) {
+        stats.lastUsed = (lastTimestamp as Date).toISOString();
+      }
+
+      console.log(`🔥 Retrieved app block stats for ${shopDomain}:`, stats);
+      return stats;
+    } catch (error) {
+      console.error('❌ Error getting app block usage stats from Firebase:', error);
+      throw error;
+    }
+  }
+
+  async getRecentAppBlockUsage(shopDomain: string, since: Date): Promise<any[]> {
+    try {
+      const query = this.firestore
+        .collection('appBlockUsage')
+        .where('shopDomain', '==', shopDomain)
+        .where('timestamp', '>=', since)
+        .orderBy('timestamp', 'desc')
+        .limit(50);
+
+      const snapshot = await query.get();
+      
+      const usage: any[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        usage.push({
+          id: doc.id,
+          shopDomain: data.shopDomain,
+          blockType: data.blockType,
+          action: data.action,
+          url: data.url,
+          userAgent: data.userAgent,
+          metadata: data.metadata ? JSON.parse(data.metadata) : null,
+          sessionId: data.sessionId,
+          timestamp: safeToDate(data.timestamp),
+        });
+      });
+
+      console.log(`🔥 Retrieved ${usage.length} recent app block usage records for ${shopDomain}`);
+      return usage;
+    } catch (error) {
+      console.error('❌ Error getting recent app block usage from Firebase:', error);
+      throw error;
+    }
+  }
+
+  // ===============================
+  // VISUAL SEARCH TRACKING METHODS
+  // ===============================
+
+  async createVisualSearchUsage(usage: any): Promise<{ id: string }> {
+    try {
+      const usageData = sanitizeData({
+        shopDomain: usage.shopDomain,
+        searchType: usage.searchType,
+        hasResults: usage.hasResults || false,
+        resultCount: usage.resultCount || 0,
+        imageSize: usage.imageSize || null,
+        imageType: usage.imageType || null,
+        cropData: usage.cropData ? JSON.stringify(usage.cropData) : null,
+        sessionId: usage.sessionId || null,
+        url: usage.url || null,
+        timestamp: FieldValue.serverTimestamp(),
+      });
+
+      const docRef = await this.firestore.collection('visualSearchUsage').add(usageData);
+      
+      console.log('🔥 Visual search usage created in Firebase:', {
+        id: docRef.id,
+        shopDomain: usage.shopDomain,
+        searchType: usage.searchType,
+        hasResults: usage.hasResults,
+        resultCount: usage.resultCount
+      });
+
+      return { id: docRef.id };
+    } catch (error) {
+      console.error('❌ Error creating visual search usage in Firebase:', error);
+      throw error;
+    }
+  }
+
+  async getVisualSearchUsageStats(shopDomain: string, since: Date): Promise<any> {
+    try {
+      const query = this.firestore
+        .collection('visualSearchUsage')
+        .where('shopDomain', '==', shopDomain)
+        .where('timestamp', '>=', since);
+
+      const snapshot = await query.get();
+      
+      const stats = {
+        totalSearches: 0,
+        successfulSearches: 0,
+        bySearchType: {} as Record<string, number>,
+        averageResults: 0,
+        dailySearches: [] as any[]
+      };
+
+      let totalResults = 0;
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        stats.totalSearches++;
+        
+        if (data.hasResults) {
+          stats.successfulSearches++;
+        }
+        
+        // Count by search type
+        const searchType = data.searchType || 'unknown';
+        stats.bySearchType[searchType] = (stats.bySearchType[searchType] || 0) + 1;
+        
+        // Calculate average results
+        totalResults += (data.resultCount || 0);
+      });
+
+      if (stats.totalSearches > 0) {
+        stats.averageResults = totalResults / stats.totalSearches;
+      }
+
+      console.log(`🔥 Retrieved visual search stats for ${shopDomain}:`, stats);
+      return stats;
+    } catch (error) {
+      console.error('❌ Error getting visual search usage stats from Firebase:', error);
       throw error;
     }
   }

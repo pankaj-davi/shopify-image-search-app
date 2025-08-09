@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
+import { appBlockTracker } from "../services/app-block-tracking.service";
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
@@ -57,6 +58,25 @@ export async function action({ request }: ActionFunctionArgs) {
         cropData: cropData ? JSON.parse(cropData) : null
       });
 
+      // 🆕 TRACK VISUAL SEARCH USAGE
+      if (shop) {
+        try {
+          await appBlockTracker.trackVisualSearchUsage({
+            shopDomain: shop,
+            searchType: cropData ? 'crop_search' : 'image_upload',
+            hasResults: products.length > 0,
+            resultCount: products.length,
+            imageSize: image.size,
+            imageType: image.type,
+            cropData: cropData || null,
+            url: request.url
+          });
+          console.log(`📊 Visual search usage tracked for ${shop}`);
+        } catch (trackingError) {
+          console.error(`❌ Failed to track visual search usage:`, trackingError);
+        }
+      }
+
       return json({
         success: true,
         products,
@@ -68,6 +88,24 @@ export async function action({ request }: ActionFunctionArgs) {
     } else if (search === "true") {
       // Product search request
       const searchQuery = await analyzeImage(image);
+      
+      // 🆕 TRACK SEARCH USAGE
+      if (shop) {
+        try {
+          await appBlockTracker.trackVisualSearchUsage({
+            shopDomain: shop,
+            searchType: 'image_upload',
+            hasResults: !!searchQuery,
+            resultCount: searchQuery ? 1 : 0,
+            imageSize: image.size,
+            imageType: image.type,
+            url: request.url
+          });
+          console.log(`📊 Visual search query tracked for ${shop}`);
+        } catch (trackingError) {
+          console.error(`❌ Failed to track visual search query:`, trackingError);
+        }
+      }
       
       return json({
         success: true,

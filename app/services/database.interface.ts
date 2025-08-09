@@ -24,6 +24,15 @@ export interface DatabaseInterface {
 
   // Event logging
   recordStoreEvent(shopDomain: string, eventType: string, eventData: Record<string, any>): Promise<void>;
+
+  // App Block tracking
+  createAppBlockUsage(usage: AppBlockUsageData): Promise<{ id: string }>;
+  getAppBlockUsageStats(shopDomain: string, since: Date): Promise<any>;
+  getRecentAppBlockUsage(shopDomain: string, since: Date): Promise<any[]>;
+
+  // Visual Search tracking
+  createVisualSearchUsage(usage: VisualSearchUsageData): Promise<{ id: string }>;
+  getVisualSearchUsageStats(shopDomain: string, since: Date): Promise<any>;
 }
 
 // Data types
@@ -169,11 +178,35 @@ export interface StoreData {
     redirectLimitReached?: boolean;
   };
   
-  themeConfig?: any; // Visual search theme configuration
   productCount?: number; // Track synced products count
   lastSyncAt?: Date; // Track last sync timestamp
   createdAt: Date;
   updatedAt: Date;
+}
+
+// App Block tracking data types
+export interface AppBlockUsageData {
+  shopDomain: string;
+  blockType: string;
+  action: string;
+  url?: string | null;
+  userAgent?: string | null;
+  metadata?: string | null;
+  sessionId?: string | null;
+  timestamp?: Date;
+}
+
+export interface VisualSearchUsageData {
+  shopDomain: string;
+  searchType: string;
+  hasResults: boolean;
+  resultCount: number;
+  imageSize?: number | null;
+  imageType?: string | null;
+  cropData?: string | null;
+  sessionId?: string | null;
+  url?: string | null;
+  timestamp?: Date;
 }
 
 // Database factory function

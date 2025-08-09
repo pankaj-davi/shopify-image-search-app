@@ -57,3 +57,38 @@ model Product {
   @@index([shopDomain])
   @@index([shopifyProductId])
 }
+
+model AppBlockUsage {
+  id          String   @id @default(cuid())
+  shopDomain  String
+  blockType   String   // "visual-search"
+  action      String   // "added", "removed", "used", "viewed"
+  url         String?
+  timestamp   DateTime @default(now())
+  userAgent   String?
+  metadata    String?  // JSON string for additional data
+  sessionId   String?  // Optional session tracking
+
+  @@index([shopDomain])
+  @@index([blockType])
+  @@index([action])
+  @@index([timestamp])
+}
+
+model VisualSearchUsage {
+  id           String   @id @default(cuid())
+  shopDomain   String
+  searchType   String   // "image_upload", "crop_search", "url_input", "camera"
+  hasResults   Boolean  @default(false)
+  resultCount  Int      @default(0)
+  imageSize    Int?     // File size in bytes
+  imageType    String?  // MIME type
+  cropData     String?  // JSON string of crop coordinates
+  timestamp    DateTime @default(now())
+  sessionId    String?
+  url          String?
+
+  @@index([shopDomain])
+  @@index([searchType])
+  @@index([timestamp])
+}

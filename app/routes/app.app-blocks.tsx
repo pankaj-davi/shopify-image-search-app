@@ -207,7 +207,7 @@ export default function AppBlockPage() {
                 <List>
                   <List.Item>🎨 Customizable colors and positioning</List.Item>
                   <List.Item>📱 Responsive design for all devices</List.Item>
-                  <List.Item>⚡ Uses the same unified script as automatic injection</List.Item>
+                  <List.Item>⚡ Uses the same unified visual search script</List.Item>
                   <List.Item>🔧 Native Shopify schema configuration</List.Item>
                 </List>
               </BlockStack>
@@ -258,12 +258,12 @@ export default function AppBlockPage() {
             
             <BlockStack gap="300">
               <Text as="p" variant="bodyMd">
-                Both automatic script injection and app blocks work simultaneously. Merchants can choose their preferred method:
+                App blocks provide the recommended integration method for Theme 2.0 stores, offering precise control over placement and styling.
               </Text>
               
               <Box background="bg-surface-info" padding="400" borderRadius="200">
                 <List>
-                  <List.Item>**Keep automatic injection** for universal compatibility</List.Item>
+                  <List.Item>**Use app blocks** for professional Theme 2.0 integration</List.Item>
                   <List.Item>**Add app blocks** for Theme 2.0 stores that want more control</List.Item>
                   <List.Item>**Let merchants choose** based on their needs and theme version</List.Item>
                 </List>
@@ -274,8 +274,8 @@ export default function AppBlockPage() {
               <Button url="/app/visual-search" variant="primary">
                 ← Back to Settings
               </Button>
-              <Button url="/app/preview" variant="secondary">
-                🎨 Preview & Customize
+              <Button url="/app/block-stats" variant="secondary">
+                📊 View Analytics
               </Button>
             </InlineStack>
           </BlockStack>

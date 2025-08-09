@@ -57,11 +57,6 @@ export const BREADCRUMB_CONFIGS = {
     { label: "Visual Search", current: true }
   ],
   
-  preview: [
-    { label: "Dashboard", url: "/app" },
-    { label: "Preview & Customize", current: true }
-  ],
-  
   navigation: [
     { label: "Dashboard", url: "/app" },
     { label: "Navigation", current: true }

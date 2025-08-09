@@ -1,3 +1,4 @@
+import React from "react";
 import { useLocation } from "@remix-run/react";
 import StickyHeader from "./StickyHeader";
 
@@ -37,25 +38,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
         showBackButton: true,
         backUrl: "/app/navigation"
       },
-      '/app/preview': {
-        title: "Preview & Customization",
+      '/app/app-blocks': {
+        title: "App Block Setup",
         showBackButton: true,
         backUrl: "/app/navigation"
-      },
-      '/app/additional': {
-        title: "Analytics & Reports",
-        showBackButton: true,
-        backUrl: "/app/navigation"
-      },
-      '/app/verify-integration': {
-        title: "Visual Search Integration Verification",
-        showBackButton: true,
-        backUrl: "/app"
-      },
-      '/app/testing-tools': {
-        title: "Visual Search Testing Tools",
-        showBackButton: true,
-        backUrl: "/app"
       }
     };
     

@@ -8,19 +8,13 @@ App blocks are a Theme 2.0 feature that allows merchants to add app functionalit
 - **Native integration** with the theme customization experience
 - **Precise placement control** - merchants choose exactly where to add functionality
 - **Theme-specific styling** - customizable colors, positioning, and appearance
-- **Better performance** - no script injection needed
+- **Better performance** - native theme integration
 - **Enhanced user experience** - seamless integration with existing theme workflow
 
-## Installation Methods
+## Installation Method
 
-### Method 1: Automatic Script Injection (Current)
-✅ **Already Active** - Your app automatically injects visual search into all search bars
-- Works with all themes (1.0 and 2.0)
-- No merchant configuration required
-- Universal compatibility
-
-### Method 2: App Block Integration (New Option)
-🎯 **Enhanced Control** - Merchants can add visual search through the theme editor
+### App Block Integration
+🎯 **Professional Integration** - Merchants add visual search through the theme editor
 - Theme 2.0 stores only
 - Merchant chooses placement
 - Customizable styling options
@@ -95,30 +89,22 @@ The block automatically loads your unified visual search script with shop-specif
 
 ## Merchant Instructions
 
-### For Theme 2.0 Stores (Dawn, etc.)
+### For All Shopify Stores (Theme 2.0 Compatible)
 1. **Install the app** from the Shopify App Store
 2. **Go to theme editor**: Online Store → Themes → Customize
 3. **Add the block**: Click "+" → Apps → Visual Search
 4. **Customize appearance**: Adjust colors, positioning, and size
-5. **Save and test**: Visual search icons will appear in search bars
-
-### For Theme 1.0 Stores (Debut, Brooklyn, etc.)
-- App blocks are not available for Theme 1.0
-- **Automatic script injection** will work instead
-- No configuration needed - visual search appears automatically
+5. **Save and test**: Visual search functionality will be available
 
 ## Support and Troubleshooting
 
 ### Common Questions
 
 **Q: Will this work with my theme?**
-A: Yes! The app block works with all Theme 2.0 stores. For Theme 1.0 stores, automatic script injection provides the same functionality.
-
-**Q: Can I use both app blocks and automatic injection?**
-A: Yes, but we recommend choosing one method to avoid conflicts. App blocks provide more control for Theme 2.0 stores.
+A: Yes! The app block works with all Theme 2.0 stores, which includes virtually all modern Shopify themes.
 
 **Q: What if I change themes?**
-A: App blocks need to be re-added when switching themes. Automatic script injection works immediately with any theme.
+A: You'll need to re-add the app block in your new theme's editor through the theme customizer.
 
 **Q: Can I customize the appearance?**
 A: Yes! The app block includes extensive customization options for colors, positioning, and sizing.

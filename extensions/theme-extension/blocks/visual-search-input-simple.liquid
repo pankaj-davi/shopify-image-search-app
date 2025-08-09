@@ -9,7 +9,17 @@
   assign hover_color = block.settings.hover_color | default: '#202124'
 -%}
 
-<div class="visual-search-app-block" {{ block.shopify_attributes }} data-visual-search-trigger tabindex="0" role="button" aria-label="Open Visual Search">
+<div 
+  class="visual-search-app-block" 
+  {{ block.shopify_attributes }} 
+  data-visual-search-trigger 
+  data-app-block="visual-search"
+  data-vs-shop="{{ shop.permanent_domain }}"
+  data-vs-block-id="{{ block.id }}"
+  tabindex="0" 
+  role="button" 
+  aria-label="Open Visual Search"
+>
   <style>
     /* Override Shopify app block default full-width behavior */
     .shopify-app-block {
@@ -32,6 +42,18 @@
       padding: {{ block.settings.padding | default: 8 }}px;
       margin: {{ block.settings.margin | default: 4 }}px;
       border: {{ block.settings.border_width | default: 0 }}px solid {{ block.settings.border_color | default: 'transparent' }};
+      
+      /* CSS Custom Properties for JavaScript to read theme configuration */
+      --vs-icon-color: {{ icon_color }};
+      --vs-hover-color: {{ hover_color }};
+      --vs-primary-color: {{ block.settings.focus_color | default: '#008060' }};
+      --vs-background-color: {{ block.settings.background_color | default: 'transparent' }};
+      --vs-hover-background: {{ block.settings.hover_background | default: 'rgba(95, 99, 104, 0.08)' }};
+      --vs-icon-size: {{ icon_size }}px;
+      --vs-border-radius: {{ block.settings.border_radius | default: 4 }}px;
+      --vs-padding: {{ block.settings.padding | default: 8 }}px;
+      --vs-margin: {{ block.settings.margin | default: 4 }}px;
+      --vs-hover-scale: {{ block.settings.hover_scale | default: 1.1 }};
     }
 
     .visual-search-app-block:hover {
@@ -47,6 +69,16 @@
     .visual-search-app-block:focus {
       outline: 2px solid {{ block.settings.focus_color | default: '#008060' }};
       outline-offset: 2px;
+    }
+    
+    /* Announce theme configuration to JavaScript via CSS custom properties on root */
+    :root {
+      --visual-search-config-icon-color: {{ icon_color }};
+      --visual-search-config-hover-color: {{ hover_color }};
+      --visual-search-config-primary-color: {{ block.settings.focus_color | default: '#008060' }};
+      --visual-search-config-icon-size: {{ icon_size }}px;
+      --visual-search-config-block-id: "{{ block.id }}";
+      --visual-search-config-updated: "{{ 'now' | date: '%s' }}";
     }
   </style>
 
