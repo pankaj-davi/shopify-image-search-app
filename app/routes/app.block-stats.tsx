@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { authenticate } from "../shopify.server";
 import { appBlockTracker } from "../services/app-block-tracking.service";
 
 interface BlockStats {
@@ -27,13 +28,11 @@ interface LoaderData {
 }
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<Response> {
+  const { session } = await authenticate.admin(request);
+  const shop = session.shop;
+  
   const url = new URL(request.url);
-  const shop = url.searchParams.get("shop");
   const days = parseInt(url.searchParams.get("days") || "30");
-
-  if (!shop) {
-    throw new Response("Shop parameter required", { status: 400 });
-  }
 
   try {
     const [blockStats, searchStats] = await Promise.all([
@@ -160,21 +159,6 @@ export default function AppBlockStats() {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div style={{ 
-        background: "#fff3cd", 
-        padding: "15px", 
-        borderRadius: "8px", 
-        border: "1px solid #ffeaa7" 
-      }}>
-        <h3 style={{ margin: 0, color: "#856404" }}>📋 Quick Actions</h3>
-        <p style={{ margin: "10px 0", color: "#856404" }}>
-          • Check if app block is actively used<br/>
-          • View detailed analytics in your dashboard<br/>
-          • Export data for further analysis
-        </p>
       </div>
     </div>
   );

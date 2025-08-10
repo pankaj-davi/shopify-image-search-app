@@ -22,48 +22,6 @@ interface AppNavigationProps {
 }
 
 const DEFAULT_SECTIONS: NavigationSection[] = [
-  {
-    title: "Quick Access",
-    description: "Jump to the most used features",
-    links: [
-      {
-        url: "/app/app-blocks",
-        label: "App Block Setup",
-        icon: "📦",
-        variant: "primary",
-        description: "Add visual search blocks to your theme using Shopify's theme editor"
-      },
-      {
-        url: "/app/visual-search", 
-        label: "Visual Search Settings",
-        icon: "🔍",
-        variant: "secondary",
-        description: "Manage visual search functionality and configuration"
-      }
-    ]
-  },
-  {
-    title: "Interactive Demos",
-    description: "Live demos and examples",
-    links: [
-      {
-        url: "http://localhost:56873/positioning-demo.html",
-        label: "Positioning Demo",
-        icon: "🎯",
-        variant: "secondary",
-        external: true,
-        description: "Test different icon positioning options"
-      },
-      {
-        url: "http://localhost:56873/overlap-prevention-demo.html", 
-        label: "Overlap Prevention Demo",
-        icon: "🔧",
-        variant: "secondary",
-        external: true,
-        description: "See how smart positioning prevents overlaps"
-      }
-    ]
-  },
 ];
 
 export default function AppNavigation({ sections = DEFAULT_SECTIONS, compact = false, loading = false }: AppNavigationProps) {
@@ -109,14 +67,18 @@ export default function AppNavigation({ sections = DEFAULT_SECTIONS, compact = f
   }
 
   if (compact) {
-    // Compact version - show only quick access links in a grid
-    const quickLinks = sections[0]?.links || DEFAULT_SECTIONS[0].links;
+    // Compact version - show navigation links in a grid
+    const quickLinks = sections[0]?.links || [];
+    
+    if (quickLinks.length === 0) {
+      return null; // Don't render anything if no links
+    }
     
     return (
       <Card>
         <BlockStack gap="300">
           <Text as="h2" variant="headingMd">
-            Quick Navigation
+            Navigation
           </Text>
           <div style={{ 
             display: "grid", 

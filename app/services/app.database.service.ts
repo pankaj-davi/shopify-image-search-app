@@ -237,6 +237,180 @@ export class AppDatabaseService {
     }
   }
 
+  // NEW: Save store only (for initial sync)
+  async saveStore(storeInfo: any): Promise<string> {
+    const db = await this.getDB();
+    const shopDomain = storeInfo.myshopifyDomain;
+
+    try {
+      const storeData: StoreData = {
+        shopDomain,
+        name: storeInfo.name,
+        myshopifyDomain: storeInfo.myshopifyDomain,
+        email: storeInfo.email,
+        currencyCode: storeInfo.currencyCode,
+        timezoneAbbreviation: storeInfo.timezoneAbbreviation,
+        timezoneOffset: storeInfo.timezoneOffset,
+        timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
+        plan: storeInfo.plan,
+        description: storeInfo.description,
+        url: storeInfo.url,
+        primaryDomain: storeInfo.primaryDomain,
+        contactEmail: storeInfo.contactEmail,
+        ianaTimezone: storeInfo.ianaTimezone,
+        weightUnit: storeInfo.weightUnit,
+        unitSystem: storeInfo.unitSystem,
+        enabledPresentmentCurrencies: storeInfo.enabledPresentmentCurrencies,
+        billingAddress: storeInfo.billingAddress,
+        checkoutApiSupported: storeInfo.checkoutApiSupported,
+        setupRequired: storeInfo.setupRequired,
+        taxesIncluded: storeInfo.taxesIncluded,
+        taxShipping: storeInfo.taxShipping,
+        marketingSmsConsentEnabledAtCheckout: storeInfo.marketingSmsConsentEnabledAtCheckout,
+        transactionalSmsDisabled: storeInfo.transactionalSmsDisabled,
+        features: storeInfo.features,
+        resourceLimits: storeInfo.resourceLimits,
+        createdAt: storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date(),
+        updatedAt: storeInfo.updatedAt && typeof storeInfo.updatedAt === 'string' ? new Date(storeInfo.updatedAt) : (storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date()),
+      };
+
+      const storeId = await db.createStore(storeData);
+      console.log(`✅ Store saved: ${shopDomain} -> ${storeId}`);
+      return storeId;
+    } catch (error) {
+      console.error('❌ Error saving store:', error);
+      throw error;
+    }
+  }
+
+  // NEW: Save products in batch
+  async saveProductsBatch(shopDomain: string, products: any[]): Promise<void> {
+    const db = await this.getDB();
+
+    try {
+      const productData: ProductData[] = products.map(product => {
+        const variant = product.variants?.edges?.[0]?.node;
+        
+        const featuredMedia = product.featuredMedia ? {
+          mediaContentType: product.featuredMedia.mediaContentType,
+          image: product.featuredMedia.image ? {
+            url: product.featuredMedia.image.url,
+            altText: product.featuredMedia.image.altText || null,
+          } : null,
+        } : null;
+
+        const allMedia = product.media?.edges?.map((edge: any) => ({
+          mediaContentType: edge.node.mediaContentType,
+          image: edge.node.image ? {
+            url: edge.node.image.url,
+            altText: edge.node.image.altText || null,
+            width: edge.node.image.width || null,
+            height: edge.node.image.height || null,
+          } : null,
+        })) || [];
+
+        const allVariants = product.variants?.edges?.map((edge: any) => ({
+          id: edge.node.id,
+          price: edge.node.price,
+          sku: edge.node.sku || null,
+          title: edge.node.title || null,
+          availableForSale: edge.node.availableForSale || false,
+          image: edge.node.image ? {
+            url: edge.node.image.url,
+            altText: edge.node.image.altText || null,
+            width: edge.node.image.width || null,
+            height: edge.node.image.height || null,
+          } : null,
+        })) || [];
+
+        const allMetafields = product.metafields?.edges?.map((edge: any) => ({
+          namespace: edge.node.namespace,
+          key: edge.node.key,
+          value: edge.node.value,
+          type: edge.node.type,
+          definition: edge.node.definition ? {
+            description: edge.node.definition.description || null,
+          } : null,
+        })) || [];
+
+        const allOptions = product.options?.map((option: any) => ({
+          name: option.name,
+          values: option.values || [],
+        })) || [];
+
+        const priceRange = product.priceRangeV2 ? {
+          minVariantPrice: {
+            amount: product.priceRangeV2.minVariantPrice.amount,
+            currencyCode: product.priceRangeV2.minVariantPrice.currencyCode,
+          },
+          maxVariantPrice: {
+            amount: product.priceRangeV2.maxVariantPrice.amount,
+            currencyCode: product.priceRangeV2.maxVariantPrice.currencyCode,
+          },
+        } : null;
+
+        return {
+          shopifyProductId: product.id,
+          title: product.title,
+          handle: product.handle,
+          status: product.status,
+          description: product.description || null,
+          vendor: product.vendor || null,
+          productType: product.productType || null,
+          tags: product.tags || [],
+          onlineStoreUrl: product.onlineStoreUrl || null,
+          totalInventory: product.totalInventory || 0,
+          price: variant?.price || '',
+          sku: variant?.sku || null,
+          priceRange,
+          featuredMedia,
+          media: allMedia,
+          options: allOptions,
+          variants: allVariants,
+          metafields: allMetafields,
+          shopDomain,
+          createdAt: product.createdAt && typeof product.createdAt === 'string' ? new Date(product.createdAt) : new Date(),
+          updatedAt: product.updatedAt && typeof product.updatedAt === 'string' ? new Date(product.updatedAt) : (product.createdAt && typeof product.createdAt === 'string' ? new Date(product.createdAt) : new Date()),
+        };
+      });
+
+      // Use batch create if available, otherwise create individually
+      if (db.createProductsBatch) {
+        await db.createProductsBatch(productData);
+      } else {
+        for (const product of productData) {
+          await db.createProduct(product);
+        }
+      }
+      
+      console.log(`✅ Products batch saved: ${products.length} products for ${shopDomain}`);
+    } catch (error) {
+      console.error('❌ Error saving products batch:', error);
+      throw error;
+    }
+  }
+
+  // NEW: Get sync progress
+  async getSyncProgress(shopDomain: string): Promise<{ synced_products: number; total_products?: number; last_sync?: string }> {
+    const db = await this.getDB();
+
+    try {
+      if (db.getSyncProgress) {
+        return await db.getSyncProgress(shopDomain);
+      } else {
+        // Fallback: count products manually
+        const products = await this.getStoreProducts(shopDomain, 10000);
+        return {
+          synced_products: products.length,
+          last_sync: products.length > 0 ? products[0].updatedAt?.toISOString() : undefined
+        };
+      }
+    } catch (error) {
+      console.error('❌ Error getting sync progress:', error);
+      return { synced_products: 0 };
+    }
+  }
+
   async getStore(shopDomain: string) {
     const db = await this.getDB();
     try {

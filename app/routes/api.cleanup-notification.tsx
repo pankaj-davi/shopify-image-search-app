@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
+import { appBlockTracker } from "../services/app-block-tracking.service";
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
@@ -8,24 +9,43 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const body = await request.json();
-    const { shop, action: cleanupAction, timestamp, userAgent, url } = body;
+    const { shop, action: cleanupAction, timestamp, userAgent, url, metadata } = body;
 
-    const USER_AGENT_TRUNCATE_LENGTH = 100; // Maximum length for user agent logging
+    const USER_AGENT_TRUNCATE_LENGTH = 100;
 
     console.log(`🧹 Cleanup notification received:`, {
       shop,
       action: cleanupAction,
       timestamp,
       url,
-      userAgent: userAgent?.substring(0, USER_AGENT_TRUNCATE_LENGTH) // Truncate for logging
+      userAgent: userAgent?.substring(0, USER_AGENT_TRUNCATE_LENGTH)
     });
 
-    // Log the cleanup event for analytics
+    // Save app block usage data to database for analytics
+    if (shop) {
+      try {
+        await appBlockTracker.trackAppBlockUsage({
+          shopDomain: shop,
+          blockType: 'visual_search',
+          action: cleanupAction === 'app_block_removed' ? 'removed' : 
+                 cleanupAction === 'app_block_added' ? 'added' :
+                 cleanupAction === 'visual_search_used' ? 'used' : 'viewed',
+          url: url || null,
+          userAgent: userAgent?.substring(0, 500) || null, // Longer for database
+          metadata: metadata || null,
+          sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        });
+        
+        console.log(`✅ App block usage tracked in database for ${shop}`);
+      } catch (dbError) {
+        console.error('❌ Failed to save usage data to database:', dbError);
+        // Continue without failing the request
+      }
+    }
+
+    // Log specific events for monitoring
     if (shop && cleanupAction === 'app_block_removed') {
       console.log(`📊 App block removed from store: ${shop} at ${url}`);
-      
-      // For now, just log the event - database tracking can be added later
-      console.log(`✅ App block removal logged for ${shop}`);
     }
 
     return json({ 
