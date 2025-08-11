@@ -4,7 +4,7 @@
 {%- endcomment -%}
 
 {%- liquid
-  assign icon_size = block.settings.icon_size | default: 24
+  assign icon_size = block.settings.icon_size | default: 34
   assign icon_color = block.settings.icon_color | default: '#5f6368'
   assign hover_color = block.settings.hover_color | default: '#202124'
 -%}
@@ -42,18 +42,6 @@
       padding: {{ block.settings.padding | default: 8 }}px;
       margin: {{ block.settings.margin | default: 4 }}px;
       border: {{ block.settings.border_width | default: 0 }}px solid {{ block.settings.border_color | default: 'transparent' }};
-      
-      /* CSS Custom Properties for JavaScript to read theme configuration */
-      --vs-icon-color: {{ icon_color }};
-      --vs-hover-color: {{ hover_color }};
-      --vs-primary-color: {{ block.settings.focus_color | default: '#008060' }};
-      --vs-background-color: {{ block.settings.background_color | default: 'transparent' }};
-      --vs-hover-background: {{ block.settings.hover_background | default: 'rgba(95, 99, 104, 0.08)' }};
-      --vs-icon-size: {{ icon_size }}px;
-      --vs-border-radius: {{ block.settings.border_radius | default: 4 }}px;
-      --vs-padding: {{ block.settings.padding | default: 8 }}px;
-      --vs-margin: {{ block.settings.margin | default: 4 }}px;
-      --vs-hover-scale: {{ block.settings.hover_scale | default: 1.1 }};
     }
 
     .visual-search-app-block:hover {
@@ -69,16 +57,6 @@
     .visual-search-app-block:focus {
       outline: 2px solid {{ block.settings.focus_color | default: '#008060' }};
       outline-offset: 2px;
-    }
-    
-    /* Announce theme configuration to JavaScript via CSS custom properties on root */
-    :root {
-      --visual-search-config-icon-color: {{ icon_color }};
-      --visual-search-config-hover-color: {{ hover_color }};
-      --visual-search-config-primary-color: {{ block.settings.focus_color | default: '#008060' }};
-      --visual-search-config-icon-size: {{ icon_size }}px;
-      --visual-search-config-block-id: "{{ block.id }}";
-      --visual-search-config-updated: "{{ 'now' | date: '%s' }}";
     }
   </style>
 
@@ -131,7 +109,7 @@
       </svg>
     {%- else -%}
       <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
         <circle cx="12" cy="13" r="3"/>
       </svg>
   {%- endcase -%}
@@ -139,7 +117,7 @@
 
 {% schema %}
 {
-  "name": "Visual Search Icon",
+  "name": "Image Search",
   "target": "section",
   "settings": [
     {

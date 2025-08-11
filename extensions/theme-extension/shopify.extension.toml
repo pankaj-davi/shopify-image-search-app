@@ -2,12 +2,12 @@ name = "visual-search-theme"
 type = "theme"
 
 [[app_blocks]]
-  name = "Visual Search Input Icon"
-  target = "section"
+  name = "Float Image Search"
+  target = "body"
   icon = "visual-search-logo.svg"
 
-[settings]
-  [[settings.app_blocks]]
-    name = "Visual Search Input Icon"
-    target = "section"
+[[app_blocks]]
+  name = "VS Icon_pankaj"
+  target = "section"
+  icon = "visual-search-logo.svg"
 
