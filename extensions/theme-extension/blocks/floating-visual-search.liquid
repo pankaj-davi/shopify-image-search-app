@@ -183,7 +183,9 @@
     {%- if block.settings.custom_icon -%}
       <img 
         src="{{ block.settings.custom_icon | image_url: width: icon_size }}" 
-        alt="Visual Search" 
+        alt="Visual Search"
+        width="{{ block.settings.icon_size | default: 24 }}"
+        height="{{ block.settings.icon_size | default: 24 }}"
       >
     {%- else -%}
       {%- case block.settings.icon_style -%}
