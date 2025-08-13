@@ -1,36 +1,4 @@
 {%- if block.settings.embed_enabled -%}
-<script>
-  // Enhanced script loading with better error handling
-  (function loadVisualSearchScript() {
-    // Check if script is already loaded or loading
-    if (window.visualSearchUnified) {
-      console.log('[Visual Search Embed] ✅ Script already available');
-      return;
-    }
-    
-    // Check if script is already being loaded
-    if (document.querySelector('script[src*="visual-search-unified-backup-without-search-selector"]')) {
-      console.log('[Visual Search Embed] 🔄 Script already loading...');
-      return;
-    }
-    
-    console.log('[Visual Search Embed] 📥 Loading main script...');
-    const visualSearchScript = document.createElement('script');
-    visualSearchScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
-    visualSearchScript.async = true;
-    
-    visualSearchScript.onload = function() {
-      console.log('[Visual Search Embed] ✅ Main script loaded successfully');
-    };
-    
-    visualSearchScript.onerror = function() {
-      console.error('[Visual Search Embed] ❌ Failed to load main script from:', this.src);
-    };
-    
-    document.head.appendChild(visualSearchScript);
-  })();
-</script>
-
 <style>
   .vs-enhanced-search-container {
     position: relative;
@@ -56,6 +24,10 @@
     border-radius: 4px;
     width: {{ block.settings.icon_size | default: 34 }}px;
     height: {{ block.settings.icon_size | default: 34 }}px;
+    /* Instant visibility optimizations */
+    opacity: 1;
+    visibility: visible;
+    will-change: opacity, transform;
   }
   
   .vs-search-icon:hover {
@@ -122,11 +94,14 @@
   document.head.appendChild(visualSearchScript);
 
   function waitForMainScript() {
-    console.log('[Visual Search Embed] ⏳ Waiting for main visual search script...');
+    console.log('[Visual Search Embed] ⚡ Fast-loading icon initialization...');
     
-    // Check if main script is loaded every 500ms, max 40 attempts (20 seconds)
+    // Initialize icons immediately, don't wait for main script
+    initializeEmbedEnhancer();
+    
+    // Then load main functionality in background
     let attempts = 0;
-    const maxAttempts = 40;
+    const maxAttempts = 20; // Reduced from 40
     
     const checkScript = setInterval(() => {
       attempts++;
@@ -135,18 +110,23 @@
         clearInterval(checkScript);
         
         if (window.visualSearchUnified) {
-          console.log('[Visual Search Embed] ✅ Main script found, initializing embed...');
-          console.log('[Visual Search Embed] 🔍 Available methods:', Object.keys(window.visualSearchUnified));
-          initializeEmbedEnhancer();
+          console.log('[Visual Search Embed] ✅ Main script loaded, enhancing functionality...');
+          enhanceWithMainScript();
         } else {
-          console.warn('[Visual Search Embed] ⚠️ Main script not found after 20 seconds, proceeding anyway...');
-          console.log('[Visual Search Embed] 🔍 window.visualSearchUnified:', window.visualSearchUnified);
-          initializeEmbedEnhancer();
+          console.warn('[Visual Search Embed] ⚠️ Main script not available, icons will show error message when clicked');
         }
-      } else if (attempts % 5 === 0) {
-        console.log(`[Visual Search Embed] 🔄 Still waiting for script... attempt ${attempts}/${maxAttempts}`);
       }
-    }, 500);
+    }, 250); // Check more frequently (250ms instead of 500ms)
+  }
+  
+  function enhanceWithMainScript() {
+    // Update existing icons to enable full functionality
+    const icons = document.querySelectorAll('.vs-search-icon[data-vs-trigger="embed-{{ block.id }}"]');
+    icons.forEach(icon => {
+      icon.classList.remove('vs-loading');
+      icon.setAttribute('data-vs-ready', 'true');
+    });
+    console.log('[Visual Search Embed] ✅ Enhanced', icons.length, 'icons with full functionality');
   }
   
   function initializeEmbedEnhancer() {
@@ -193,60 +173,76 @@
     ];
     
     function detectAndEnhanceSearchInputs() {
-      const allInputs = document.querySelectorAll(searchSelectors.join(', '));
-      let enhancedCount = 0;
-      
-      console.log(`[Visual Search Embed] 🔍 Found ${allInputs.length} potential search inputs`);
-      
-      allInputs.forEach((input, index) => {
-        if (shouldEnhanceInput(input)) {
-          enhanceSearchInputForEmbed(input, config, index);
-          enhancedCount++;
-        }
-      });
-      
-      console.log(`[Visual Search Embed] ✨ Enhanced ${enhancedCount} search inputs`);
-      
-      // Provide helpful suggestions if no inputs were enhanced
-      if (enhancedCount === 0) {
-        console.group('[Visual Search Embed] 💡 No search inputs found - Here are some suggestions:');
+      // Use requestAnimationFrame for smoother execution
+      requestAnimationFrame(() => {
+        const allInputs = document.querySelectorAll(searchSelectors.join(', '));
+        let enhancedCount = 0;
         
-        if (config.settings.advancedSettings) {
-          console.log('❌ Your custom selector didn\'t match any elements:', advancedSettings.customSelector);
-          console.log('   Please check the selector syntax and try again.');
-        } else {
-          console.log('🔧 Try adding custom selectors in Theme Settings > App Embeds > Visual Search');
-        }
+        console.log(`[Visual Search Embed] 🔍 Found ${allInputs.length} potential search inputs`);
         
-        // Suggest potential search inputs
-        console.log('🔍 Potential search inputs found on this page:');
-        const potentialInputs = document.querySelectorAll('input');
-        let suggestionCount = 0;
-        
-        potentialInputs.forEach((input, i) => {
-          if (input.type === 'text' || input.type === 'search' || 
-              input.placeholder?.toLowerCase().includes('search') ||
-              input.name?.toLowerCase().includes('search') ||
-              input.id?.toLowerCase().includes('search')) {
-            suggestionCount++;
-            const suggestions = [];
-            if (input.name) suggestions.push(`input[name="${input.name}"]`);
-            if (input.id) suggestions.push(`#${input.id}`);
-            if (input.className) suggestions.push(`.${input.className.split(' ').join('.')}`);
-            
-            console.log(`   ${suggestionCount}. ${suggestions.join(' or ')}`);
-            if (input.placeholder) console.log(`      Placeholder: "${input.placeholder}"`);
+        // Process inputs in batches to avoid blocking the UI
+        const processInput = (input, index) => {
+          if (shouldEnhanceInput(input)) {
+            enhanceSearchInputForEmbed(input, config, index);
+            enhancedCount++;
           }
-        });
+        };
         
-        if (suggestionCount === 0) {
-          console.log('   No obvious search inputs found. The search might be loaded dynamically.');
-        } else {
-          console.log('📝 Copy one of the selectors above and paste it in Theme Settings > App Embeds > Visual Search > Custom Search Selectors');
+        // Process first 3 inputs immediately
+        for (let i = 0; i < Math.min(3, allInputs.length); i++) {
+          processInput(allInputs[i], i);
         }
         
-        console.groupEnd();
-      }
+        // Process remaining inputs with small delays to avoid blocking
+        for (let i = 3; i < allInputs.length; i++) {
+          setTimeout(() => processInput(allInputs[i], i), i * 10);
+        }
+        
+        setTimeout(() => {
+          console.log(`[Visual Search Embed] ✨ Enhanced ${enhancedCount} search inputs`);
+          
+          // Provide helpful suggestions if no inputs were enhanced
+          if (enhancedCount === 0) {
+            console.group('[Visual Search Embed] 💡 No search inputs found - Here are some suggestions:');
+            
+            if (config.settings.advancedSettings) {
+              console.log('❌ Your custom selector didn\'t match any elements:', advancedSettings.customSelector);
+              console.log('   Please check the selector syntax and try again.');
+            } else {
+              console.log('🔧 Try adding custom selectors in Theme Settings > App Embeds > Visual Search');
+            }
+            
+            // Suggest potential search inputs
+            console.log('🔍 Potential search inputs found on this page:');
+            const potentialInputs = document.querySelectorAll('input');
+            let suggestionCount = 0;
+            
+            potentialInputs.forEach((input, i) => {
+              if (input.type === 'text' || input.type === 'search' || 
+                  input.placeholder?.toLowerCase().includes('search') ||
+                  input.name?.toLowerCase().includes('search') ||
+                  input.id?.toLowerCase().includes('search')) {
+                suggestionCount++;
+                const suggestions = [];
+                if (input.name) suggestions.push(`input[name="${input.name}"]`);
+                if (input.id) suggestions.push(`#${input.id}`);
+                if (input.className) suggestions.push(`.${input.className.split(' ').join('.')}`);
+                
+                console.log(`   ${suggestionCount}. ${suggestions.join(' or ')}`);
+                if (input.placeholder) console.log(`      Placeholder: "${input.placeholder}"`);
+              }
+            });
+            
+            if (suggestionCount === 0) {
+              console.log('   No obvious search inputs found. The search might be loaded dynamically.');
+            } else {
+              console.log('📝 Copy one of the selectors above and paste it in Theme Settings > App Embeds > Visual Search > Custom Search Selectors');
+            }
+            
+            console.groupEnd();
+          }
+        }, 100);
+      });
     }
     
     function shouldEnhanceInput(input) {
@@ -314,47 +310,78 @@
         e.preventDefault();
         e.stopPropagation();
         
-        // Show loading state
-        icon.classList.add('vs-loading');
-        
-        // Find the associated search input
-        const searchInput = icon.closest('.vs-enhanced-search-container').querySelector('input');
-        
-        // Use the existing visual search system
+        // Check if main script is ready
         if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {
+          // Show loading state
+          icon.classList.add('vs-loading');
+          
+          // Find the associated search input
+          const searchInput = icon.closest('.vs-enhanced-search-container').querySelector('input');
+          
           console.log('[Visual Search Embed] 🚀 Opening visual search drawer for input:', searchInput);
           window.visualSearchUnified.openDrawer(searchInput);
-        } else {
-          console.error('[Visual Search Embed] ❌ visualSearchUnified.openDrawer not available');
-          console.log('[Visual Search Embed] 🔧 Attempting to reload script...');
           
-          // Try loading the script again and retry
+          // Restore icon after delay
+          setTimeout(() => {
+            icon.classList.remove('vs-loading');
+          }, 1000);
+        } else {
+          // Show user-friendly message while script loads
+          icon.classList.add('vs-loading');
+          console.log('[Visual Search Embed] ⏳ Main script still loading, please wait...');
+          
+          // Show temporary feedback to user
+          const originalHTML = icon.innerHTML;
+          icon.innerHTML = `
+            <svg width="${settings.iconSize}" height="${settings.iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          `;
+          
+          // Try loading the script again with faster retry
           const retryScript = document.createElement('script');
           retryScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
           retryScript.onload = function() {
             setTimeout(() => {
               if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {
                 console.log('[Visual Search Embed] ✅ Retry successful, opening drawer...');
+                const searchInput = icon.closest('.vs-enhanced-search-container').querySelector('input');
                 window.visualSearchUnified.openDrawer(searchInput);
+                icon.innerHTML = originalHTML;
               } else {
                 console.error('[Visual Search Embed] ❌ Retry failed - script still not available');
+                // Show error state briefly, then restore
+                icon.innerHTML = `
+                  <svg width="${settings.iconSize}" height="${settings.iconSize}" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
+                `;
+                setTimeout(() => {
+                  icon.innerHTML = originalHTML;
+                }, 2000);
               }
-            }, 1000);
+              icon.classList.remove('vs-loading');
+            }, 500);
           };
+          
+          retryScript.onerror = function() {
+            console.error('[Visual Search Embed] ❌ Failed to retry loading script');
+            icon.classList.remove('vs-loading');
+            icon.innerHTML = originalHTML;
+          };
+          
           document.head.appendChild(retryScript);
         }
-        
-        // Restore icon after delay
-        setTimeout(() => {
-          icon.classList.remove('vs-loading');
-        }, 1000);
         
         // Track usage
         trackEmbedUsage('icon_clicked', {
           embedId: config.blockId,
           inputIndex: index,
-          inputType: searchInput.type,
-          inputName: searchInput.name
+          inputType: searchInput ? searchInput.type : 'unknown',
+          inputName: searchInput ? searchInput.name : 'unknown'
         });
       });
       
@@ -382,14 +409,18 @@
     // Initialize enhancement
     detectAndEnhanceSearchInputs();
     
-    // Re-enhance on DOM changes (for AJAX/SPA themes)
+    // Re-enhance on DOM changes (for AJAX/SPA themes) - throttled for performance
+    let mutationTimeout;
     const observer = new MutationObserver(() => {
-      setTimeout(detectAndEnhanceSearchInputs, 100);
+      clearTimeout(mutationTimeout);
+      mutationTimeout = setTimeout(detectAndEnhanceSearchInputs, 200);
     });
     
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
+      attributes: false, // Don't watch attribute changes for better performance
+      characterData: false // Don't watch text changes
     });
     
     // Re-enhance on Shopify theme events
