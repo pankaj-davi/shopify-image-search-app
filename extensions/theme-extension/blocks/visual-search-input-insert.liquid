@@ -54,8 +54,8 @@
     pointer-events: auto;
     padding: 4px;
     border-radius: 4px;
-    width: {{ block.settings.icon_size | default: 20 }}px;
-    height: {{ block.settings.icon_size | default: 20 }}px;
+    width: {{ block.settings.icon_size | default: 34 }}px;
+    height: {{ block.settings.icon_size | default: 34 }}px;
   }
   
   .vs-search-icon:hover {
@@ -84,7 +84,7 @@
     appUrl: 'https://programmers-acre-clip-foo.trycloudflare.com',
     settings: {
       embedEnabled: {{ block.settings.embed_enabled | default: true }},
-      iconSize: {{ block.settings.icon_size | default: 20 }},
+      iconSize: {{ block.settings.icon_size | default: 34 }},
       iconMargin: {{ block.settings.icon_margin | default: 8 }},
       advancedSettings: '{{ block.settings.custom_settings | default: "" }}'
     }
@@ -303,7 +303,7 @@
       } else {
         icon.innerHTML = `
           <svg width="${settings.iconSize}" height="${settings.iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
             <circle cx="12" cy="13" r="3"/>
           </svg>
         `;
@@ -438,7 +438,7 @@
       "min": 16,
       "max": 32,
       "step": 2,
-      "default": 20,
+      "default": 34,
       "unit": "px"
     },
     {
