@@ -20,9 +20,12 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://programmers-acre-clip-foo.trycloudflare.com',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://vegetable-menus-wales-hottest.trycloudflare.com',
     EXTERNAL_API_URL: 'http://localhost:3000/visual-search',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
+    
+    // Analytics configuration - DISABLED
+    ANALYTICS_ENABLED: false,
     
     // Theme customization - Static theme values
     THEME: {
@@ -92,6 +95,107 @@
         -webkit-overflow-scrolling: touch;
       }
       
+      /* Mobile Simple Layout Styles */
+      @media (max-width: 768px) {
+        /* Default mobile: Full screen layout */
+        .visual-search-modal-content {
+          flex-direction: column !important;
+        }
+        
+        .visual-search-left-panel {
+          flex: none !important;
+          border-bottom: 1px solid #e9e9e9 !important;
+          border-right: none !important;
+          max-height: 100vh !important;
+          min-height: auto !important;
+          padding: 16px !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        .visual-search-right-panel {
+          flex: 1 !important;
+          min-height: 120px !important;
+          max-height: 160px !important;
+          overflow-y: auto !important;
+          margin-bottom: 0 !important;
+        }
+        
+        /* Ensure results container fills available space */
+        .visual-search-results-container {
+          height: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+        
+        .visual-search-results-grid {
+          flex: 1 !important;
+          align-content: start !important;
+        }
+        
+        /* Show/hide sections based on state */
+        .mobile-results-mode .visual-search-left-panel {
+          max-height: 55vh !important;
+          min-height: 55vh !important;
+          flex: 3 !important;
+          flex-shrink: 0 !important;
+        }
+        
+        .mobile-results-mode .visual-search-right-panel {
+          flex: 2 !important;
+          min-height: 35vh !important;
+          max-height: 35vh !important;
+          height: auto !important;
+        }
+        
+        /* Fill remaining space with results */
+        .mobile-results-mode .visual-search-modal-content {
+          height: 90vh !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+        
+        /* Better mobile image container sizing */
+        .mobile-results-mode #image-selection-container {
+          max-height: 45vh !important;
+          min-height: 300px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          overflow: visible !important;
+          padding: 10px !important;
+        }
+        
+        .mobile-results-mode #image-selection-container img {
+          max-height: 40vh !important;
+          width: auto !important;
+          max-width: 100% !important;
+          object-fit: contain !important;
+          display: block !important;
+          margin: 0 auto !important;
+        }
+        
+        /* Expanded state - when user clicks expand */
+        .mobile-results-expanded .visual-search-left-panel {
+          display: none !important;
+        }
+        
+        .mobile-results-expanded .visual-search-right-panel {
+          flex: 1 !important;
+          max-height: 100vh !important;
+          min-height: 70vh !important;
+        }
+        
+        /* Add expand/collapse button styles */
+        .mobile-expand-button {
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 10 !important;
+          background: white !important;
+          border-bottom: 1px solid #e9e9e9 !important;
+          padding: 12px 16px !important;
+        }
+      }
+      
       .visual-search-left-panel {
         flex: none !important;
         border-bottom: 1px solid #e9e9e9 !important;
@@ -110,11 +214,40 @@
       
       .visual-search-results-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
+        gap: 8px !important;
+      }
+      
+      /* Compact mobile product cards */
+      .visual-search-product-card {
+        border-radius: 8px !important;
+        padding: 6px !important;
+      }
+      
+      .visual-search-product-card img {
+        border-radius: 6px !important;
+        height: 80px !important;
+        object-fit: cover !important;
+      }
+      
+      .visual-search-product-card .visual-search-product-title {
+        font-size: 12px !important;
+        line-height: 1.3 !important;
+        margin: 4px 0 2px 0 !important;
+        max-height: 32px !important;
+        overflow: hidden !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+      }
+      
+      .visual-search-product-card .visual-search-product-price {
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        margin: 2px 0 0 0 !important;
       }
       
       .visual-search-results-header {
-        padding: 16px !important;
+        padding: 8px 12px !important;
         position: sticky !important;
         top: 0 !important;
         background: #ffffff !important;
@@ -122,7 +255,7 @@
       }
       
       .visual-search-results-container {
-        padding: 16px !important;
+        padding: 8px 12px !important;
         -webkit-overflow-scrolling: touch;
       }
       
@@ -174,22 +307,6 @@
       .visual-search-main-upload button {
         padding: 14px 28px;
         font-size: 15px;
-      }
-      
-      /* Mobile-friendly tips section */
-      .visual-search-tips {
-        padding: 14px;
-        border-radius: 10px;
-      }
-      
-      .visual-search-tips h4 {
-        font-size: 14px;
-        margin-bottom: 8px;
-      }
-      
-      .visual-search-tips ul {
-        font-size: 13px;
-        line-height: 1.6;
       }
       
       /* Product card optimizations for mobile */
@@ -362,18 +479,6 @@
           width: 20px !important;
           height: 20px !important;
         }
-        .visual-search-tips {
-          padding: 16px !important;
-          border-radius: 12px !important;
-        }
-        .visual-search-tips h4 {
-          font-size: 14px !important;
-          margin-bottom: 8px !important;
-        }
-        .visual-search-tips ul {
-          font-size: 13px !important;
-          line-height: 1.6 !important;
-        }
         .visual-search-empty-state {
           padding: 60px 20px !important;
         }
@@ -396,22 +501,34 @@
         }
         
         #image-selection-container {
-          max-height: 450px !important;
+          max-height: 400px !important;
           min-height: 250px !important;
           width: 100% !important;
           box-sizing: border-box !important;
           overflow: visible !important;
-          padding: 15px !important;
-          height: 180px !important;
+          padding: 12px !important;
+          height: auto !important;
         }
         
         #image-selection-container img {
           width: 100% !important;
           min-width: 100% !important;
-          min-height: 240px !important;
+          min-height: 220px !important;
+          max-height: 320px !important;
           object-fit: contain !important;
           display: block !important;
           margin: 0 auto !important;
+        }
+        
+        /* Ensure action buttons area is visible and properly spaced */
+        .visual-search-left-panel .visual-search-actions {
+          margin-top: 12px !important;
+          padding: 0 !important;
+          flex-shrink: 0 !important;
+        }
+        
+        .visual-search-left-panel .visual-search-alt-button {
+          margin-bottom: 8px !important;
         }
         
         #close-drawer-x {
@@ -537,20 +654,19 @@
     // Pinterest-style modal content - Enhanced mobile-first responsive design
     drawerContent: (isMobile) => `
       background: #ffffff;
-      border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
+      border-radius: ${isMobile ? '0' : '20px'};
       padding: 0;
       max-width: ${isMobile ? '100%' : '1600px'};
       width: ${isMobile ? '100%' : '95%'};
-      max-height: ${isMobile ? '95vh' : '90vh'};
-      height: ${isMobile ? 'auto' : '800px'};
-      min-height: ${isMobile ? '50vh' : '600px'};
-      ${isMobile ? 'position: fixed; bottom: 0; left: 0; right: 0;' : ''}
+      max-height: ${isMobile ? '90vh' : '90vh'};
+      height: ${isMobile ? '90vh' : '90vh'};
+      min-height: ${isMobile ? '90vh' : '600px'};
+      ${isMobile ? 'position: fixed; bottom: 0; left: 0; right: 0;' : 'position: relative;'}
       overflow: hidden;
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
       transform: ${isMobile ? 'translateY(100%)' : 'translateY(24px) scale(0.94)'};
       transition: all 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      position: relative;
       border: 1px solid rgba(0, 0, 0, 0.06);
       display: flex;
       flex-direction: column;
@@ -1002,10 +1118,11 @@
       flex-direction: column;
       overflow: hidden;
       min-height: 0;
+      position: relative;
     ">
-      <!-- Mobile: Stacked Layout, Desktop: Side-by-side Layout -->
+      <!-- Mobile: Responsive Layout, Desktop: Side-by-side Layout -->
       
-      <!-- Left Side - Image Upload/Selection -->
+      <!-- Left Side - Image Upload/Selection (Desktop) / Initial Upload (Mobile) -->
       <div id="left-panel" class="visual-search-left-panel" style="
         flex: 1;
         background: #fafafa;
@@ -1141,90 +1258,11 @@
               </svg>
               Camera
             </button>
-
-            <!-- URL Option -->
-            <button id="from-url" class="visual-search-alt-button" style="
-              flex: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 6px;
-              padding: 12px 8px;
-              border: 1px solid #e9e9e9;
-              border-radius: 8px;
-              background: white;
-              color: #111111;
-              font-size: 13px;
-              font-weight: 500;
-              cursor: pointer;
-              transition: all 0.2s ease;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            " onmouseover="
-              this.style.background='#f7f7f7';
-              this.style.borderColor='#c8c8c8';
-            " onmouseout="
-              this.style.background='white';
-              this.style.borderColor='#e9e9e9';
-            ">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              </svg>
-              From URL
-            </button>
-          </div>
-
-          <!-- Mobile-Optimized Tips -->
-          <div class="visual-search-tips" style="
-            background: #ffffff;
-            border: 1px solid #e9e9e9;
-            border-radius: 8px;
-            padding: 12px;
-          ">
-            <h4 style="
-              margin: 0 0 6px;
-              color: #111111;
-              font-size: 13px;
-              font-weight: 600;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">💡 Tips for better results</h4>
-            
-            <ul style="
-              margin: 0;
-              padding-left: 14px;
-              color: #5f5f5f;
-              font-size: 12px;
-              line-height: 1.5;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">
-              <li>Use clear, well-lit images</li>
-              <li>Focus on a single main item</li>
-              <li>Avoid cluttered backgrounds</li>
-            </ul>
           </div>
         </div>
 
         <!-- Image Preview Section (Hidden Initially) -->
         <div id="image-preview-section" style="display: none;">
-          <div style="
-            text-align: center;
-            margin-bottom: 16px;
-          ">
-            <h3 style="
-              margin: 0 0 6px;
-              color: #111111;
-              font-size: 16px;
-              font-weight: 600;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">Your uploaded image</h3>
-            <p style="
-              margin: 0;
-              color: #5f5f5f;
-              font-size: 13px;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">Adjust the crop area to focus on the item you want to search for</p>
-          </div>
-
           <!-- Image Container with Crop Tool -->
           <div id="image-selection-container" style="
             position: relative;
@@ -1232,11 +1270,11 @@
             border-radius: 8px;
             overflow: visible;
             background: #fafafa;
-            min-height: 200px;
+            min-height: 300px;
             display: flex;
             align-items: center;
             justify-content: center;
-            max-height: 350px;
+            max-height: 500px;
             border: 1px solid #e9e9e9;
             width: 100%;
             box-sizing: border-box;
@@ -1284,8 +1322,9 @@
         flex-direction: column;
         overflow: hidden;
         min-height: 0;
+        position: relative;
       ">
-        <!-- Search Results Section -->
+        <!-- Desktop Search Results Section -->
         <div id="results-section" style="
           flex: 1;
           display: flex;
@@ -1294,18 +1333,52 @@
         ">
           <!-- Results Header -->
           <div id="results-header" class="visual-search-results-header" style="
-            padding: 16px;
+            padding: 12px;
             border-bottom: 1px solid #e9e9e9;
             background: #ffffff;
             flex-shrink: 0;
           ">
-            <h3 id="results-title" style="
-              margin: 0 0 4px;
-              color: #111111;
-              font-size: 16px;
-              font-weight: 600;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">Ready to search</h3>
+            <!-- Side by side layout for title and expand button -->
+            <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 4px;
+            ">
+              <h3 id="results-title" style="
+                margin: 0;
+                color: #111111;
+                font-size: 16px;
+                font-weight: 600;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                flex: 1;
+              ">Ready to search</h3>
+              
+              <div class="mobile-expand-button" style="display: none;">
+                <button id="mobile-expand-toggle" style="
+                  background: #e60023;
+                  border: none;
+                  border-radius: 20px;
+                  padding: 8px 16px;
+                  font-size: 14px;
+                  font-weight: 500;
+                  cursor: pointer;
+                  color: white;
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  transition: background 0.2s ease;
+                  white-space: nowrap;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                ">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 15l-6-6-6 6"/>
+                  </svg>
+                  Expand Results
+                </button>
+              </div>
+            </div>
+            
             <p id="results-count" style="
               margin: 0;
               color: #5f5f5f;
@@ -1318,12 +1391,12 @@
           <div id="results-container" class="visual-search-results-container" style="
             flex: 1;
             overflow-y: auto;
-            padding: 16px;
+            padding: 12px;
           ">
             <div id="results-grid" class="visual-search-results-grid" style="
               display: grid;
               grid-template-columns: repeat(2, 1fr);
-              gap: 12px;
+              gap: 8px;
             ">
               <!-- Results will be dynamically inserted here -->
             </div>
@@ -1693,6 +1766,109 @@
     }
   }
 
+
+
+  // ====================================================================
+  // SIMPLE MOBILE EXPAND FUNCTIONALITY
+  // ====================================================================
+  
+  function initializeMobileExpand(drawer) {
+    const isMobile = isMobileDevice();
+    if (!isMobile) return;
+    
+    const expandButton = drawer.querySelector('#mobile-expand-toggle');
+    const leftPanel = drawer.querySelector('#left-panel');
+    const expandContainer = drawer.querySelector('.mobile-expand-button');
+    
+    if (!expandButton || !leftPanel || !expandContainer) return;
+    
+    let isExpanded = false;
+    
+    // Show expand button when in mobile results mode
+    const observer = new MutationObserver(() => {
+      const modalContent = drawer.querySelector('#modal-content');
+      if (modalContent && modalContent.classList.contains('mobile-results-mode')) {
+        expandContainer.style.display = 'block';
+      } else {
+        expandContainer.style.display = 'none';
+      }
+    });
+    
+    const modalContent = drawer.querySelector('#modal-content');
+    if (modalContent) {
+      observer.observe(modalContent, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    expandButton.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      
+      if (isExpanded) {
+        // Expand: Add expanded class for full height results
+        modalContent.classList.add('mobile-results-expanded');
+        expandButton.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+          Show Image
+        `;
+        expandButton.style.background = '#c8001c';
+        expandButton.style.color = 'white';
+      } else {
+        // Collapse: Remove expanded class to show compact results with image
+        modalContent.classList.remove('mobile-results-expanded');
+        expandButton.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 15l-6-6-6 6"/>
+          </svg>
+          Expand Results
+        `;
+        expandButton.style.background = '#e60023';
+        expandButton.style.color = 'white';
+      }
+    });
+    
+    // Add hover effects
+    expandButton.addEventListener('mouseenter', () => {
+      if (!isExpanded) {
+        expandButton.style.background = '#c8001c';
+      }
+    });
+    
+    expandButton.addEventListener('mouseleave', () => {
+      if (!isExpanded) {
+        expandButton.style.background = '#e60023';
+      }
+    });
+    
+    // Reset state when modal closes or new search starts
+    const resetExpandState = () => {
+      isExpanded = false;
+      if (modalContent) modalContent.classList.remove('mobile-results-expanded');
+      expandButton.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 15l-6-6-6 6"/>
+        </svg>
+        Expand Results
+      `;
+      expandButton.style.background = '#e60023';
+      expandButton.style.color = 'white';
+    };
+    
+    // Listen for modal close
+    const closeButton = drawer.querySelector('#close-modal');
+    if (closeButton) {
+      closeButton.addEventListener('click', resetExpandState);
+    }
+    
+    // Listen for new uploads (reset to upload mode)
+    const uploadButton = drawer.querySelector('#upload-new-image');
+    if (uploadButton) {
+      uploadButton.addEventListener('click', resetExpandState);
+    }
+    
+    console.log('[Visual Search] 📱 Simple mobile expand functionality initialized');
+  }
+
   // ====================================================================
   // PINTEREST-STYLE DRAWER
   // ====================================================================
@@ -1833,6 +2009,9 @@
     // Button handlers
     drawer.querySelector('#close-drawer-x').addEventListener('click', closeDrawer);
 
+    // Add simple mobile expand functionality
+    initializeMobileExpand(drawer);
+
     // Main upload area click handler
     drawer.querySelector('#main-upload-area').addEventListener('click', () => {
       openVisualSearchWithSelection(searchInput, drawer);
@@ -1911,9 +2090,17 @@
   }
 
   function showImagePreview(drawer, imageFile, searchInput) {
+    const isMobile = isMobileDevice();
+    
     // Hide upload section, show image preview
     drawer.querySelector('#upload-section').style.display = 'none';
     drawer.querySelector('#image-preview-section').style.display = 'block';
+    
+    // On mobile, also add results mode class for better layout
+    if (isMobile) {
+      const modalContent = drawer.querySelector('#modal-content');
+      if (modalContent) modalContent.classList.add('mobile-results-mode');
+    }
     
     // Display the uploaded image with skeleton loader
     const imageContainer = drawer.querySelector('#image-selection-container');
@@ -2921,7 +3108,7 @@
           
           // Show success notification
           showSuccess(`Found ${detectedItems.length} items in the selected area!`);
-          
+
         } else {
           showError('No items detected in the selected area. Try adjusting the crop area.');
           updateResultsHeader(drawer, 'No items detected', 'Try adjusting the crop area');
@@ -3046,8 +3233,8 @@
     // Display first 20 products initially
     const initialProducts = products.slice(0, drawer._itemsPerPage);
     initialProducts.forEach(product => {
-      const productCard = createProductCard(product);
-      resultsGrid.appendChild(productCard);
+        const productCard = createProductCard(product);
+        resultsGrid.appendChild(productCard);
     });
   }
 
@@ -3204,7 +3391,7 @@
       cameraOverlay.style.transform = 'scale(0.8)';
       cameraOverlay.style.pointerEvents = 'none';
     });
-    
+
     // Add click handler specifically for the camera overlay icon
     const cameraOverlay = card.querySelector('.camera-overlay');
     cameraOverlay.addEventListener('click', (e) => {
@@ -3982,7 +4169,7 @@
   // ====================================================================
   // INITIALIZATION & EVENT LISTENERS
   // ====================================================================
-  
+
   function initialize() {
     console.log('[Visual Search] Initializing unified script...');
     
