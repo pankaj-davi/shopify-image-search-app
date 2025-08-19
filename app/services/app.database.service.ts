@@ -577,30 +577,11 @@ export class AppDatabaseService {
       const existingProducts = await this.getProductsByShopifyId(shopifyProduct.id);
       
       if (existingProducts.length > 0) {
-        // Update existing product
-        const existingProduct = existingProducts[0];
-        await db.updateProduct(existingProduct.id!, {
-          title: productData.title,
-          handle: productData.handle,
-          status: productData.status,
-          description: productData.description,
-          vendor: productData.vendor,
-          productType: productData.productType,
-          tags: productData.tags,
-          onlineStoreUrl: productData.onlineStoreUrl,
-          totalInventory: productData.totalInventory,
-          price: productData.price,
-          sku: productData.sku,
-          priceRange: productData.priceRange,
-          featuredMedia: productData.featuredMedia,
-          media: productData.media,
-          options: productData.options,
-          variants: productData.variants,
-          metafields: productData.metafields,
-          updatedAt: productData.updatedAt,
-        });
-        console.log(`✅ Product synced (updated): ${productData.title}`);
-        return existingProduct.id;
+        // Product exists - for Firebase, the syncStoreWithProducts method handles updates
+        // For individual product sync, we'll create a new record (Firebase subcollections handle duplicates)
+        const productId = await db.createProduct(productData);
+        console.log(`✅ Product synced (updated via new record): ${productData.title} -> ${productId}`);
+        return productId;
       } else {
         // Create new product
         const productId = await db.createProduct(productData);
@@ -641,39 +622,6 @@ export class AppDatabaseService {
     } catch (error) {
       console.error('❌ Error getting store products:', error);
       return [];
-    }
-  }
-
-  async searchProducts(searchTerm: string, shopDomain?: string): Promise<ProductData[]> {
-    const db = await this.getDB();
-    
-    try {
-      if (db.searchProducts) {
-        return await db.searchProducts(searchTerm, shopDomain);
-      } else {
-        // Fallback: basic search
-        const products = await db.getProducts(1000);
-        return products.filter((p: ProductData) => {
-          const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || p.handle.toLowerCase().includes(searchTerm.toLowerCase());
-          const matchesShop = !shopDomain || p.shopDomain === shopDomain;
-          return matchesSearch && matchesShop;
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error searching products:', error);
-      return [];
-    }
-  }
-
-  async deleteProduct(productId: string): Promise<void> {
-    const db = await this.getDB();
-    
-    try {
-      await db.deleteProduct(productId);
-      console.log(`✅ Product deleted: ${productId}`);
-    } catch (error) {
-      console.error('❌ Error deleting product:', error);
-      throw error;
     }
   }
 

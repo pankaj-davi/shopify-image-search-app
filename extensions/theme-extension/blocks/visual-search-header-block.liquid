@@ -10,12 +10,14 @@
 -%}
 
 <div 
-  class="visual-search-app-block" 
+  class="visual-search-app-block visual-search-header-block" 
   {{ block.shopify_attributes }} 
-  data-visual-search-trigger 
-  data-app-block="visual-search"
+  data-visual-search-trigger="header"
+  data-visual-search-block="header-block"
+  data-app-block="visual-search-header"
   data-vs-shop="{{ shop.permanent_domain }}"
-  data-vs-block-id="{{ block.id }}"
+  data-vs-block-id="header-{{ block.id }}"
+  data-vs-block-type="header"
   tabindex="0" 
   role="button" 
   aria-label="Open Visual Search"
@@ -65,7 +67,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const trigger = document.querySelector('[data-visual-search-trigger]');
+      const trigger = document.querySelector('[data-visual-search-block="header-block"]');
       
       function openVisualSearch(e) {
         e.preventDefault();

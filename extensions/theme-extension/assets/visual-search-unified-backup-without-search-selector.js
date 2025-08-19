@@ -20,12 +20,44 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://vegetable-menus-wales-hottest.trycloudflare.com',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://pledge-provinces-involves-ist.trycloudflare.com',
     EXTERNAL_API_URL: 'http://localhost:3000/visual-search',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
     ANALYTICS_ENABLED: false,
+    
+    // App Block Selectors - CENTRALIZED CONFIGURATION
+    // ⚠️ IMPORTANT: All app block selectors are defined here for easy maintenance
+    // When adding/changing app block selectors, update ONLY this section
+    APP_BLOCK_SELECTORS: {
+      // Primary selectors (mutually exclusive - no duplicates)
+      HEADER_BLOCK: '[data-visual-search-block="header-block"]',
+      FLOATING_BLOCK: '[data-visual-search-block="floating-block"]', 
+      INPUT_EMBED_CONTAINER: '.vs-enhanced-search-container[data-visual-search-block="input-embed"]',
+      INPUT_EMBED_ANY: '[data-visual-search-block="input-embed"]',
+      
+      // Get all selectors as array for iteration
+      ALL: [
+        '[data-visual-search-block="header-block"]',     // Header block element
+        '[data-visual-search-block="floating-block"]',   // Floating FAB element  
+        '.vs-enhanced-search-container[data-visual-search-block="input-embed"]'  // Input embed container only (not individual icons)
+      ],
+      
+      // Individual data attributes for matching
+      ATTRIBUTES: {
+        HEADER: 'data-visual-search-block="header-block"',
+        FLOATING: 'data-visual-search-block="floating-block"',
+        INPUT_EMBED: 'data-visual-search-block="input-embed"'
+      },
+      
+      // Mapping selectors to block type names for analytics
+      TYPE_MAPPING: {
+        '[data-visual-search-block="header-block"]': 'header',
+        '[data-visual-search-block="floating-block"]': 'floating',
+        '.vs-enhanced-search-container[data-visual-search-block="input-embed"]': 'input-embed'
+      }
+    },
     
     // Theme customization - Static theme values
     THEME: {
@@ -1481,12 +1513,8 @@
   function getThemeConfigFromAppBlocks() {
     console.log('[Visual Search] 🎨 Reading theme configuration from app blocks...');
     
-    // Try to find app block with theme configuration
-    const appBlockSelectors = [
-      '[data-visual-search-trigger]',
-      '[data-app-block="visual-search"]',
-      '.visual-search-app-block'
-    ];
+    // Use centralized app block selectors
+    const appBlockSelectors = CONFIG.APP_BLOCK_SELECTORS.ALL;
     
     const themeConfig = {};
     let configSource = 'app-block';
@@ -2143,7 +2171,7 @@
         // Add crop box after image loads with smooth transition
         setTimeout(() => {
           addCropBox(imageContainer, img);
-        }, 300);
+        }, 100);
       };
       
       img.onerror = () => {
@@ -2348,12 +2376,10 @@
       console.log('[Visual Search] 🔍 Search input exists:', !!searchInput);
       
       if (!drawer) {
-        console.log('[Visual Search] ❌ Could not find drawer element');
         return;
       }
       
       if (!imageFile) {
-        console.log('[Visual Search] ❌ No image file found');
         return;
       }
       
@@ -3055,7 +3081,6 @@
       });
       
       console.log('[Visual Search] Response status:', response.status);
-      console.log('[Visual Search] Response headers:', response.headers);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -3834,59 +3859,15 @@
       delete window.visualSearchUnified;
     }
     
-    // Send cleanup notification to app
-    sendGlobalCleanupNotification();
-    
     console.log('[Visual Search] ✅ Global cleanup completed successfully');
     return true;
   }
   
-  function sendGlobalCleanupNotification() {
-    try {
-      // Ensure proper URL construction without double slashes
-      const baseUrl = CONFIG.APP_URL.endsWith('/') ? CONFIG.APP_URL.slice(0, -1) : CONFIG.APP_URL;
-      
-      fetch(`${baseUrl}/api/cleanup-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          shop: CONFIG.SHOP_DOMAIN,
-          action: 'app_block_removed',
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          metadata: {
-            cleanupMethod: 'enhanced_monitoring',
-            checkCount: window.visualSearchCleanupAttempts || 0,
-            lastActive: localStorage.getItem('vs_last_active') || null
-          }
-        })
-      }).then(() => {
-        console.log('[Visual Search] 📡 Cleanup notification sent to app');
-      }).catch(error => {
-        console.log('[Visual Search] ⚠️ Cleanup notification failed:', error);
-      });
-    } catch (error) {
-      console.log('[Visual Search] ⚠️ Cleanup notification error:', error);
-    }
-  }
-
   // 🆕 TRACK APP BLOCK USAGE
   function trackAppBlockUsage(action, metadata = {}) {
     try {
-      // Store locally for backup
-      localStorage.setItem('vs_last_active', new Date().toISOString());
-      
-      // Ensure proper URL construction without double slashes
-      const baseUrl = CONFIG.APP_URL.endsWith('/') ? CONFIG.APP_URL.slice(0, -1) : CONFIG.APP_URL;
-      const finalUrl = `${baseUrl}/api/cleanup-notification`;
-      
-      console.log(`[Visual Search] 📊 Tracking ${action} to:`, finalUrl);
-      console.log('[Visual Search] 🔧 CONFIG.APP_URL:', CONFIG.APP_URL);
-      console.log('[Visual Search] 🔧 window.VISUAL_SEARCH_CONFIG:', window.VISUAL_SEARCH_CONFIG);
-      
+      const finalUrl = `${CONFIG.APP_URL}/api/cleanup-notification`;
+
       fetch(finalUrl, {
         method: 'POST',
         headers: {
@@ -3900,8 +3881,7 @@
           url: window.location.href,
           metadata: {
             action,
-            ...metadata,
-            sessionId: sessionStorage.getItem('vs_session_id') || Math.random().toString(36).substr(2, 9)
+            ...metadata
           }
         })
       }).then(() => {
@@ -3923,19 +3903,8 @@
     let cleanupPerformed = false;
     
     function checkAppBlockPresence() {
-      // Enhanced selectors to detect app blocks more reliably
-      const appBlockSelectors = [
-        '[data-visual-search-trigger]',
-        '[data-app-block="visual-search"]',
-        '.visual-search-app-block',
-        '[data-vs-shop]',
-        '[data-vs-block-id]',
-        // Add Shopify-specific app block selectors
-        '.shopify-app-block[data-block-type*="visual"]',
-        '.shopify-section__app-block[data-block-type*="visual"]',
-        // Look for the specific block name
-        '[data-shopify-app-block*="visual-search"]'
-      ];
+      // Use centralized app block selectors
+      const appBlockSelectors = CONFIG.APP_BLOCK_SELECTORS.ALL;
       
       let totalFound = 0;
       const detection = {};
@@ -3951,12 +3920,7 @@
         }
       });
       
-      console.log('[Visual Search] 🔍 Enhanced app block presence check:', {
-        selectors: detection,
-        totalFound,
-        cleanupAttempts,
-        timestamp: new Date().toISOString()
-      });
+     
       
       return totalFound > 0;
     }
@@ -4047,16 +4011,14 @@
           if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
             mutation.removedNodes.forEach((node) => {
               if (node.nodeType === Node.ELEMENT_NODE) {
-                // Check if removed node contained app blocks
+                // Check if removed node contained app blocks - using centralized selectors
                 if (node.matches && (
-                  node.matches('[data-visual-search-trigger]') ||
-                  node.matches('[data-app-block="visual-search"]') ||
-                  node.matches('.visual-search-app-block') ||
-                  node.matches('[data-shopify-app-block*="visual"]') ||
-                  node.querySelector('[data-visual-search-trigger]') ||
-                  node.querySelector('[data-app-block="visual-search"]') ||
-                  node.querySelector('.visual-search-app-block') ||
-                  node.querySelector('[data-shopify-app-block*="visual"]')
+                  node.matches(CONFIG.APP_BLOCK_SELECTORS.HEADER_BLOCK) ||
+                  node.matches(CONFIG.APP_BLOCK_SELECTORS.FLOATING_BLOCK) ||
+                  node.matches(CONFIG.APP_BLOCK_SELECTORS.INPUT_EMBED_ANY) ||
+                  node.querySelector(CONFIG.APP_BLOCK_SELECTORS.HEADER_BLOCK) ||
+                  node.querySelector(CONFIG.APP_BLOCK_SELECTORS.FLOATING_BLOCK) ||
+                  node.querySelector(CONFIG.APP_BLOCK_SELECTORS.INPUT_EMBED_ANY)
                 )) {
                   potentialRemoval = true;
                   console.log('[Visual Search] 🚨 Potential app block removal detected:', node);
@@ -4067,9 +4029,8 @@
           
           // Also check for attribute changes that might indicate app block changes
           if (mutation.type === 'attributes' && 
-              (mutation.attributeName === 'data-app-block' ||
-               mutation.attributeName === 'data-visual-search-trigger' ||
-               mutation.attributeName === 'data-shopify-app-block')) {
+              (mutation.attributeName === 'data-visual-search-block' ||
+               mutation.attributeName === 'data-vs-block-type')) {
             potentialRemoval = true;
             console.log('[Visual Search] 🚨 App block attribute change detected');
           }
@@ -4103,10 +4064,8 @@
         subtree: true,
         attributes: true,
         attributeFilter: [
-          'data-app-block',
-          'data-visual-search-trigger', 
-          'data-shopify-app-block',
-          'data-vs-shop',
+          'data-visual-search-block',
+          'data-vs-block-type',
           'class'
         ]
       });
@@ -4173,32 +4132,58 @@
   function initialize() {
     console.log('[Visual Search] Initializing unified script...');
     
-    // Check for app blocks before proceeding
-    const appBlockSelectors = [
-      '[data-visual-search-trigger]',
-      '[data-app-block="visual-search"]',
-      '.visual-search-app-block',
-      '[data-vs-shop]'
-    ];
+    // Use centralized app block selectors
+    const appBlockSelectors = CONFIG.APP_BLOCK_SELECTORS.ALL;
     
-    const hasAppBlocks = appBlockSelectors.some(selector => 
-      document.querySelectorAll(selector).length > 0
-    );
+    // Enhanced app block detection with unique counting - STRICT MODE
+    const detection = {};
+    const allFoundElements = new Set();
+    
+    appBlockSelectors.forEach(selector => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        detection[selector] = elements.length;
+        
+        // Add elements to set for deduplication
+        elements.forEach(el => {
+          allFoundElements.add(el);
+        });
+        
+      } catch (e) {
+        detection[selector] = 0;
+      }
+    });
+    
+    const totalFoundElements = allFoundElements.size;
+    const hasAppBlocks = totalFoundElements > 0;
+    
+    console.log('[Visual Search] � FINAL COUNT SUMMARY:', {
+      individualSelectorCounts: detection,
+      totalUniqueElements: totalFoundElements,
+      hasAppBlocks: hasAppBlocks,
+      expectedCount: 'Should match number of enabled blocks'
+    });
     
     if (!hasAppBlocks) {
-      console.log('[Visual Search] ⚠️ No app blocks detected, starting cleanup monitoring only');
       initializeCleanupSystem();
       return;
     }
+        
+    // 🆕 TRACK APP BLOCK PRESENCE - with specific block types
+    const enabledBlockTypes = [];
+    const blockTypeMapping = CONFIG.APP_BLOCK_SELECTORS.TYPE_MAPPING;
     
-    console.log('[Visual Search] ✅ App blocks detected, proceeding with full initialization');
+    // Determine which specific block types are enabled
+    Object.entries(detection).forEach(([selector, count]) => {
+      if (count > 0 && blockTypeMapping[selector]) {
+        enabledBlockTypes.push(blockTypeMapping[selector]);
+      }
+    });
     
-    // 🆕 TRACK APP BLOCK PRESENCE
-    trackAppBlockUsage('viewed', {
+    trackAppBlockUsage('block_loaded', {
       feature: 'app_block_detected',
-      blockCount: appBlockSelectors.reduce((count, selector) => {
-        return count + document.querySelectorAll(selector).length;
-      }, 0),
+      enabledBlockTypes: enabledBlockTypes,      
+      blockDetails: detection,               
       pageUrl: window.location.href
     });
     

@@ -53,7 +53,7 @@
   const config = {
     blockId: '{{ block.id }}',
     shopDomain: '{{ shop.permanent_domain }}',
-    appUrl: 'https://programmers-acre-clip-foo.trycloudflare.com',
+    appUrl: 'https://pledge-provinces-involves-ist.trycloudflare.com',
     settings: {
       embedEnabled: {{ block.settings.embed_enabled | default: true }},
       iconSize: {{ block.settings.icon_size | default: 34 }},
@@ -270,6 +270,8 @@
         container = document.createElement('div');
         container.className = 'vs-enhanced-search-container';
         container.setAttribute('data-vs-embed', '{{ block.id }}');
+        container.setAttribute('data-visual-search-block', 'input-embed');
+        container.setAttribute('data-app-block', 'visual-search-embed');
         
         // Wrap the input
         input.parentNode.insertBefore(container, input);
@@ -291,6 +293,9 @@
       
       icon.className = 'vs-search-icon';
       icon.setAttribute('data-vs-trigger', 'embed-{{ block.id }}');
+      icon.setAttribute('data-visual-search-trigger', 'embed');
+      icon.setAttribute('data-visual-search-block', 'input-embed');
+      icon.setAttribute('data-vs-block-type', 'embed');
       icon.setAttribute('data-vs-input-index', index);
       
       // Add icon (custom image or default SVG)

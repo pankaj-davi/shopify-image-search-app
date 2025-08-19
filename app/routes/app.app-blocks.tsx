@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   return json({
     shop: session.shop,
-    appUrl: process.env.SHOPIFY_APP_URL || 'https://your-app-domain.com'
+    appUrl: process.env.SHOPIFY_APP_URL 
   });
 }
 
@@ -273,9 +273,6 @@ export default function AppBlockPage() {
             <InlineStack gap="300">
               <Button url="/app/visual-search" variant="primary">
                 ← Back to Settings
-              </Button>
-              <Button url="/app/block-stats" variant="secondary">
-                📊 View Analytics
               </Button>
             </InlineStack>
           </BlockStack>

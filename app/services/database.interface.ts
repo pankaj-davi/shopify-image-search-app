@@ -5,13 +5,6 @@ export interface DatabaseInterface {
   // Product operations
   createProduct(product: ProductData): Promise<string>;
   getProducts(limit?: number): Promise<ProductData[]>;
-  getProductById(id: string): Promise<ProductData | null>;
-  updateProduct(id: string, updates: Partial<ProductData>): Promise<void>;
-  deleteProduct(id: string): Promise<void>;
-  
-  // Batch product operations for better performance
-  batchCreateProducts(products: ProductData[]): Promise<string[]>;
-  batchUpdateProducts(updates: Array<{ id: string; data: Partial<ProductData> }>): Promise<void>;
   
   // Store operations
   createStore(store: StoreData): Promise<string>;
@@ -25,14 +18,10 @@ export interface DatabaseInterface {
   // Event logging
   recordStoreEvent(shopDomain: string, eventType: string, eventData: Record<string, any>): Promise<void>;
 
-  // App Block tracking
+  // App Block tracking (stored as subcollections under stores)
   createAppBlockUsage(usage: AppBlockUsageData): Promise<{ id: string }>;
-  getAppBlockUsageStats(shopDomain: string, since: Date): Promise<any>;
-  getRecentAppBlockUsage(shopDomain: string, since: Date): Promise<any[]>;
 
-  // Visual Search tracking
-  createVisualSearchUsage(usage: VisualSearchUsageData): Promise<{ id: string }>;
-  getVisualSearchUsageStats(shopDomain: string, since: Date): Promise<any>;
+  // Visual Search tracking (stored as subcollections under stores) - REMOVED
 }
 
 // Data types
@@ -196,18 +185,7 @@ export interface AppBlockUsageData {
   timestamp?: Date;
 }
 
-export interface VisualSearchUsageData {
-  shopDomain: string;
-  searchType: string;
-  hasResults: boolean;
-  resultCount: number;
-  imageSize?: number | null;
-  imageType?: string | null;
-  cropData?: string | null;
-  sessionId?: string | null;
-  url?: string | null;
-  timestamp?: Date;
-}
+// Visual Search Usage Data - REMOVED - Now uses general app block tracking
 
 // Database factory function
 export async function createDatabaseInstance(): Promise<DatabaseInterface> {
@@ -218,21 +196,6 @@ export async function createDatabaseInstance(): Promise<DatabaseInterface> {
       const { FirebaseDatabase } = await import('./firebase.database');
       return new FirebaseDatabase();
     }
-    
-    // case 'prisma': {
-    //   const { PrismaDatabase } = await import('./prisma.database');
-      // return new PrismaDatabase();
-    // }
-    
-    // case 'mongodb': {
-    //   const { MongoDatabase } = await import('./mongo.database');
-    //   return new MongoDatabase();
-    // }
-    
-    // case 'supabase': {
-    //   const { SupabaseDatabase } = await import('./supabase.database');
-      // return new SupabaseDatabase();
-    // }
     
     default:
       throw new Error(`Unsupported database provider: ${provider}`);

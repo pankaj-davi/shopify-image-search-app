@@ -21,10 +21,13 @@
 
 <div 
     id="floating-visual-search-fab-{{ block.id }}"
-    class="visual-search-floating-app-block"
+    class="visual-search-floating-app-block visual-search-fab-block"
+    data-visual-search-trigger="floating"
+    data-visual-search-block="floating-block" 
     data-app-block="floating-visual-search"
     data-vs-shop="{{ shop.permanent_domain }}"
-    data-vs-block-id="{{ block.id }}"
+    data-vs-block-id="floating-{{ block.id }}"
+    data-vs-block-type="floating"
     tabindex="0"
     role="button"
     aria-label="{{ block.settings.aria_label | default: 'Open Visual Search' }}"

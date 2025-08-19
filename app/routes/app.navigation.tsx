@@ -45,19 +45,6 @@ export default function NavigationPage() {
           description: "Theme configuration and visual search settings"
         }
       ]
-    },
-    {
-      title: "Analytics & Insights",
-      description: "Track and analyze performance",
-      links: [
-        {
-          url: "/app/block-stats",
-          label: "App Block Analytics",
-          icon: "📊",
-          variant: "primary",
-          description: "Track app block usage and performance metrics"
-        }
-      ]
     }
   ];
 

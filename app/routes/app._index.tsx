@@ -377,18 +377,13 @@ export default function Index() {
                             <BlockStack gap="100">
                               <Text as="p" variant="bodySm">📈 Search analytics</Text>
                               <Text as="p" variant="bodySm">🎯 Conversion tracking</Text>
-                              <Text as="p" variant="bodySm">🔍 Popular searches</Text>
+                            <Text as="p" variant="bodySm">🔍 Popular searches</Text>
                               <Text as="p" variant="bodySm">📱 Mobile insights</Text>
                             </BlockStack>
                             
-                            <Button
-                              url="/app/block-stats"
-                              variant="secondary"
-                              size="large"
-                              fullWidth
-                            >
-                              View Analytics →
-                            </Button>
+                            <Text as="p" variant="bodyMd" tone="subdued">
+                              Analytics coming soon
+                            </Text>
                           </BlockStack>
                         </Box>
                       </Card>
