@@ -11,16 +11,20 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
   console.log("Store exists in database:", storeExists);
   
   if (storeExists) {
-    // Check if we have any synced products
-    const syncProgress = await appDatabase.getSyncProgress(shopDomain);
-    const hasSyncedProducts = syncProgress.synced_products > 0;
+    console.log("🔍 Store exists, checking product sync status...");
+    // Check if we have any synced products and get actual count
+    const storeProducts = await appDatabase.getStoreProducts(shopDomain, 1000); // Get more to count
+    const hasSyncedProducts = storeProducts.length > 0;
+    const actualProductCount = storeProducts.length;
+    
+    console.log(`📊 Found ${actualProductCount} products in database`);
     
     return {
       store: storeExists,
       products: [], // Don't load products on initial load
       isFirstTime: false,
       needsSync: !hasSyncedProducts, // Need sync if no products synced
-      productCount: syncProgress.synced_products || 0,
+      productCount: actualProductCount, // Return actual count
     };
   }
 
@@ -188,58 +192,9 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
       }
     `
     );
-    
   const storeData = await storeResponse.json();
   
-  // Enhanced logging to show all captured store details
-  console.log("📊 COMPLETE STORE DATA CAPTURED:");
-  console.log("🏪 Basic Info:", {
-    name: storeData.data.shop.name,
-    domain: storeData.data.shop.myshopifyDomain,
-    email: storeData.data.shop.email,
-    currency: storeData.data.shop.currencyCode
-  });
-  
-  console.log("📍 Store Location & Contact:", {
-    contactEmail: storeData.data.shop.contactEmail,
-    timezone: storeData.data.shop.ianaTimezone,
-    address: storeData.data.shop.billingAddress
-  });
-  
-  console.log("💎 Plan & Features:", {
-    plan: storeData.data.shop.plan,
-    features: storeData.data.shop.features,
-    limits: storeData.data.shop.resourceLimits
-  });
-  
-  console.log("🎨 Store Configuration:", {
-    description: storeData.data.shop.description,
-    url: storeData.data.shop.url,
-    primaryDomain: storeData.data.shop.primaryDomain,
-    taxSettings: {
-      taxesIncluded: storeData.data.shop.taxesIncluded,
-      taxShipping: storeData.data.shop.taxShipping
-    }
-  });
-  
-  console.log("⚙️ Store Capabilities:", {
-    checkoutApiSupported: storeData.data.shop.checkoutApiSupported,
-    weightUnit: storeData.data.shop.weightUnit,
-    unitSystem: storeData.data.shop.unitSystem,
-    currencies: storeData.data.shop.enabledPresentmentCurrencies
-  });
-  
-  console.log("📦 Products Summary:", {
-    totalProducts: storeData.data.products.edges.length,
-    firstProduct: storeData.data.products.edges[0]?.node.title
-  });
-
-  // Only save store details, not products - let user decide when to sync
   await appDatabase.syncStore(storeData.data.shop);
-
-  // Visual search now uses App Blocks integration for Theme 2.0 stores
-  // Theme configuration saved for use with app blocks
-  // Use /app/app-blocks for Theme 2.0 integration and configuration
 
   return {
     store: storeData.data.shop,
@@ -252,46 +207,66 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
 
 // Action function for full sync
 export async function fullSyncAction({ request }: ActionFunctionArgs) {
+  console.log('🚀 Starting full sync action...');
   const { admin, session } = await authenticate.admin(request);
   const shopDomain = session.shop;
+  console.log(`📍 Shop Domain: ${shopDomain}`);
 
   try {
-    // Get total product count first
-    const countResponse = await admin.graphql(`
-      query {
-        productsCount {
-          count
+    let dbSyncStatus = {
+      success: false,
+      syncedCount: 0,
+      totalProducts: 0
+    };
+    console.log('📊 Initial sync status:', dbSyncStatus);
+
+    // Check if DB sync is needed (if previous embedding failed)
+    console.log('🔍 Checking if database sync is needed...');
+    const existingProducts = await appDatabase.getStoreProducts(shopDomain, 1);
+    const needsDBSync = existingProducts.length === 0;
+    console.log(`📌 Database sync needed: ${needsDBSync ? 'Yes' : 'No'}`);
+
+    if (needsDBSync) {
+      console.log('📥 Starting database sync...');
+      // Get total product count first
+      const countResponse = await admin.graphql(`
+        query {
+          productsCount {
+            count
+          }
         }
-      }
-    `);
-    const countData = await countResponse.json();
-    const totalProducts = countData.data.productsCount.count;
+      `);
+      const countData = await countResponse.json();
+      const totalProducts = countData.data.productsCount.count;
+      console.log(`📦 Total products to sync: ${totalProducts}`);
+      console.log('🔄 Starting batch sync process...');
 
-    // Sync products in batches of 250
-    const batchSize = 250;
-    let cursor: string | null = null;
-    let syncedCount = 0;
+      try {
+        // Sync products in batches of 250
+        const batchSize = 250;
+        let cursor: string | null = null;
+        let syncedCount = 0;
 
-    while (syncedCount < totalProducts) {
-      const query: string = cursor 
-        ? `query {
-            products(first: ${batchSize}, after: "${cursor}") {
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-              edges {
-                node {
-                  id
-                  title
-                  handle
-                  status
-                  description
-                  vendor
-                  productType
-                  tags
-                  createdAt
-                  updatedAt
+        while (syncedCount < totalProducts) {
+          const query: string = cursor 
+            ? `query {
+                products(first: ${batchSize}, after: "${cursor}") {
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                  edges {
+                    node {
+                      id
+                      title
+                      handle
+                      status
+                      description
+                      vendor
+                      productType
+                      tags
+                      createdAt
+                      updatedAt
                   onlineStoreUrl
                   totalInventory
                   options { name values }
@@ -447,10 +422,12 @@ export async function fullSyncAction({ request }: ActionFunctionArgs) {
       const products = data.data.products.edges.map((edge: any) => edge.node);
       
       // Save products batch
+      console.log(`💾 Saving batch of ${products.length} products...`);
       await appDatabase.saveProductsBatch(shopDomain, products);
       
       syncedCount += products.length;
       cursor = data.data.products.pageInfo.endCursor;
+      console.log(`✅ Progress: ${syncedCount}/${totalProducts} products synced`);
       
       // Rate limiting - wait 50ms between batches
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -461,20 +438,89 @@ export async function fullSyncAction({ request }: ActionFunctionArgs) {
       }
     }
 
-    return { success: true, syncedProducts: syncedCount, totalProducts };
+    dbSyncStatus = {
+      success: true,
+      syncedCount: syncedCount,
+      totalProducts: totalProducts
+    };
+    console.log('✨ Database sync completed successfully:', dbSyncStatus);
+      } catch (dbError: any) {
+        console.error('❌ Database sync failed:', dbError);
+        return {
+          success: false,
+          error: dbError?.message || 'Database sync failed',
+          phase: 'database',
+          needsDBSync: true,
+          needsEmbeddingSync: true
+        };
+      }
+    } else {
+      dbSyncStatus = {
+        success: true,
+        syncedCount: existingProducts.length,
+        totalProducts: existingProducts.length
+      };
+    }
+
+    // If DB sync succeeded or wasn't needed, try embedding
+    console.log('🎯 Starting embedding process...');
+    try {
+      console.log(`📡 Calling embedding API for shop: ${shopDomain}`);
+      const embeddingResponse = await fetch(`http://34.121.184.244:8000/sync/${shopDomain}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(300000), // 5 min timeout
+      });
+      console.log('📊 Embedding API Response:', {
+        status: embeddingResponse.status,
+        statusText: embeddingResponse.statusText,
+        ok: embeddingResponse.ok
+      });
+      if (!embeddingResponse.ok) {
+        console.warn('⚠️ Embedding API returned error status:', embeddingResponse.status);
+        return {
+          success: false,
+          error: 'Visual search setup incomplete',
+          phase: 'embedding',
+          needsDBSync: false,
+          needsEmbeddingSync: true,
+          dbStatus: dbSyncStatus
+        };
+      }
+
+      console.log('🎉 Everything succeeded - both database and embedding sync complete');
+      // Everything succeeded
+      return {
+        success: true,
+        syncedProducts: dbSyncStatus.syncedCount,
+        totalProducts: dbSyncStatus.totalProducts,
+        embeddingSuccess: true
+      };
+
+    } catch (embeddingError: any) {
+      console.error('❌ Embedding sync error:', {
+        error: embeddingError.message,
+        name: embeddingError.name,
+        stack: embeddingError.stack
+      });
+      return {
+        success: false,
+        error: 'Visual search setup incomplete',
+        phase: 'embedding',
+        needsDBSync: false,
+        needsEmbeddingSync: true,
+        dbStatus: dbSyncStatus
+      };
+    }
+
   } catch (error: any) {
     console.error('Full sync error:', error);
-    return { success: false, error: error?.message || 'Unknown error' };
-  }
-}
-
-// Function to get sync progress
-export async function getSyncProgress(shopDomain: string) {
-  try {
-    const progress = await appDatabase.getSyncProgress(shopDomain);
-    return { success: true, ...progress };
-  } catch (error: any) {
-    console.error('Get sync progress error:', error);
-    return { success: false, error: error?.message || 'Unknown error' };
+    return {
+      success: false,
+      error: error?.message || 'Unexpected error occurred',
+      phase: 'unknown',
+      needsDBSync: true,
+      needsEmbeddingSync: true
+    };
   }
 }

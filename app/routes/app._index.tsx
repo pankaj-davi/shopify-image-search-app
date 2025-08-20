@@ -1,5 +1,4 @@
 import { useLoaderData, useFetcher } from "@remix-run/react";
-import { useState, useEffect } from "react";
 import {
   Page,
   Text,
@@ -8,8 +7,7 @@ import {
   InlineStack,
   Button,
   Box,
-  Spinner,
-  ProgressBar
+  Spinner
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
@@ -24,66 +22,80 @@ export default function Index() {
   const productCount = (loaderData as any).productCount || 0;
   
   const syncFetcher = useFetcher();
-  const [progress, setProgress] = useState(0);
-  const [totalProducts, setTotalProducts] = useState(productCount);
-  const [syncedProducts, setSyncedProducts] = useState(0);
-  const [remainingProducts, setRemainingProducts] = useState(0);
 
   const isLoading = syncFetcher.state === "loading" || syncFetcher.state === "submitting";
-  const syncSuccess = (syncFetcher.data as any)?.success;
+  const syncResult = syncFetcher.data as any;
+  const syncSuccess = syncResult?.success;
 
-  // Set total products from sync response
-  useEffect(() => {
-    if (syncFetcher.data && (syncFetcher.data as any).totalProducts) {
-      setTotalProducts((syncFetcher.data as any).totalProducts);
-    }
-  }, [syncFetcher.data]);
+  // Handle different failure states
+  const getErrorUI = () => {
+    if (!syncResult?.error) return null;
 
-  // Poll for progress updates during sync
-  useEffect(() => {
-    let interval: any;
-    
-    if (isLoading) {
-      interval = setInterval(async () => {
-        try {
-          const response = await fetch('/app/sync-progress');
-          const data = await response.json();
-          if (data.success && data.synced_products >= 0) {
-            setSyncedProducts(data.synced_products);
-            
-            if (data.total_products && data.total_products > 0) {
-              setTotalProducts(data.total_products);
-              const progressPercent = Math.round((data.synced_products / data.total_products) * 100);
-              setProgress(progressPercent);
-              setRemainingProducts(data.total_products - data.synced_products);
-            } else if (totalProducts > 0) {
-              const progressPercent = Math.round((data.synced_products / totalProducts) * 100);
-              setProgress(progressPercent);
-              setRemainingProducts(totalProducts - data.synced_products);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch progress:', error);
-        }
-      }, 2000); // Update every 2 seconds
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
+    const getErrorMessage = () => {
+      switch (syncResult.phase) {
+        case 'database':
+          return "Failed to save products to database";
+        case 'embedding':
+          return "Visual search setup incomplete";
+        default:
+          return syncResult.error;
+      }
     };
-  }, [isLoading, totalProducts]);
 
-  // Reload page after successful sync
-  useEffect(() => {
-    if (syncSuccess) {
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }
-  }, [syncSuccess]);
+    const getRetryMessage = () => {
+      switch (syncResult.phase) {
+        case 'database':
+          return "Retry Database Sync";
+        case 'embedding':
+          return "Retry Visual Search Setup";
+        default:
+          return "Try Again";
+      }
+    };
+    
+    return (
+      <Card>
+        <Box padding="400">
+          <BlockStack gap="400" align="center">
+            <Text as="span" variant="headingLg">
+              {syncResult.phase === 'database' ? '💾' : '🔍'}
+            </Text>
+            <BlockStack gap="200" align="center">
+              <Text as="h3" variant="headingMd" alignment="center">
+                {syncResult.phase === 'database' ? 'Database Sync Failed' : 'Visual Search Setup Incomplete'}
+              </Text>
+              <Text as="p" variant="bodyMd" tone="critical" alignment="center">
+                {getErrorMessage()}
+              </Text>
+              {syncResult.dbStatus?.success && (
+                <Text as="p" variant="bodySm" tone="success" alignment="center">
+                  ✅ {syncResult.dbStatus.syncedCount} products saved to database
+                </Text>
+              )}
+            </BlockStack>
+            <InlineStack gap="300">
+              <Button 
+                onClick={handleSync} 
+                variant="primary"
+                tone={syncResult.phase === 'database' ? "critical" : undefined}
+              >
+                {getRetryMessage()}
+              </Button>
+              <Button variant="secondary" url="/app/support">
+                Get Help
+              </Button>
+            </InlineStack>
+          </BlockStack>
+        </Box>
+      </Card>
+    );
+  };
+  
+  // Update local state based on sync result - no reload needed!
+  const effectiveNeedsSync = syncSuccess ? false : needsSync;
+  const effectiveProductCount = syncSuccess ? (syncFetcher.data as any)?.syncedProducts || productCount : productCount;
 
   const handleSync = () => {
-    setProgress(0);
     syncFetcher.submit({}, {
       method: "POST",
       action: "/app/sync-store"
@@ -100,7 +112,7 @@ export default function Index() {
         
 
 
-        {/* Syncing Progress - Enhanced with better UX */}
+        {/* Loading State */}
         {isLoading && (
           <Card>
             <Box padding="600">
@@ -110,65 +122,14 @@ export default function Index() {
                 </Box>
                 <BlockStack gap="200" align="center">
                   <Text as="h2" variant="headingLg" alignment="center">
-                    Syncing Your Store
+                    {syncResult?.phase === 'embedding' 
+                      ? 'Setting up visual search...'
+                      : 'Syncing your products...'}
                   </Text>
                   <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
-                    {totalProducts > 1000 
-                      ? `Processing ${totalProducts.toLocaleString()} products — this may take a few minutes`
-                      : totalProducts > 0 
-                      ? `Importing ${totalProducts.toLocaleString()} products into visual search`
-                      : `Discovering your store products and setting up visual search`
-                    }
+                    Please wait while we set up your store
                   </Text>
-                  
-                  {/* Real-time sync statistics */}
-                  {syncedProducts > 0 && totalProducts > 0 && (
-                    <BlockStack gap="100" align="center">
-                      <Text as="p" variant="bodyMd" fontWeight="semibold" alignment="center">
-                        📦 {syncedProducts.toLocaleString()} products processed
-                      </Text>
-                      {remainingProducts > 0 && (
-                        <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                          ⏳ {remainingProducts.toLocaleString()} remaining
-                        </Text>
-                      )}
-                    </BlockStack>
-                  )}
                 </BlockStack>
-                
-                {progress > 0 && totalProducts > 0 && (
-                  <Box width="100%" maxWidth="500px">
-                    <BlockStack gap="300">
-                      <ProgressBar progress={progress} size="large" />
-                      <InlineStack gap="400" align="space-between">
-                        <Text as="p" variant="bodyMd" alignment="center">
-                          {Math.round((progress / 100) * totalProducts).toLocaleString()} of {totalProducts.toLocaleString()} products
-                        </Text>
-                        <Text as="p" variant="bodyMd" fontWeight="semibold">
-                          {progress}%
-                        </Text>
-                      </InlineStack>
-                      
-                      {/* Additional progress details */}
-                      <InlineStack gap="300" align="center" wrap>
-                        <Text as="p" variant="bodySm" tone="subdued">
-                          🔄 Processing files in real-time
-                        </Text>
-                        {remainingProducts > 0 && (
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            📋 {remainingProducts.toLocaleString()} files in queue
-                          </Text>
-                        )}
-                      </InlineStack>
-                    </BlockStack>
-                  </Box>
-                )}
-                
-                <Box padding="200" background="bg-surface-secondary" borderRadius="100">
-                  <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                    💡 Tip: Keep this page open to track progress
-                  </Text>
-                </Box>
               </BlockStack>
             </Box>
           </Card>
@@ -187,40 +148,21 @@ export default function Index() {
                     Sync Complete!
                   </Text>
                   <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
-                    Your products are now ready for visual search. Redirecting to dashboard...
+                    Your products are now ready for visual search!
                   </Text>
+                  {(syncFetcher.data as any)?.syncedProducts && (
+                    <Text as="p" variant="bodySm" tone="success" alignment="center">
+                      ✅ {(syncFetcher.data as any).syncedProducts} products synced successfully
+                    </Text>
+                  )}
                 </BlockStack>
               </BlockStack>
             </Box>
           </Card>
         )}
 
-        {/* Error State - Enhanced */}
-        {(syncFetcher.data as any)?.error && (
-          <Card>
-            <Box padding="400">
-              <BlockStack gap="400" align="center">
-                <Text as="span" variant="headingLg">⚠️</Text>
-                <BlockStack gap="200" align="center">
-                  <Text as="h3" variant="headingMd" alignment="center">
-                    Sync Failed
-                  </Text>
-                  <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
-                    {(syncFetcher.data as any).error}
-                  </Text>
-                </BlockStack>
-                <InlineStack gap="300">
-                  <Button onClick={handleSync} variant="primary">
-                    Try Again
-                  </Button>
-                  <Button variant="secondary" url="/app/support">
-                    Get Help
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            </Box>
-          </Card>
-        )}
+        {/* Error States */}
+        {getErrorUI()}
 
         {/* Progressive Loading: Always show store info immediately */}
         <Card>
@@ -237,7 +179,7 @@ export default function Index() {
               
               {/* Status indicator */}
               <Box>
-                {needsSync ? (
+                {effectiveNeedsSync ? (
                   <InlineStack gap="200" align="center">
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#FFA500' }}></div>
                     <Text as="span" variant="bodyMd" tone="subdued">Setup Required</Text>
@@ -257,8 +199,8 @@ export default function Index() {
                 <Text variant="bodyMd" as="p" tone="subdued">
                   Products
                 </Text>
-                <Text variant="headingMd" as="p" tone={needsSync ? "subdued" : "success"}>
-                  {needsSync ? "Not synced" : (productCount > 0 ? productCount.toLocaleString() : "0")}
+                <Text variant="headingMd" as="p" tone={effectiveNeedsSync ? "subdued" : "success"}>
+                  {effectiveNeedsSync ? "Not synced" : (effectiveProductCount > 0 ? effectiveProductCount.toLocaleString() : "0")}
                 </Text>
               </BlockStack>
               
@@ -273,7 +215,7 @@ export default function Index() {
             </InlineStack>
 
             {/* Quick setup CTA for users who need sync */}
-            {needsSync && !isLoading && (
+            {effectiveNeedsSync && !isLoading && (
               <Box background="bg-surface-info" padding="400" borderRadius="200">
                 <BlockStack gap="300">
                   <InlineStack gap="200" align="start">
@@ -302,7 +244,7 @@ export default function Index() {
         </Card>
 
         {/* Integration Options - Only show after sync */}
-        {!needsSync && (
+        {!effectiveNeedsSync && (
           <BlockStack gap="400">
             {/* Getting Started Section */}
             <Card>

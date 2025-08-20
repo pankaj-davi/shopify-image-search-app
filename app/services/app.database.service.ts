@@ -390,27 +390,6 @@ export class AppDatabaseService {
     }
   }
 
-  // NEW: Get sync progress
-  async getSyncProgress(shopDomain: string): Promise<{ synced_products: number; total_products?: number; last_sync?: string }> {
-    const db = await this.getDB();
-
-    try {
-      if (db.getSyncProgress) {
-        return await db.getSyncProgress(shopDomain);
-      } else {
-        // Fallback: count products manually
-        const products = await this.getStoreProducts(shopDomain, 10000);
-        return {
-          synced_products: products.length,
-          last_sync: products.length > 0 ? products[0].updatedAt?.toISOString() : undefined
-        };
-      }
-    } catch (error) {
-      console.error('❌ Error getting sync progress:', error);
-      return { synced_products: 0 };
-    }
-  }
-
   async getStore(shopDomain: string) {
     const db = await this.getDB();
     try {

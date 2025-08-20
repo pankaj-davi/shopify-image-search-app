@@ -3,7 +3,7 @@
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
 handle = "newp"
-application_url = "https://pledge-provinces-involves-ist.trycloudflare.com"
+application_url = "https://hospital-tongue-hazardous-banners.trycloudflare.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-07"
 scopes = "write_products,write_script_tags"
 
 [auth]
-redirect_urls = ["https://pledge-provinces-involves-ist.trycloudflare.com/auth/callback", "https://pledge-provinces-involves-ist.trycloudflare.com/auth/shopify/callback", "https://pledge-provinces-involves-ist.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://hospital-tongue-hazardous-banners.trycloudflare.com/auth/callback", "https://hospital-tongue-hazardous-banners.trycloudflare.com/auth/shopify/callback", "https://hospital-tongue-hazardous-banners.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false
