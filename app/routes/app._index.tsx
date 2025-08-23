@@ -13,6 +13,7 @@ import { TitleBar } from "@shopify/app-bridge-react";
 
 import { shopifyStoreLoader } from "../utils/shopifyData.server";
 import AppNavigation from "../components/AppNavigation";
+import { VisualSearchTest } from "../components/VisualSearchTest";
 
 export const loader = shopifyStoreLoader;
 
@@ -338,6 +339,13 @@ export default function Index() {
         )}
 
         {!needsSync && <AppNavigation compact={false} />}
+        
+        {/* Visual Search API Test - Development Only */}
+        {!needsSync && (
+          <Box paddingBlockStart="600">
+            <VisualSearchTest />
+          </Box>
+        )}
       </BlockStack>
     </Page>
   );
