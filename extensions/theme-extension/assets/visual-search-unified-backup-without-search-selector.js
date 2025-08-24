@@ -20,14 +20,14 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://pledge-provinces-involves-ist.trycloudflare.com',
-    EXTERNAL_API_URL: 'http://localhost:3000/visual-search',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://hq-makers-struck-she.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://hq-makers-struck-she.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
     ANALYTICS_ENABLED: false,
     
-    // App Block Selectors - CENTRALIZED CONFIGURATION
+  // App Block Selectors - CENTRALIZED CONFIGURATION
     // ⚠️ IMPORTANT: All app block selectors are defined here for easy maintenance
     // When adding/changing app block selectors, update ONLY this section
     APP_BLOCK_SELECTORS: {
@@ -2472,8 +2472,8 @@
   async function performImmediateFileAnalysis(drawer, imageFile, searchInput) {
     // Prepare form data for immediate analysis
     const formData = new FormData();
-    formData.append('image', imageFile);
-    formData.append('analyze', 'true');
+    formData.append('file', imageFile);
+    // formData.append('analyze', 'true');
     
     console.log('[Visual Search] 📤 Sending immediate analysis request to:', CONFIG.EXTERNAL_API_URL);
     console.log('[Visual Search] 📄 File details:', {
@@ -3063,9 +3063,9 @@
       showSkeletonLoaders(drawer);
       
       const formData = new FormData();
-      formData.append('image', drawer._imageFile);
-      formData.append('cropData', JSON.stringify(cropData));
-      formData.append('analyze', 'true');
+      formData.append('file', drawer._imageFile);
+      // formData.append('cropData', JSON.stringify(cropData));
+      // formData.append('analyze', 'true');
       
       console.log('[Visual Search] Sending cropped analysis request to:', CONFIG.EXTERNAL_API_URL);
       console.log('[Visual Search] Crop data:', cropData);
