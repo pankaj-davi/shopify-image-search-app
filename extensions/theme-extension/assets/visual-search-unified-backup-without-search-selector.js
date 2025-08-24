@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://hq-makers-struck-she.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://hq-makers-struck-she.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://retrieve-infected-about-gave.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://retrieve-infected-about-gave.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -2295,7 +2295,9 @@
     
     const cropData = getCropData(drawer);
     if (cropData) {
-      performCroppedImageSearch(drawer, drawer._searchInput, cropData);
+      // COMMENTED OUT: Crop API call disabled for now
+      // performCroppedImageSearch(drawer, drawer._searchInput, cropData);
+      console.log('[Visual Search] 🔇 Crop API call disabled - skipping search');
     }
   }
 
@@ -2303,6 +2305,10 @@
   async function performRealTimeCropAnalysis(container) {
     try {
       console.log('[Visual Search] 🎯 Real-time crop analysis triggered!');
+      
+      // COMMENTED OUT: Crop API call disabled for now
+      console.log('[Visual Search] 🔇 Real-time crop API call disabled - skipping analysis');
+      return;
       
       // Find the drawer and data more reliably
       let drawer = null;
@@ -2513,18 +2519,32 @@
         // Result is directly an array of items
         detectedItems = result.map((item, index) => ({
           id: item.productId || item.id || index,
-          image: item.image || item.imageUrl,
+          image: item.image || item.imageUrl || (item.images && item.images[0] && item.images[0].url),
           name: item.name || item.title || `Item ${index + 1}`,
-          confidence: item.confidence || 0.9
+          confidence: item.confidence || 0.9,
+          price: item.price,
+          currency: item.currency || 'USD',
+          handle: item.handle,
+          available: item.available,
+          vendor: item.vendor,
+          description: item.description,
+          variants: item.variants
         }));
       } else if (result.detectedItems) {
         detectedItems = result.detectedItems;
       } else if (result.products) {
         detectedItems = result.products.map((item, index) => ({
           id: item.productId || item.id || index,
-          image: item.image || item.imageUrl,
+          image: item.image || item.imageUrl || (item.images && item.images[0] && item.images[0].url),
           name: item.name || item.title || `Item ${index + 1}`,
-          confidence: item.confidence || 0.9
+          confidence: item.confidence || 0.9,
+          price: item.price,
+          currency: item.currency || 'USD',
+          handle: item.handle,
+          available: item.available,
+          vendor: item.vendor,
+          description: item.description,
+          variants: item.variants
         }));
       }
       
@@ -2763,9 +2783,11 @@
     setupCropBoxInteraction(cropBox, container);
     
     // Auto-trigger search when crop box is created
-    setTimeout(() => {
-      triggerAutoSearch(container);
-    }, 500);
+    // COMMENTED OUT: Crop API call disabled for now
+    // setTimeout(() => {
+    //   triggerAutoSearch(container);
+    // }, 500);
+    console.log('[Visual Search] 🔇 Auto-trigger crop search disabled');
   }
 
   function setupCropBoxInteraction(cropBox, container) {
@@ -2969,7 +2991,9 @@
         
         // 🚀 IMMEDIATE API CALL: Call API right away when user drags crop box
         console.log('[Visual Search] 🎯 User finished dragging - calling immediate API');
-        performRealTimeCropAnalysis(container);
+        // COMMENTED OUT: Crop API call disabled for now
+        // performRealTimeCropAnalysis(container);
+        console.log('[Visual Search] 🔇 Drag crop API call disabled');
       }
       if (isResizing) {
         // Reset visual feedback for all handles
@@ -2990,7 +3014,9 @@
         
         // 🚀 IMMEDIATE API CALL: Call API right away when user resizes crop box
         console.log('[Visual Search] 🎯 User finished resizing - calling immediate API');
-        performRealTimeCropAnalysis(container);
+        // COMMENTED OUT: Crop API call disabled for now
+        // performRealTimeCropAnalysis(container);
+        console.log('[Visual Search] 🔇 Resize crop API call disabled');
       }
       
       isDragging = false;
@@ -3099,10 +3125,16 @@
         if (Array.isArray(result)) {
           detectedItems = result.map((item, index) => ({
             id: item.productId || item.id || index,
-            image: item.image || item.imageUrl,
+            image: item.image || item.imageUrl || (item.images && item.images[0] && item.images[0].url),
             name: item.name || item.title || `Item ${index + 1}`,
             confidence: item.confidence || 0.9,
             price: item.price,
+            currency: item.currency || 'USD',
+            handle: item.handle,
+            available: item.available,
+            vendor: item.vendor,
+            description: item.description,
+            variants: item.variants,
             url: item.url
           }));
         } else if (result.detectedItems) {
@@ -3110,10 +3142,16 @@
         } else if (result.products) {
           detectedItems = result.products.map((item, index) => ({
             id: item.productId || item.id || index,
-            image: item.image || item.imageUrl,
+            image: item.image || item.imageUrl || (item.images && item.images[0] && item.images[0].url),
             name: item.name || item.title || `Item ${index + 1}`,
             confidence: item.confidence || 0.9,
             price: item.price,
+            currency: item.currency || 'USD',
+            handle: item.handle,
+            available: item.available,
+            vendor: item.vendor,
+            description: item.description,
+            variants: item.variants,
             url: item.url
           }));
         }
@@ -3337,6 +3375,11 @@
       position: relative;
     `;
     
+    const productImage = product.image || (product.images && product.images[0] && product.images[0].url) || '';
+    const productPrice = product.price ? `${product.currency || 'USD'} ${product.price}` : '';
+    const productTitle = product.name || product.title || 'Untitled Product';
+    const isAvailable = product.available !== false;
+    
     card.innerHTML = `
       <div style="
         aspect-ratio: 1;
@@ -3344,12 +3387,14 @@
         position: relative;
         overflow: hidden;
       ">
-        <img src="${product.image}" alt="Product ${product.id}" style="
+        <img src="${productImage}" alt="${productTitle}" style="
           width: 100%;
           height: 100%;
           object-fit: cover;
           transition: transform 0.2s ease;
-        " onload="this.parentElement.style.background='transparent'">
+        " onload="this.parentElement.style.background='transparent'"
+           onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xMiA4VjE2TTggMTJIMTYiIHN0cm9rZT0iIzk5OTk5OSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+Cg=='">
+        
         
         <!-- Camera overlay icon for search by image -->
         <div class="camera-overlay" style="
@@ -3385,6 +3430,63 @@
             <circle cx="17" cy="9" r="0.8" fill="currentColor"/>
           </svg>
         </div>
+      </div>
+      
+      <!-- Product Information -->
+      <div class="visual-search-product-info" style="
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      ">
+        <div class="visual-search-product-title" style="
+          font-size: 14px;
+          font-weight: 500;
+          line-height: 1.3;
+          color: #111111;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        ">${productTitle}</div>
+        
+        ${product.vendor ? `
+          <div style="
+            font-size: 12px;
+            color: #666666;
+            font-weight: 400;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          ">${product.vendor}</div>
+        ` : ''}
+        
+        <div class="visual-search-product-price" style="
+          font-size: 14px;
+          font-weight: 600;
+          color: ${isAvailable ? '#1a73e8' : '#666666'};
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          ${!isAvailable ? 'text-decoration: line-through;' : ''}
+        ">${productPrice}</div>
+        
+        <!-- Product Action Button -->
+        <button class="product-action-btn" style="
+          width: 100%;
+          padding: 8px 12px;
+          margin-top: 8px;
+          background: ${isAvailable ? '#000000' : '#000000'};
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: ${isAvailable ? 'pointer' : 'default'};
+          opacity: ${isAvailable ? '1' : '0.5'};
+          transition: all 0.2s ease;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          ${!isAvailable ? 'pointer-events: none;' : ''}
+        " ${isAvailable ? '' : 'disabled'}>
+          ${isAvailable ? 'View Product' : 'Out of Stock'}
+        </button>
       </div>
     `;
     
@@ -3515,6 +3617,103 @@
           console.log('[Visual Search] ❌ Could not find search input or drawer content for search by image');
           showError('Could not start new search. Please try again.');
         }
+      }
+    });
+    
+    // Add click handler to navigate to product page
+    card.addEventListener('click', (e) => {
+      // Don't trigger if camera overlay was clicked
+      if (e.target.closest('.camera-overlay')) {
+        return;
+      }
+      
+      // Don't trigger if button was clicked - button will handle its own navigation
+      if (e.target.closest('.product-action-btn')) {
+        return;
+      }
+      
+      // Navigate to product page with variant support
+      let productUrl;
+      
+      if (product.selectedVariant) {
+        // This is a variant product - redirect with variant parameter
+        const variantId = product.selectedVariant.id.split('/').pop(); // Extract ID from GID
+        const baseUrl = product.handle ? 
+          `/products/${product.handle}` : 
+          `https://${CONFIG.SHOP_DOMAIN}/products/${product.id}`;
+        productUrl = `${baseUrl}?variant=${variantId}`;
+        console.log('[Visual Search] 🔗 Variant card clicked, navigating to variant:', productUrl);
+      } else {
+        // Regular product - redirect to product page
+        productUrl = product.handle ? 
+          `/products/${product.handle}` : 
+          `https://${CONFIG.SHOP_DOMAIN}/products/${product.id}`;
+        console.log('[Visual Search] 🔗 Navigating to product:', productUrl);
+      }
+      
+      // Track product click (if analytics enabled)
+      if (CONFIG.ANALYTICS_ENABLED) {
+        // Analytics tracking could be added here
+      }
+      
+      // Open product page
+      window.open(productUrl, '_blank');
+    });
+
+    // Add specific click handler for the product action button
+    const productButton = card.querySelector('.product-action-btn');
+    if (productButton && isAvailable) {
+      productButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Navigate to product page with variant support
+        let productUrl;
+        
+        if (product.selectedVariant) {
+          // This is a variant product - redirect with variant parameter
+          const variantId = product.selectedVariant.id.split('/').pop(); // Extract ID from GID
+          const baseUrl = product.handle ? 
+            `/products/${product.handle}` : 
+            `https://${CONFIG.SHOP_DOMAIN}/products/${product.id}`;
+          productUrl = `${baseUrl}?variant=${variantId}`;
+          console.log('[Visual Search] 🛍️ Variant product button clicked, redirecting to variant:', productUrl);
+        } else {
+          // Regular product - redirect to product page
+          productUrl = product.handle ? 
+            `/products/${product.handle}` : 
+            `https://${CONFIG.SHOP_DOMAIN}/products/${product.id}`;
+          console.log('[Visual Search] 🛍️ Product button clicked, navigating to:', productUrl);
+        }
+        
+        // Track button click (if analytics enabled)
+        if (CONFIG.ANALYTICS_ENABLED) {
+          // Analytics tracking could be added here
+        }
+        
+        // Open product page
+        window.open(productUrl, '_blank');
+      });
+
+      // Add hover effect to available buttons
+      productButton.addEventListener('mouseenter', () => {
+        productButton.style.background = '#333333';
+      });
+
+      productButton.addEventListener('mouseleave', () => {
+        productButton.style.background = '#000000';
+      });
+    }
+    
+    // Add keyboard accessibility
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `View product: ${productTitle}${productPrice ? ` - ${productPrice}` : ''}`);
+    
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
       }
     });
     

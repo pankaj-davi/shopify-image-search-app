@@ -1,4 +1,5 @@
 import { extractIdFromGid } from "./visual-search.server";
+import { getShopSession, createAdminClient } from "./shop.server";
 
 export interface ProductDetails {
   id: string;
@@ -207,6 +208,31 @@ export async function fetchProductDetails(
         console.error("Error fetching product details:", error);
         throw error;
     }
+}
+
+export async function fetchProductDetailsWithAuth(
+    shopDomain: string,
+    productIds: string[]
+): Promise<ProductDetails[]> {
+    console.log("Fetching product details with auth for shop:", shopDomain);
+    
+    // Get stored session for this shop
+    const session = await getShopSession(shopDomain);
+    
+    if (!session) {
+        throw new Error(`No session found for shop ${shopDomain}. Please install the app first.`);
+    }
+    
+    // Check if session is expired
+    if (session.expires && new Date() > session.expires) {
+        throw new Error(`Session expired for shop ${shopDomain}. Please reinstall the app.`);
+    }
+    
+    // Create admin client with stored access token
+    const admin = createAdminClient(shopDomain, session.accessToken);
+    
+    // Use existing fetchProductDetails logic
+    return fetchProductDetails(admin, productIds);
 }
 
 function transformProductNode(node: any): ProductDetails {
