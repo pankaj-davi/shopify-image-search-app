@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { 
   callVisualSearchAPI, 
-  type VisualSearchResponse,
+  type VisualSearchAPIResponse,
 } from "../utils/visual-search.server";
 import { fetchProductDetailsWithAuth} from "../utils/product-details.server";
 
@@ -59,7 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Call external visual search API
-    let searchData: VisualSearchResponse;
+    let searchData: VisualSearchAPIResponse;
     try {
       searchData = await callVisualSearchAPI(shopDomain!, imageFile);
     } catch (error) {
@@ -73,20 +73,37 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    if (!searchData.results || searchData.results.length === 0) {
+    // Check if the API returned an error
+    if ('error' in searchData) {
       return json<any>({
-        result: true,
-        products: []
+        result: false,
+        products: [],
+        error: searchData.error
+      }, { 
+        status: 500,
+        headers: getCorsHeaders()
+      });
+    }
+
+    if (!searchData.results || !searchData.results.similar_items || searchData.results.similar_items.length === 0) {
+      return json<any>({
+        results: true,
+        products: [],
+        detections: searchData.results?.detections || [],
+        largest_detection: searchData.results?.largest_detection || null
       }, {
         headers: getCorsHeaders()
       });
     }
 
     try {
-      const productDetails = await fetchProductDetailsWithAuth(shopDomain!, searchData.results.map(({shopifyProductId}) =>shopifyProductId ));  
+      console.log(searchData.results.similar_items , "searchData.resultssearchData.resultssearchData.results")
+      const productDetails = await fetchProductDetailsWithAuth(shopDomain!, searchData.results.similar_items.map(({shopifyProductId}) =>shopifyProductId ));  
       return json<any>({
         result: true,
-        products: productDetails
+        products: productDetails,
+        detections: searchData.results.detections || [],
+        largest_detection: searchData.results.largest_detection || null
       }, {
         headers: getCorsHeaders()
       });
