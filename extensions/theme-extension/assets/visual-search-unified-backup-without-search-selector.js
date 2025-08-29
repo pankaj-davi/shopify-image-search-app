@@ -15,13 +15,13 @@
   console.log('[Visual Search] Browser environment detected, initializing...');
   
   // ====================================================================
-  // CONFIGURATION
+  // CONFIGURATION 
   // ====================================================================
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://retrieve-infected-about-gave.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://retrieve-infected-about-gave.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://perfect-increasingly-budget-katie.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://perfect-increasingly-budget-katie.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -98,6 +98,39 @@
     primaryColor: CONFIG.THEME.PRIMARY_COLOR,
     iconStyle: CONFIG.THEME.ICON_STYLE
   });
+  
+  // ====================================================================
+  // IMAGE STATE MANAGEMENT
+  // ====================================================================
+  
+  // Centralized image dimensions storage for uploaded-image element
+  const imageState = {
+    naturalWidth: 0,
+    naturalHeight: 0,
+    displayedWidth: 0,
+    displayedHeight: 0,
+    element: null, // Reference to the uploaded-image element
+    scaleX: 1,
+    scaleY: 1
+  };
+  
+  // Function to update image state when image loads
+  function updateImageState(imageElement) {
+    if (!imageElement) return;
+    
+    imageState.element = imageElement;
+    imageState.naturalWidth = imageElement.naturalWidth;
+    imageState.naturalHeight = imageElement.naturalHeight;
+    
+    const rect = imageElement.getBoundingClientRect();
+    imageState.displayedWidth = rect.width;
+    imageState.displayedHeight = rect.height;
+    
+    imageState.scaleX = imageState.displayedWidth / imageState.naturalWidth;
+    imageState.scaleY = imageState.displayedHeight / imageState.naturalHeight;
+    
+    console.log('[Visual Search] 📐 Image state updated:', imageState);
+  }
   
   // ====================================================================
   // STYLES
@@ -2168,10 +2201,9 @@
         }
         img.style.opacity = '1';
         
-        // Add crop box after image loads with smooth transition
-        setTimeout(() => {
-          addCropBox(imageContainer, img);
-        }, 100);
+        // Update centralized image state
+        updateImageState(img);
+        
       };
       
       img.onerror = () => {
@@ -2219,10 +2251,8 @@
           }
           img.style.opacity = '1';
           
-          // Add crop box after image loads with smooth transition
-          setTimeout(() => {
-            addCropBox(imageContainer, img);
-          }, 300);
+          updateImageState(img);          
+          
         };
         
         imageContainer.appendChild(img);
@@ -2510,6 +2540,18 @@
     
     const result = await response.json();
     console.log('[Visual Search] ✅ Immediate analysis API response:', result);
+    
+    // Extract detection data from API response using centralized image state
+    const detections = result.detections || [];
+    const largestDetection = result.largest_detection || null;
+    
+    console.log('[Visual Search] 🎯 Detections found:', detections.length);
+    console.log('[Visual Search] 📍 Largest detection:', largestDetection);
+    
+    // Show largest detection bounding box if available
+    if (largestDetection && largestDetection.bbox && imageState.element) {
+      showLargestDetection(drawer, largestDetection);
+    }
     
     // Process results immediately and show to user
     if (result && (result.products || result.detectedItems || result.length > 0)) {
@@ -4322,6 +4364,179 @@
         }, 500);
       }
     });
+  }
+
+  // ====================================================================
+  // BOUNDING BOX DETECTION VISUALIZATION
+  // ====================================================================
+  
+  function showLargestDetection(drawer, largestDetection) {
+    console.log('[Visual Search] 📍 Showing largest detection:', largestDetection);
+    
+    const imageContainer = drawer.querySelector('#image-selection-container');
+    
+    if (!imageContainer || !imageState.element) {
+      console.error('[Visual Search] ❌ Image container or image state not found');
+      return;
+    }
+    
+    // Remove any existing detection boxes
+    const existingBox = imageContainer.querySelector('#detection-box');
+    if (existingBox) {
+      existingBox.remove();
+    }
+    
+    // Use bbox_normalized if available, fallback to bbox
+    const bboxNormalized = largestDetection.bbox_normalized || largestDetection.bbox;
+    const label = largestDetection.label || 'Detection';
+    
+    if (!bboxNormalized) {
+      console.error('[Visual Search] No bbox_normalized or bbox data found');
+      return;
+    }
+    
+    // Use centralized image state for dimensions and scaling
+    const imageRect = imageState.element.getBoundingClientRect();
+    const containerRect = imageContainer.getBoundingClientRect();
+    
+    // Calculate relative position of image within container
+    const imgLeft = imageRect.left - containerRect.left;
+    const imgTop = imageRect.top - containerRect.top;
+    
+    // Apply normalization formula: [x1, y1, x2, y2] normalized -> absolute pixels
+    // Formula: new_box = [x1*w, y1*h, x2*w, y2*h]
+    const w = imageState.naturalWidth;  // Original image width
+    const h = imageState.naturalHeight; // Original image height
+    
+    const absoluteBbox = [
+      Math.floor(bboxNormalized[0] * w), // x1 * width
+      Math.floor(bboxNormalized[1] * h), // y1 * height  
+      Math.floor(bboxNormalized[2] * w), // x2 * width
+      Math.floor(bboxNormalized[3] * h)  // y2 * height
+    ];
+    
+    // Convert [x1, y1, x2, y2] to [x, y, width, height] format
+    const bboxAbsolute = {
+      x: absoluteBbox[0],                           // x1
+      y: absoluteBbox[1],                           // y1  
+      width: absoluteBbox[2] - absoluteBbox[0],     // x2 - x1
+      height: absoluteBbox[3] - absoluteBbox[1]     // y2 - y1
+    };
+    
+    // Scale to displayed image dimensions
+    const scaledBbox = {
+      x: bboxAbsolute.x * imageState.scaleX,
+      y: bboxAbsolute.y * imageState.scaleY,
+      width: bboxAbsolute.width * imageState.scaleX,
+      height: bboxAbsolute.height * imageState.scaleY
+    };
+    
+    // Position bounding box relative to container, maintaining aspect ratio
+    let boxLeft = imgLeft + scaledBbox.x;
+    let boxTop = imgTop + scaledBbox.y;
+    const boxWidth = scaledBbox.width;
+    const boxHeight = scaledBbox.height;
+    
+    // Define image boundaries
+    const imageRight = imgLeft + imageState.displayedWidth;
+    const imageBottom = imgTop + imageState.displayedHeight;
+    
+    // Check if bounding box extends outside image bounds
+    const exceedsLeft = boxLeft < imgLeft;
+    const exceedsTop = boxTop < imgTop;
+    const exceedsRight = boxLeft + boxWidth > imageRight;
+    const exceedsBottom = boxTop + boxHeight > imageBottom;
+    
+    // Only constrain position if box goes outside, but maintain full size and aspect ratio
+    if (exceedsLeft) {
+      boxLeft = Math.max(imgLeft, imgLeft - (scaledBbox.width * 0.1)); // Allow slight overflow for visibility
+    }
+    if (exceedsTop) {
+      boxTop = Math.max(imgTop, imgTop - (scaledBbox.height * 0.1)); // Allow slight overflow for visibility
+    }
+    if (exceedsRight) {
+      boxLeft = Math.min(boxLeft, imageRight - boxWidth);
+    }
+    if (exceedsBottom) {
+      boxTop = Math.min(boxTop, imageBottom - boxHeight);
+    }
+    
+    // Final constraint to ensure box doesn't go completely outside
+    boxLeft = Math.max(imgLeft - (boxWidth * 0.5), Math.min(boxLeft, imageRight - (boxWidth * 0.5)));
+    boxTop = Math.max(imgTop - (boxHeight * 0.5), Math.min(boxTop, imageBottom - (boxHeight * 0.5)));
+    
+    console.log('[Visual Search] 📊 Normalized bbox processing:', {
+      bboxNormalized: bboxNormalized,
+      absoluteBbox: absoluteBbox,
+      bboxAbsolute: bboxAbsolute,
+      scaledBbox: scaledBbox,
+      constrainedBox: { left: boxLeft, top: boxTop, width: boxWidth, height: boxHeight },
+      imageState: imageState,
+      imageBounds: { left: imgLeft, top: imgTop, right: imageRight, bottom: imageBottom }
+    });
+    
+    // Create detection box element
+    const detectionBox = document.createElement('div');
+    detectionBox.id = 'detection-box';
+    detectionBox.style.cssText = `
+      position: absolute;
+      left: ${boxLeft}px;
+      top: ${boxTop}px;
+      width: ${boxWidth}px;
+      height: ${boxHeight}px;
+      border: 3px solid #00D4AA;
+      background: rgba(0, 212, 170, 0.1);
+      pointer-events: none;
+      z-index: 10;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+      animation: detection-appear 0.5s ease-out;
+    `;
+    
+    // Create label element
+    const labelElement = document.createElement('div');
+    labelElement.style.cssText = `
+      position: absolute;
+      top: -30px;
+      left: 0;
+      background: #00D4AA;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    `;
+    labelElement.textContent = label;
+    
+    // Add label to detection box
+    detectionBox.appendChild(labelElement);
+    
+    // Add detection box to container
+    imageContainer.appendChild(detectionBox);
+    
+    // Add CSS animation if not already added
+    if (!document.querySelector('#detection-animation-styles')) {
+      const style = document.createElement('style');
+      style.id = 'detection-animation-styles';
+      style.textContent = `
+        @keyframes detection-appear {
+          0% { 
+            opacity: 0; 
+            transform: scale(0.8); 
+          }
+          100% { 
+            opacity: 1; 
+            transform: scale(1); 
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    console.log('[Visual Search] ✅ Detection box created using centralized image state');
   }
 
   // ====================================================================
