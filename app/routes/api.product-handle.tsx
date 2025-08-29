@@ -41,9 +41,9 @@ export async function action({ request }: ActionFunctionArgs) {
     // Parse form data to get the uploaded image
     const formData = await request.formData();
     console.log("FormData entries:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes, ${value.type})` : value);
-    }
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes, ${value.type})` : value);
+    // }
     
     const imageFile = formData.get("file") as File;
 
