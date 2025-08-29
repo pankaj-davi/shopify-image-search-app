@@ -12,11 +12,13 @@ interface Detection {
   label: string;
   score: number;
   bbox: [number, number, number, number];
+  bbox_normalized: [number, number, number, number];
   area: number;
 }
 
 interface LargestDetection {
   bbox: [number, number, number, number];
+  bbox_normalized : [number, number, number, number]
   label: string;
 }
 
