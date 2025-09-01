@@ -10,6 +10,7 @@
     "config:use": "shopify app config use",
     "env": "shopify app env",
     "start": "remix-serve ./build/server/index.js",
+    "build:netlify": "remix build && cp ./build/server/index.js ./netlify/functions/server.js",
     "docker-start": "npm run setup && npm run start",
     "setup": "prisma generate && prisma migrate deploy",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
@@ -28,6 +29,8 @@
     "node": "^18.20 || ^20.10 || >=21.0.0"
   },
   "dependencies": {
+    "@netlify/functions": "^4.2.5",
+    "@netlify/remix-adapter": "^2.6.1",
     "@prisma/client": "^6.13.0",
     "@remix-run/dev": "^2.16.1",
     "@remix-run/fs-routes": "^2.16.1",
