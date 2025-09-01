@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://perfect-increasingly-budget-katie.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://perfect-increasingly-budget-katie.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://cash-customise-longitude-scope.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://cash-customise-longitude-scope.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -1278,10 +1278,10 @@
               cursor: pointer;
               transition: all 0.2s ease;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            " onmouseover="
+            "onmouseover="
               this.style.background='#c8001c';
               this.style.transform='translateY(-1px)';
-            " onmouseout="
+            "onmouseout="
               this.style.background='#e60023';
               this.style.transform='translateY(0)';
             ">Choose file</button>
@@ -1353,8 +1353,12 @@
             display: flex;
             gap: 8px;
             justify-content: center;
+            align-items: center;
             margin-top: 12px;
           ">
+            <svg id="crop-button" role="button" style="cursor: pointer;" width="24" height="24" viewBox="0 0 24 24" fill="#e60023">
+                <path d="M17,15H19V7C19,5.89 18.1,5 17,5H9V7H17V15M7,17V1H5V5H1V7H5V17A2,2 0 0,0 7,19H17V23H19V19H23V17H7Z"/>
+            </svg>
             <button id="upload-another" style="
               background: white;
               color: #e60023;
@@ -1700,6 +1704,29 @@
   
   function showSuccess(message) {
     showNotification(message, 'success');
+  }
+
+  function applyCrop() {
+    const drawer = document.querySelector('.visual-search-drawer');
+    if (!drawer) return;
+    
+    // Check if crop box already exists
+    const existingCropBox = drawer.querySelector('#crop-box');
+    
+    if (!existingCropBox) {
+      // Show crop box
+      const imageContainer = drawer.querySelector('#image-selection-container');
+      const img = drawer.querySelector('#uploaded-image');
+      
+      if (imageContainer && img) {
+        // Hide any existing detection boxes
+        const existingDetectionBox = imageContainer.querySelector('#detection-box');
+        if (existingDetectionBox) {
+          existingDetectionBox.remove();
+        }
+        addCropBox(imageContainer, img);
+      } 
+    }
   }
   
   // ====================================================================
@@ -2108,6 +2135,11 @@
       showUploadSection(drawer);
     });
 
+    // Crop button handler
+    drawer.querySelector('#crop-button')?.addEventListener('click', () => {
+      applyCrop();
+    });
+
     // Filter handlers - Simplified for no filters
     // setupFilterHandlers(drawer, searchInput);
     
@@ -2251,7 +2283,7 @@
           }
           img.style.opacity = '1';
           
-          updateImageState(img);          
+          updateImageState(img);
           
         };
         
@@ -2316,18 +2348,13 @@
     console.log('  - imageContainer:', !!(imageSelectionContainer && imageSelectionContainer._imageFile), !!(imageSelectionContainer && imageSelectionContainer._searchInput));
     console.log('  - drawerOverlay:', !!(drawerOverlay && drawerOverlay._imageFile), !!(drawerOverlay && drawerOverlay._searchInput));
     console.log('  - global:', !!window.visualSearchCurrentInput);
-  }
-
-  function triggerAutoSearch(container) {
-    // Get the drawer element
-    const drawer = container.closest('.visual-search-drawer').querySelector('div');
-    if (!drawer || !drawer._imageFile || !drawer._searchInput) return;
     
-    const cropData = getCropData(drawer);
-    if (cropData) {
-      // COMMENTED OUT: Crop API call disabled for now
-      // performCroppedImageSearch(drawer, drawer._searchInput, cropData);
-      console.log('[Visual Search] 🔇 Crop API call disabled - skipping search');
+    // Set up crop button event listener (now that the button exists in DOM)
+    const cropButton = drawer.querySelector('#crop-button');
+    if (cropButton) {
+      cropButton.addEventListener('click', () => {
+        applyCrop();
+      });
     }
   }
 
@@ -2335,10 +2362,6 @@
   async function performRealTimeCropAnalysis(container) {
     try {
       console.log('[Visual Search] 🎯 Real-time crop analysis triggered!');
-      
-      // COMMENTED OUT: Crop API call disabled for now
-      console.log('[Visual Search] 🔇 Real-time crop API call disabled - skipping analysis');
-      return;
       
       // Find the drawer and data more reliably
       let drawer = null;
@@ -2548,8 +2571,9 @@
     console.log('[Visual Search] 🎯 Detections found:', detections.length);
     console.log('[Visual Search] 📍 Largest detection:', largestDetection);
     
-    // Show largest detection bounding box if available
-    if (largestDetection && largestDetection.bbox && imageState.element) {
+    // Show largest detection bounding box if available (but not when crop box is active)
+    const cropBox = drawer.querySelector('#crop-box');
+    if (largestDetection && largestDetection.bbox && imageState.element && !cropBox) {
       showLargestDetection(drawer, largestDetection);
     }
     
@@ -2890,6 +2914,7 @@
     }
 
     function startDrag(e) {
+      console.log('[Visual Search] 🎯 Start drag triggered');
       // Don't start drag if clicking on resize handles
       if (e.target.classList.contains('resize-handle') || 
           e.target.closest('.resize-handle')) {
@@ -3024,6 +3049,7 @@
     }
 
     function endAction() {
+      console.log('[Visual Search] 🎯 End action triggered, isDragging:', isDragging, 'isResizing:', isResizing);
       if (isDragging) {
         // Clean up drag styling
         cropBox.style.cssText = cropBox.style.cssText.replace(STYLES.cropBoxActive, '');
@@ -3033,9 +3059,8 @@
         
         // 🚀 IMMEDIATE API CALL: Call API right away when user drags crop box
         console.log('[Visual Search] 🎯 User finished dragging - calling immediate API');
-        // COMMENTED OUT: Crop API call disabled for now
-        // performRealTimeCropAnalysis(container);
-        console.log('[Visual Search] 🔇 Drag crop API call disabled');
+        console.log('[Visual Search] 🎯 About to call performRealTimeCropAnalysis with container:', container);
+        performRealTimeCropAnalysis(container);
       }
       if (isResizing) {
         // Reset visual feedback for all handles
@@ -3056,9 +3081,7 @@
         
         // 🚀 IMMEDIATE API CALL: Call API right away when user resizes crop box
         console.log('[Visual Search] 🎯 User finished resizing - calling immediate API');
-        // COMMENTED OUT: Crop API call disabled for now
-        // performRealTimeCropAnalysis(container);
-        console.log('[Visual Search] 🔇 Resize crop API call disabled');
+        performRealTimeCropAnalysis(container);
       }
       
       isDragging = false;
@@ -4371,6 +4394,13 @@
   // ====================================================================
   
   function showLargestDetection(drawer, largestDetection) {
+    // Don't show detection boxes when crop box is active
+    const cropBox = drawer.querySelector('#crop-box');
+    if (cropBox) {
+      console.log('[Visual Search] 🔇 Skipping detection box - crop box is active');
+      return;
+    }
+    
     console.log('[Visual Search] 📍 Showing largest detection:', largestDetection);
     
     const imageContainer = drawer.querySelector('#image-selection-container');
