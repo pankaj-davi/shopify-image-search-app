@@ -193,9 +193,9 @@ export async function fetchProductDetails(
         const shopifyResponse = await admin.graphql(PRODUCT_DETAILS_QUERY, {
             variables: { ids: productIds }
         });
-        console.log("shopifyResponseShopify product details response:", shopifyResponse);
+        // console.log("shopifyResponseShopify product details response:", shopifyResponse);
         const shopifyData = await shopifyResponse.json();
-        console.log("Shopify product details response:", shopifyData);
+        // console.log("Shopify product details response:", shopifyData);
         if (!shopifyData.data || !shopifyData.data.nodes) {
             throw new Error("Failed to fetch product details from Shopify");
         }
@@ -252,7 +252,6 @@ function transformProductNode(node: any): ProductDetails {
     isAvailable = product.variants?.nodes?.some((variant: any) => variant.availableForSale) || false;
   }
   
-  console.log(node, 'DaivNode');
   
   return {
     id: extractIdFromGid(product.id),

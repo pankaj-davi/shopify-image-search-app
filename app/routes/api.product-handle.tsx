@@ -40,10 +40,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Parse form data to get the uploaded image
     const formData = await request.formData();
-    console.log("FormData entries:");
-    // for (const [key, value] of formData.entries()) {
-    //   console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes, ${value.type})` : value);
-    // }
+
     
     const imageFile = formData.get("file") as File;
 
@@ -60,9 +57,16 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Call external visual search API
     let searchData: VisualSearchAPIResponse;
+    const apiStartTime = Date.now();
     try {
       searchData = await callVisualSearchAPI(shopDomain!, imageFile);
+      const apiEndTime = Date.now();
+      const apiResponseTime = apiEndTime - apiStartTime;
+      console.log(`Visual Search API response time: ${apiResponseTime}ms`);
     } catch (error) {
+      const apiEndTime = Date.now();
+      const apiResponseTime = apiEndTime - apiStartTime;
+      console.log(`Visual Search API response time (failed): ${apiResponseTime}ms`);
       return json<any>({
         result: false,
         products: [],
@@ -85,25 +89,31 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    if (!searchData.results || !searchData.results.similar_items || searchData.results.similar_items.length === 0) {
+    if (!searchData.results || !searchData.results.crop_search_results || searchData.results.crop_search_results.length === 0) {
       return json<any>({
         results: true,
         products: [],
-        detections: searchData.results?.detections || [],
-        largest_detection: searchData.results?.largest_detection || null
+        crop_search_results: []
       }, {
         headers: getCorsHeaders()
       });
     }
 
     try {
-      console.log(searchData.results.similar_items , "searchData.resultssearchData.resultssearchData.results")
-      const productDetails = await fetchProductDetailsWithAuth(shopDomain!, searchData.results.similar_items.map(({shopifyProductId}) =>shopifyProductId ));  
+      // console.log(JSON.stringify(searchData.results.crop_search_results) , "searchData.results")
+      // Extract all search results from all crops
+      const allSearchResults = searchData.results.crop_search_results.flatMap(crop => crop.search_results);
+      // console.log(allSearchResults, "allSearchResults from crop_search_results")
+      
+      const fetchStartTime = Date.now();
+      const productDetails = await fetchProductDetailsWithAuth(shopDomain!, allSearchResults.map(({shopifyProductId}) => shopifyProductId));
+      const fetchEndTime = Date.now();
+      const fetchResponseTime = fetchEndTime - fetchStartTime;
+      console.log(`Product fetch response time: ${fetchResponseTime}ms`);  
       return json<any>({
         result: true,
         products: productDetails,
-        detections: searchData.results.detections || [],
-        largest_detection: searchData.results.largest_detection || null
+        crop_search_results: searchData.results.crop_search_results
       }, {
         headers: getCorsHeaders()
       });

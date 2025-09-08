@@ -3,12 +3,13 @@ export interface VisualSearchResult {
   product_id: string;
   variant: boolean;
   main_image: boolean;
-  sku: string;
+  sku: string | null;
   shopifyProductId: string;
-  ["Object Name"]: string;
+  similarity_score: number;
+  detected_label: string;
 }
 
-interface Detection {
+interface CropMetadata {
   label: string;
   score: number;
   bbox: [number, number, number, number];
@@ -16,19 +17,19 @@ interface Detection {
   area: number;
 }
 
-interface LargestDetection {
-  bbox: [number, number, number, number];
-  bbox_normalized : [number, number, number, number]
-  label: string;
+interface CropSearchResult {
+  crop_index: number;
+  crop_metadata: CropMetadata;
+  search_results: VisualSearchResult[];
 }
 
-interface IResult {
-  similar_items: VisualSearchResult[];
-  detections: Detection[];
-  largest_detection: LargestDetection | null;
+interface Results {
+  total_crops: number;
+  crop_search_results: CropSearchResult[];
 }
+
 export interface VisualSearchResponse {
-   results : IResult
+  results: Results;
 }
 
 export interface VisualSearchErrorResponse {

@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://cash-customise-longitude-scope.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://cash-customise-longitude-scope.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://bleeding-franklin-defend-matthew.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://bleeding-franklin-defend-matthew.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -2566,15 +2566,15 @@
     
     // Extract detection data from API response using centralized image state
     const detections = result.detections || [];
-    const largestDetection = result.largest_detection || null;
+    const cropSearchResults = result.crop_search_results || [];
     
     console.log('[Visual Search] 🎯 Detections found:', detections.length);
-    console.log('[Visual Search] 📍 Largest detection:', largestDetection);
+    console.log('[Visual Search] 📍 Crop search results found:', cropSearchResults.length);
     
-    // Show largest detection bounding box if available (but not when crop box is active)
+    // Show multiple detection bounding boxes if available (but not when crop box is active)
     const cropBox = drawer.querySelector('#crop-box');
-    if (largestDetection && largestDetection.bbox && imageState.element && !cropBox) {
-      showLargestDetection(drawer, largestDetection);
+    if (cropSearchResults.length > 0 && imageState.element && !cropBox) {
+      showMultipleDetections(drawer, cropSearchResults);
     }
     
     // Process results immediately and show to user
@@ -4393,15 +4393,15 @@
   // BOUNDING BOX DETECTION VISUALIZATION
   // ====================================================================
   
-  function showLargestDetection(drawer, largestDetection) {
+  function showMultipleDetections(drawer, cropSearchResults) {
     // Don't show detection boxes when crop box is active
     const cropBox = drawer.querySelector('#crop-box');
     if (cropBox) {
-      console.log('[Visual Search] 🔇 Skipping detection box - crop box is active');
+      console.log('[Visual Search] 🔇 Skipping detection boxes - crop box is active');
       return;
     }
     
-    console.log('[Visual Search] 📍 Showing largest detection:', largestDetection);
+    console.log('[Visual Search] 📍 Showing multiple detections:', cropSearchResults.length);
     
     const imageContainer = drawer.querySelector('#image-selection-container');
     
@@ -4411,20 +4411,63 @@
     }
     
     // Remove any existing detection boxes
-    const existingBox = imageContainer.querySelector('#detection-box');
-    if (existingBox) {
-      existingBox.remove();
+    const existingBoxes = imageContainer.querySelectorAll('.detection-box');
+    existingBoxes.forEach(box => box.remove());
+    
+    
+    // Add CSS animation if not already added (shared for all detection boxes)
+    if (!document.querySelector('#detection-animation-styles')) {
+      const style = document.createElement('style');
+      style.id = 'detection-animation-styles';
+      style.textContent = `
+        @keyframes detection-appear {
+          0% { 
+            opacity: 0; 
+            transform: scale(0.8); 
+          }
+          100% { 
+            opacity: 1; 
+            transform: scale(1); 
+          }
+        }
+        
+        @keyframes detection-pulse {
+          0%, 100% { 
+            transform: scale(1); 
+          }
+          50% { 
+            transform: scale(0.85); 
+          }
+        }
+      `;
+      document.head.appendChild(style);
     }
     
-    // Use bbox_normalized if available, fallback to bbox
-    const bboxNormalized = largestDetection.bbox_normalized || largestDetection.bbox;
-    const label = largestDetection.label || 'Detection';
+    // Sort crop search results by area (descending) and show all detections
+    const sortedCropResults = cropSearchResults
+      .filter(cropResult => {
+        const cropMetadata = cropResult.crop_metadata;
+        return cropMetadata && cropMetadata.bbox_normalized && cropMetadata.area;
+      })
+      .sort((a, b) => b.crop_metadata.area - a.crop_metadata.area);
     
-    if (!bboxNormalized) {
-      console.error('[Visual Search] No bbox_normalized or bbox data found');
-      return;
-    }
+    console.log('[Visual Search] 📊 Showing all', sortedCropResults.length, 'detections out of', cropSearchResults.length, 'total detections');
     
+    // Process all crop search results
+    sortedCropResults.forEach((cropResult, index) => {
+      const cropMetadata = cropResult.crop_metadata;
+      
+      const bboxNormalized = cropMetadata.bbox_normalized;
+      const label = cropMetadata.label;
+      const color = '#FF0000'; // Red color for all detections
+      
+      const isLargestDetection = index === 0;
+      showSingleDetection(imageContainer, bboxNormalized, label, color, index, isLargestDetection);
+    });
+  }
+
+  
+  function showSingleDetection(imageContainer, bboxNormalized, label, color, index, isLargestDetection = false) {
     // Use centralized image state for dimensions and scaling
     const imageRect = imageState.element.getBoundingClientRect();
     const containerRect = imageContainer.getBoundingClientRect();
@@ -4461,112 +4504,79 @@
       height: bboxAbsolute.height * imageState.scaleY
     };
     
-    // Position bounding box relative to container, maintaining aspect ratio
-    let boxLeft = imgLeft + scaledBbox.x;
-    let boxTop = imgTop + scaledBbox.y;
-    const boxWidth = scaledBbox.width;
-    const boxHeight = scaledBbox.height;
+    // Calculate center position for 10px circle
+    const centerX = imgLeft + scaledBbox.x + (scaledBbox.width / 2);
+    const centerY = imgTop + scaledBbox.y + (scaledBbox.height / 2);
+    const circleSize = 10;
+    const boxLeft = centerX - (circleSize / 2);
+    const boxTop = centerY - (circleSize / 2);
+    const boxWidth = circleSize;
+    const boxHeight = circleSize;
     
-    // Define image boundaries
-    const imageRight = imgLeft + imageState.displayedWidth;
-    const imageBottom = imgTop + imageState.displayedHeight;
+    // No constraints needed for small circles at center positions
     
-    // Check if bounding box extends outside image bounds
-    const exceedsLeft = boxLeft < imgLeft;
-    const exceedsTop = boxTop < imgTop;
-    const exceedsRight = boxLeft + boxWidth > imageRight;
-    const exceedsBottom = boxTop + boxHeight > imageBottom;
-    
-    // Only constrain position if box goes outside, but maintain full size and aspect ratio
-    if (exceedsLeft) {
-      boxLeft = Math.max(imgLeft, imgLeft - (scaledBbox.width * 0.1)); // Allow slight overflow for visibility
-    }
-    if (exceedsTop) {
-      boxTop = Math.max(imgTop, imgTop - (scaledBbox.height * 0.1)); // Allow slight overflow for visibility
-    }
-    if (exceedsRight) {
-      boxLeft = Math.min(boxLeft, imageRight - boxWidth);
-    }
-    if (exceedsBottom) {
-      boxTop = Math.min(boxTop, imageBottom - boxHeight);
-    }
-    
-    // Final constraint to ensure box doesn't go completely outside
-    boxLeft = Math.max(imgLeft - (boxWidth * 0.5), Math.min(boxLeft, imageRight - (boxWidth * 0.5)));
-    boxTop = Math.max(imgTop - (boxHeight * 0.5), Math.min(boxTop, imageBottom - (boxHeight * 0.5)));
-    
-    console.log('[Visual Search] 📊 Normalized bbox processing:', {
+    console.log(`[Visual Search] 📊 Detection ${index + 1} circle processing:`, {
       bboxNormalized: bboxNormalized,
-      absoluteBbox: absoluteBbox,
-      bboxAbsolute: bboxAbsolute,
-      scaledBbox: scaledBbox,
-      constrainedBox: { left: boxLeft, top: boxTop, width: boxWidth, height: boxHeight },
-      imageState: imageState,
-      imageBounds: { left: imgLeft, top: imgTop, right: imageRight, bottom: imageBottom }
+      centerPosition: { centerX, centerY },
+      circlePosition: { left: boxLeft, top: boxTop, size: circleSize },
+      color: color,
+      label: label
     });
     
-    // Create detection box element
+    // Create detection circle element
     const detectionBox = document.createElement('div');
-    detectionBox.id = 'detection-box';
+    detectionBox.className = 'detection-circle';
+    detectionBox.id = `detection-circle-${index}`;
     detectionBox.style.cssText = `
       position: absolute;
       left: ${boxLeft}px;
       top: ${boxTop}px;
       width: ${boxWidth}px;
       height: ${boxHeight}px;
-      border: 3px solid #00D4AA;
-      background: rgba(0, 212, 170, 0.1);
-      pointer-events: none;
-      z-index: 10;
-      border-radius: 4px;
+      border: 2px solid #FF0000;
+      background: #FF0000;
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: ${10 + index};
+      border-radius: 50%;
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
-      animation: detection-appear 0.5s ease-out;
+      animation: detection-appear 0.5s ease-out, detection-pulse 2s ease-in-out 0.5s infinite;
     `;
     
     // Create label element
     const labelElement = document.createElement('div');
+    const labelDisplay = isLargestDetection ? 'block' : 'none';
     labelElement.style.cssText = `
       position: absolute;
       top: -30px;
       left: 0;
-      background: #00D4AA;
+      background: #FF0000;
       color: white;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 12px;
       font-weight: 600;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       white-space: nowrap;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      display: ${labelDisplay};
     `;
     labelElement.textContent = label;
     
-    // Add label to detection box
+    // Add label to detection circle
     detectionBox.appendChild(labelElement);
     
-    // Add detection box to container
+    // Add click event listener to toggle label visibility
+    detectionBox.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (labelElement.style.display === 'none') {
+        labelElement.style.display = 'block';
+      } else {
+        labelElement.style.display = 'none';
+      }
+    });
+    
+    // Add detection circle to container
     imageContainer.appendChild(detectionBox);
-    
-    // Add CSS animation if not already added
-    if (!document.querySelector('#detection-animation-styles')) {
-      const style = document.createElement('style');
-      style.id = 'detection-animation-styles';
-      style.textContent = `
-        @keyframes detection-appear {
-          0% { 
-            opacity: 0; 
-            transform: scale(0.8); 
-          }
-          100% { 
-            opacity: 1; 
-            transform: scale(1); 
-          }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-    
-    console.log('[Visual Search] ✅ Detection box created using centralized image state');
   }
 
   // ====================================================================
@@ -4601,7 +4611,7 @@
     const totalFoundElements = allFoundElements.size;
     const hasAppBlocks = totalFoundElements > 0;
     
-    console.log('[Visual Search] � FINAL COUNT SUMMARY:', {
+    console.log('[Visual Search]   FINAL COUNT SUMMARY:', {
       individualSelectorCounts: detection,
       totalUniqueElements: totalFoundElements,
       hasAppBlocks: hasAppBlocks,
