@@ -1,4 +1,7 @@
 name = "visual-search-theme"
+
+uid = "8ef726fe-3504-d189-ce7b-23b0fe62c43f0c42d042"
+
 type = "theme"
 
 [[app_blocks]]
