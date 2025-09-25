@@ -1,35 +1,13 @@
 // Visual Search Utility Functions
-export interface VisualSearchResult {
-  product_id: string;
-  variant: boolean;
-  main_image: boolean;
-  sku: string | null;
-  shopifyProductId: string;
-  similarity_score: number;
-  detected_label: string;
-}
-
-interface CropMetadata {
-  label: string;
-  score: number;
-  bbox: [number, number, number, number];
-  bbox_normalized: [number, number, number, number];
-  area: number;
-}
-
-interface CropSearchResult {
-  crop_index: number;
-  crop_metadata: CropMetadata;
-  search_results: VisualSearchResult[];
-}
-
-interface Results {
-  total_crops: number;
-  crop_search_results: CropSearchResult[];
+export interface BoundingBox {
+  [key: string]: [number, number, number, number];
 }
 
 export interface VisualSearchResponse {
-  results: Results;
+  search_results: string[];
+  largest_bounding_box_id: number;
+  all_bounding_box: BoundingBox[];
+  labels: Array<{[key: string]: string}>;
 }
 
 export interface VisualSearchErrorResponse {
@@ -42,13 +20,19 @@ export async function callVisualSearchAPI(
   shopDomain: string, 
   imageFile: File
 ): Promise<VisualSearchAPIResponse> {
+  const apiStartTime = Date.now();
+  console.log(`[TIMING] Visual Search API call starting for domain: ${shopDomain}`);
+  console.log(`[TIMING] Image file size: ${imageFile.size} bytes`);
+  
+  const formDataStart = Date.now();
   const searchFormData = new FormData();
   searchFormData.append("file", imageFile);
+  console.log(`[TIMING] FormData creation took: ${Date.now() - formDataStart}ms`);
   
-  //  const url = `${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/search/${shopDomain}`;
-   const url = `http://34.121.106.164:8000/search/${shopDomain}`;
+   const url = `${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/search/${shopDomain}`;
   
   try {
+    const fetchStart = Date.now();
     const searchResponse = await fetch(url, {
       method: "POST",
       headers: {
@@ -56,16 +40,27 @@ export async function callVisualSearchAPI(
       },
       body: searchFormData,
     });
+    const fetchEnd = Date.now();
+    console.log(`[TIMING] Fetch request took: ${fetchEnd - fetchStart}ms`);
     
     if (!searchResponse.ok) { 
+      const errorStart = Date.now();
       const errorText = await searchResponse.text();
+      console.log(`[TIMING] Error text parsing took: ${Date.now() - errorStart}ms`);
       throw new Error(`Visual search API failed with status: ${searchResponse.status} - ${errorText}`);
     }
+    
+    const jsonStart = Date.now();
     const responseData = await searchResponse.json();
+    const jsonEnd = Date.now();
+    console.log(`[TIMING] JSON parsing took: ${jsonEnd - jsonStart}ms`);
+    console.log(`[TIMING] Total Visual Search API took: ${Date.now() - apiStartTime}ms`);
+    
     console.log("Visual search response:Pankaj", responseData);
     return responseData;
   } catch (error) {
     console.error("Visual search API error:", error);
+    console.log(`[TIMING] Visual Search API failed after: ${Date.now() - apiStartTime}ms`);
     throw error;
   }
 }

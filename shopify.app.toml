@@ -3,12 +3,11 @@
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
 handle = "newp"
-application_url = "https://retrieve-infected-about-gave.trycloudflare.com"
+application_url = "https://tiles-us-joining-terrain.trycloudflare.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-07"
@@ -26,7 +25,7 @@ api_version = "2025-07"
 scopes = "write_products,write_script_tags"
 
 [auth]
-redirect_urls = ["https://retrieve-infected-about-gave.trycloudflare.com/auth/callback", "https://retrieve-infected-about-gave.trycloudflare.com/auth/shopify/callback", "https://retrieve-infected-about-gave.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://tiles-us-joining-terrain.trycloudflare.com/auth/callback", "https://tiles-us-joining-terrain.trycloudflare.com/auth/shopify/callback", "https://tiles-us-joining-terrain.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false

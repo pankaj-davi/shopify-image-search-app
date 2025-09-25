@@ -33,13 +33,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const totalStartTime = Date.now();
+  console.log(`[TIMING] API call started at: ${totalStartTime}`);
+  
   try {
     // Get shop domain from header (sent by frontend)
     const shopDomain = request.headers.get("shopDomainURL");
-    
+    console.log(`[TIMING] Headers parsed: ${Date.now() - totalStartTime}ms`);
 
     // Parse form data to get the uploaded image
+    const formDataStartTime = Date.now();
     const formData = await request.formData();
+    const formDataEndTime = Date.now();
+    console.log(`[TIMING] FormData parsing took: ${formDataEndTime - formDataStartTime}ms`);
 
     
     const imageFile = formData.get("file") as File;
@@ -89,31 +95,36 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    if (!searchData.results || !searchData.results.crop_search_results || searchData.results.crop_search_results.length === 0) {
+    if (!searchData.search_results || searchData.search_results.length === 0) {
       return json<any>({
-        results: true,
+        result: true,
         products: [],
-        crop_search_results: []
+        search_results: [],
+        largest_bounding_box_id: searchData.largest_bounding_box_id || null,
+        all_bounding_box: searchData.all_bounding_box || [],
+        labels: searchData.labels || []
       }, {
         headers: getCorsHeaders()
       });
     }
 
     try {
-      // console.log(JSON.stringify(searchData.results.crop_search_results) , "searchData.results")
-      // Extract all search results from all crops
-      const allSearchResults = searchData.results.crop_search_results.flatMap(crop => crop.search_results);
-      // console.log(allSearchResults, "allSearchResults from crop_search_results")
+     
+      const allSearchResults = searchData.search_results;
+      // console.log(allSearchResults, "allSearchResults from search_results")
       
       const fetchStartTime = Date.now();
-      const productDetails = await fetchProductDetailsWithAuth(shopDomain!, allSearchResults.map(({shopifyProductId}) => shopifyProductId));
+      const productDetails = await fetchProductDetailsWithAuth(shopDomain!, allSearchResults);
       const fetchEndTime = Date.now();
       const fetchResponseTime = fetchEndTime - fetchStartTime;
       console.log(`Product fetch response time: ${fetchResponseTime}ms`);  
       return json<any>({
         result: true,
         products: productDetails,
-        crop_search_results: searchData.results.crop_search_results
+        search_results: searchData.search_results,
+        largest_bounding_box_id: searchData.largest_bounding_box_id,
+        all_bounding_box: searchData.all_bounding_box,
+        labels: searchData.labels
       }, {
         headers: getCorsHeaders()
       });

@@ -188,24 +188,37 @@ export async function fetchProductDetails(
     admin: any, 
     productIds: string[]
 ): Promise<ProductDetails[]> {
-    console.log("EEFetching product details for IDs:", productIds);
+    const fetchStart = Date.now();
+    console.log(`[TIMING] Fetching product details for ${productIds.length} IDs`);
     try {
+        const graphqlStart = Date.now();
         const shopifyResponse = await admin.graphql(PRODUCT_DETAILS_QUERY, {
             variables: { ids: productIds }
         });
-        // console.log("shopifyResponseShopify product details response:", shopifyResponse);
+        const graphqlEnd = Date.now();
+        console.log(`[TIMING] GraphQL query took: ${graphqlEnd - graphqlStart}ms`);
+        
+        const jsonStart = Date.now();
         const shopifyData = await shopifyResponse.json();
-        // console.log("Shopify product details response:", shopifyData);
+        const jsonEnd = Date.now();
+        console.log(`[TIMING] Shopify JSON parsing took: ${jsonEnd - jsonStart}ms`);
         if (!shopifyData.data || !shopifyData.data.nodes) {
             throw new Error("Failed to fetch product details from Shopify");
         }
 
         // Transform Shopify data to required format
-        return shopifyData.data.nodes
+        const transformStart = Date.now();
+        const result = shopifyData.data.nodes
             .filter((node: any) => node !== null)
             .map((node: any) => transformProductNode(node));
+        const transformEnd = Date.now();
+        console.log(`[TIMING] Data transformation took: ${transformEnd - transformStart}ms`);
+        console.log(`[TIMING] Total product fetch took: ${Date.now() - fetchStart}ms`);
+        
+        return result;
     } catch (error) {
         console.error("Error fetching product details:", error);
+        console.log(`[TIMING] Product fetch failed after: ${Date.now() - fetchStart}ms`);
         throw error;
     }
 }

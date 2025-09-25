@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://bleeding-franklin-defend-matthew.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://bleeding-franklin-defend-matthew.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://sherman-rough-moderators-franchise.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://sherman-rough-moderators-franchise.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -2565,16 +2565,18 @@
     console.log('[Visual Search] ✅ Immediate analysis API response:', result);
     
     // Extract detection data from API response using centralized image state
-    const detections = result.detections || [];
-    const cropSearchResults = result.crop_search_results || [];
+    const largestBoundingBoxId = result.largest_bounding_box_id || null;
+    const allBoundingBox = result.all_bounding_box || [];
+    const labels = result.labels || [];
     
-    console.log('[Visual Search] 🎯 Detections found:', detections.length);
-    console.log('[Visual Search] 📍 Crop search results found:', cropSearchResults.length);
+    console.log('[Visual Search] 📦 Largest bounding box ID:', largestBoundingBoxId);
+    console.log('[Visual Search] 🔲 All bounding boxes:', allBoundingBox.length);
+    console.log('[Visual Search] 🏷️ Detection labels:', labels);
     
     // Show multiple detection bounding boxes if available (but not when crop box is active)
     const cropBox = drawer.querySelector('#crop-box');
-    if (cropSearchResults.length > 0 && imageState.element && !cropBox) {
-      showMultipleDetections(drawer, cropSearchResults);
+    if (allBoundingBox.length > 0 && imageState.element && !cropBox) {
+      showMultipleDetections(drawer, allBoundingBox, largestBoundingBoxId, labels);
     }
     
     // Process results immediately and show to user
@@ -4390,10 +4392,324 @@
   }
 
   // ====================================================================
+  // DETECTION SWITCHING AND CROPPING LOGIC
+  // ====================================================================
+  
+  async function switchToDetection(drawer, detectionData) {
+    try {
+      console.log('[Visual Search] 🔄 Switching to detection:', detectionData);
+      
+      // Show loading state immediately when user clicks
+      showLoadingState(drawer);
+      
+      // Update current selected detection
+      drawer._currentSelectedDetection = parseInt(detectionData.boxId);
+      
+      // Move rectangle outline to new detection
+      updateDetectionRectangle(drawer, detectionData.index);
+      
+      // Crop image to selected detection area
+      const croppedImageFile = await cropImageToDetection(detectionData.bboxNormalized);
+      
+      if (croppedImageFile) {
+        // Call API with cropped image (this also handles its own loading state)
+        await performAnalysisWithCroppedImage(drawer, croppedImageFile);
+      } else {
+        // If cropping failed, hide loading state
+        hideLoadingState(drawer);
+        console.error('[Visual Search] ❌ Failed to crop image for selected detection');
+      }
+      
+    } catch (error) {
+      console.error('[Visual Search] ❌ Error switching detection:', error);
+      hideLoadingState(drawer);
+    }
+  }
+  
+  async function cropImageToDetection(bboxNormalized) {
+    try {
+      if (!imageState.element) {
+        console.error('[Visual Search] ❌ No image element found');
+        return null;
+      }
+      
+      // Create canvas for cropping
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Get original image dimensions
+      const originalWidth = imageState.naturalWidth;
+      const originalHeight = imageState.naturalHeight;
+      
+      // Convert normalized coordinates to pixel coordinates
+      const x1 = Math.floor(bboxNormalized[0] * originalWidth);
+      const y1 = Math.floor(bboxNormalized[1] * originalHeight);
+      const x2 = Math.floor(bboxNormalized[2] * originalWidth);
+      const y2 = Math.floor(bboxNormalized[3] * originalHeight);
+      
+      const cropWidth = x2 - x1;
+      const cropHeight = y2 - y1;
+      
+      // Set canvas dimensions to crop size
+      canvas.width = cropWidth;
+      canvas.height = cropHeight;
+      
+      console.log('[Visual Search] ✂️ Cropping image:', {
+        originalDimensions: { width: originalWidth, height: originalHeight },
+        bboxNormalized: bboxNormalized,
+        pixelCoords: { x1, y1, x2, y2 },
+        cropDimensions: { width: cropWidth, height: cropHeight }
+      });
+      
+      // Draw cropped portion of image to canvas
+      ctx.drawImage(
+        imageState.element,
+        x1, y1, cropWidth, cropHeight, // Source rectangle
+        0, 0, cropWidth, cropHeight    // Destination rectangle
+      );
+      
+      // Convert canvas to blob, then to file
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], 'cropped-detection.jpg', { type: 'image/jpeg' });
+            console.log('[Visual Search] ✅ Cropped image created:', file.size, 'bytes');
+            resolve(file);
+          } else {
+            console.error('[Visual Search] ❌ Failed to create cropped image blob');
+            resolve(null);
+          }
+        }, 'image/jpeg', 0.9);
+      });
+      
+    } catch (error) {
+      console.error('[Visual Search] ❌ Error cropping image:', error);
+      return null;
+    }
+  }
+  
+  function updateDetectionRectangle(drawer, newIndex) {
+    // Remove existing rectangle
+    const existingRectangle = drawer.querySelector('.detection-rectangle');
+    if (existingRectangle) {
+      existingRectangle.remove();
+    }
+    
+    // Add rectangle to new detection (reuse the showSingleDetection logic for rectangle)
+    const imageContainer = drawer.querySelector('#image-selection-container');
+    const newDetectionData = drawer._allBoundingBox[newIndex];
+    const bboxNormalized = Object.values(newDetectionData)[0];
+    const boxId = Object.keys(newDetectionData)[0];
+    
+    // Find the label for this detection
+    const labels = drawer._detectionLabels || [];
+    const matchingLabel = labels.find(labelObj => labelObj[boxId]);
+    const labelText = matchingLabel ? matchingLabel[boxId] : null;
+    
+    console.log(`[Visual Search] 🏷️ Switching rectangle to: ${labelText || 'Unlabeled'} (${boxId})`);
+    
+    // Show rectangle for the new selection with label
+    showDetectionRectangle(imageContainer, bboxNormalized, newIndex, labelText);
+  }
+  
+  function showDetectionRectangle(imageContainer, bboxNormalized, index, labelText = null) {
+    const imageRect = imageState.element.getBoundingClientRect();
+    const containerRect = imageContainer.getBoundingClientRect();
+    
+    const imgLeft = imageRect.left - containerRect.left;
+    const imgTop = imageRect.top - containerRect.top;
+    
+    const w = imageState.naturalWidth;
+    const h = imageState.naturalHeight;
+    
+    const absoluteBbox = [
+      Math.floor(bboxNormalized[0] * w),
+      Math.floor(bboxNormalized[1] * h),
+      Math.floor(bboxNormalized[2] * w),
+      Math.floor(bboxNormalized[3] * h)
+    ];
+    
+    const bboxAbsolute = {
+      x: absoluteBbox[0],
+      y: absoluteBbox[1],
+      width: absoluteBbox[2] - absoluteBbox[0],
+      height: absoluteBbox[3] - absoluteBbox[1]
+    };
+    
+    const scaledBbox = {
+      x: bboxAbsolute.x * imageState.scaleX,
+      y: bboxAbsolute.y * imageState.scaleY,
+      width: bboxAbsolute.width * imageState.scaleX,
+      height: bboxAbsolute.height * imageState.scaleY
+    };
+    
+    const rectangleLeft = imgLeft + scaledBbox.x;
+    const rectangleTop = imgTop + scaledBbox.y;
+    const rectangleWidth = scaledBbox.width;
+    const rectangleHeight = scaledBbox.height;
+    
+    const detectionRectangle = document.createElement('div');
+    detectionRectangle.className = 'detection-rectangle';
+    detectionRectangle.id = `detection-rectangle-${index}`;
+    detectionRectangle.innerHTML = '&nbsp;';
+    detectionRectangle.style.cssText = `
+      position: absolute;
+      left: ${rectangleLeft}px;
+      top: ${rectangleTop}px;
+      width: ${rectangleWidth}px;
+      height: ${rectangleHeight}px;
+      border: 3px solid #FF0000;
+      background: #ea0d0d2b;
+      pointer-events: none;
+      z-index: 999;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+    `;
+    
+    // Add label to the rectangle if available
+    if (labelText) {
+      const rectangleLabel = document.createElement('div');
+      rectangleLabel.className = 'detection-rectangle-label';
+      rectangleLabel.innerHTML = labelText;
+      rectangleLabel.style.cssText = `
+        position: absolute;
+        top: -25px;
+        left: 0px;
+        background: #FF0000;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 8px;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+      `;
+      detectionRectangle.appendChild(rectangleLabel);
+    }
+    
+    imageContainer.appendChild(detectionRectangle);
+  }
+  
+  async function performAnalysisWithCroppedImage(drawer, croppedImageFile) {
+    try {
+      console.log('[Visual Search] 🔍 Calling API with cropped image...');
+      
+      // Loading state is already shown in switchToDetection
+      // Get search input for API call
+      const searchInput = getStoredSearchInput(drawer);
+      
+      // Call the API with cropped image (reuse existing API call logic)
+      const formData = new FormData();
+      formData.append('file', croppedImageFile);
+      
+      const response = await fetch(CONFIG.EXTERNAL_API_URL, {
+        method: 'POST',
+        headers: {
+          'shopDomainURL': CONFIG.SHOP_DOMAIN
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('[Visual Search] ✅ Cropped image API response:', result);
+      
+      // Update UI with new results
+      updateResultsFromCroppedArea(drawer, result);
+      
+    } catch (error) {
+      console.error('[Visual Search] ❌ Error calling API with cropped image:', error);
+      hideLoadingState(drawer);
+    }
+  }
+  
+  function updateResultsFromCroppedArea(drawer, result) {
+    console.log('[Visual Search] 🎯 Updating results from cropped area:', result);
+    
+    // Update product results using existing display function
+    if (result && result.products && result.products.length > 0) {
+      console.log('[Visual Search] 📦 Showing', result.products.length, 'products from cropped area');
+      
+      // Clear any existing empty states
+      const emptyState = drawer.querySelector('#empty-state');
+      if (emptyState) {
+        emptyState.style.display = 'none';
+      }
+      
+      // showSearchResults automatically handles clearing skeleton loaders
+      showSearchResults(drawer, result.products, 'cropped-area', null);
+      
+      // Update header to indicate this is from cropped area
+      updateResultsHeader(drawer, 'Detection Area Results', `Found ${result.products.length} products in selected area`);
+      
+      console.log('[Visual Search] ✅ Results should now be visible in the grid');
+    } else {
+      console.log('[Visual Search] ❌ No products found in cropped area');
+      
+      // Hide loading state for no results case
+      hideLoadingState(drawer);
+      
+      // Show no results message using existing grid
+      const resultsGrid = drawer.querySelector('#results-grid');
+      if (resultsGrid) {
+        resultsGrid.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">
+            <div style="font-size: 18px; margin-bottom: 8px;">No products found</div>
+            <div style="font-size: 14px;">Try selecting a different detection area</div>
+          </div>
+        `;
+      }
+      
+      // Update header for no results
+      updateResultsHeader(drawer, 'Detection Area Results', 'No products found in selected area');
+    }
+  }
+  
+  function showLoadingState(drawer) {
+    console.log('[Visual Search] 💀 Showing skeleton loaders...');
+    const resultsGrid = drawer.querySelector('#results-grid');
+    console.log('[Visual Search] 🎯 Results grid found:', !!resultsGrid);
+    
+    // Clear existing content first
+    if (resultsGrid) {
+      resultsGrid.innerHTML = '';
+    }
+    
+    // Use existing skeleton loaders instead of custom spinner
+    showSkeletonLoaders(drawer);
+    
+    // Check if skeletons were added
+    const skeletonCards = resultsGrid ? resultsGrid.querySelectorAll('.skeleton-card') : [];
+    console.log('[Visual Search] 💀 Skeleton cards added:', skeletonCards.length);
+  }
+  
+  function hideLoadingState(drawer) {
+    // Remove skeleton loaders using existing function
+    removeSkeletonLoaders(drawer);
+  }
+  
+  function getStoredSearchInput(drawer) {
+    // Try to get stored search input from various locations
+    return drawer._searchInput || 
+           window.visualSearchCurrentInput || 
+           drawer.querySelector('#modal-content')?._searchInput ||
+           drawer.querySelector('#image-selection-container')?._searchInput ||
+           null;
+  }
+
+  // ====================================================================
   // BOUNDING BOX DETECTION VISUALIZATION
   // ====================================================================
   
-  function showMultipleDetections(drawer, cropSearchResults) {
+  function showMultipleDetections(drawer, allBoundingBox, largestBoundingBoxId, labels = []) {
+    // Store data on drawer for access in click handlers
+    drawer._allBoundingBox = allBoundingBox;
+    drawer._currentSelectedDetection = largestBoundingBoxId;
+    drawer._detectionLabels = labels;
     // Don't show detection boxes when crop box is active
     const cropBox = drawer.querySelector('#crop-box');
     if (cropBox) {
@@ -4401,13 +4717,22 @@
       return;
     }
     
-    console.log('[Visual Search] 📍 Showing multiple detections:', cropSearchResults.length);
+    console.log('[Visual Search] 📍 Showing multiple detections:', allBoundingBox.length);
     
     const imageContainer = drawer.querySelector('#image-selection-container');
     
     if (!imageContainer || !imageState.element) {
       console.error('[Visual Search] ❌ Image container or image state not found');
       return;
+    }
+    
+    // Ensure the container has proper positioning and overflow
+    const containerStyle = getComputedStyle(imageContainer);
+    if (containerStyle.position === 'static') {
+      imageContainer.style.position = 'relative';
+    }
+    if (containerStyle.overflow === 'hidden') {
+      imageContainer.style.overflow = 'visible';
     }
     
     // Remove any existing detection boxes
@@ -4443,31 +4768,32 @@
       document.head.appendChild(style);
     }
     
-    // Sort crop search results by area (descending) and show all detections
-    const sortedCropResults = cropSearchResults
-      .filter(cropResult => {
-        const cropMetadata = cropResult.crop_metadata;
-        return cropMetadata && cropMetadata.bbox_normalized && cropMetadata.area;
-      })
-      .sort((a, b) => b.crop_metadata.area - a.crop_metadata.area);
+    // Process all bounding boxes with new format
+    console.log('[Visual Search] 📊 Showing all', allBoundingBox.length, 'detections');
     
-    console.log('[Visual Search] 📊 Showing all', sortedCropResults.length, 'detections out of', cropSearchResults.length, 'total detections');
-    
-    // Process all crop search results
-    sortedCropResults.forEach((cropResult, index) => {
-      const cropMetadata = cropResult.crop_metadata;
+    // Process all bounding boxes
+    allBoundingBox.forEach((boundingBox, index) => {
+      // Extract the first (and likely only) key-value pair from the bounding box object
+      const boxId = Object.keys(boundingBox)[0];
+      const bboxNormalized = boundingBox[boxId];
       
-      const bboxNormalized = cropMetadata.bbox_normalized;
-      const label = cropMetadata.label;
+      // Find matching label for this detection
+      const matchingLabel = labels.find(labelObj => labelObj[boxId]);
+      const labelText = matchingLabel ? matchingLabel[boxId] : null;
+      
       const color = '#FF0000'; // Red color for all detections
       
-      const isLargestDetection = index === 0;
-      showSingleDetection(imageContainer, bboxNormalized, label, color, index, isLargestDetection);
+      // Check if this is the largest bounding box
+      const isLargestDetection = largestBoundingBoxId !== null && parseInt(boxId) === largestBoundingBoxId;
+      
+      console.log(`[Visual Search] 🏷️ Detection ${index} (${boxId}): ${labelText || 'No label'}`);
+      
+      showSingleDetection(drawer, imageContainer, bboxNormalized, color, index, isLargestDetection, labelText);
     });
   }
 
   
-  function showSingleDetection(imageContainer, bboxNormalized, label, color, index, isLargestDetection = false) {
+  function showSingleDetection(drawer, imageContainer, bboxNormalized, color, index, isLargestDetection, labelText = null) {
     // Use centralized image state for dimensions and scaling
     const imageRect = imageState.element.getBoundingClientRect();
     const containerRect = imageContainer.getBoundingClientRect();
@@ -4504,7 +4830,7 @@
       height: bboxAbsolute.height * imageState.scaleY
     };
     
-    // Calculate center position for 10px circle
+    // Always show small circle at center for all detections
     const centerX = imgLeft + scaledBbox.x + (scaledBbox.width / 2);
     const centerY = imgTop + scaledBbox.y + (scaledBbox.height / 2);
     const circleSize = 10;
@@ -4513,20 +4839,12 @@
     const boxWidth = circleSize;
     const boxHeight = circleSize;
     
-    // No constraints needed for small circles at center positions
     
-    console.log(`[Visual Search] 📊 Detection ${index + 1} circle processing:`, {
-      bboxNormalized: bboxNormalized,
-      centerPosition: { centerX, centerY },
-      circlePosition: { left: boxLeft, top: boxTop, size: circleSize },
-      color: color,
-      label: label
-    });
-    
-    // Create detection circle element
+    // Create detection circle element (same for all detections)
     const detectionBox = document.createElement('div');
     detectionBox.className = 'detection-circle';
     detectionBox.id = `detection-circle-${index}`;
+    detectionBox.innerHTML = '&nbsp;'; // Add non-breaking space so it's not considered empty
     detectionBox.style.cssText = `
       position: absolute;
       left: ${boxLeft}px;
@@ -4537,46 +4855,106 @@
       background: #FF0000;
       pointer-events: auto;
       cursor: pointer;
-      z-index: ${10 + index};
+      z-index: ${1000 + index};
       border-radius: 50%;
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
       animation: detection-appear 0.5s ease-out, detection-pulse 2s ease-in-out 0.5s infinite;
     `;
     
-    // Create label element
-    const labelElement = document.createElement('div');
-    const labelDisplay = isLargestDetection ? 'block' : 'none';
-    labelElement.style.cssText = `
-      position: absolute;
-      top: -30px;
-      left: 0;
-      background: #FF0000;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      display: ${labelDisplay};
-    `;
-    labelElement.textContent = label;
+    // Store detection data on the element for click handler
+    detectionBox._detectionData = {
+      index: index,
+      bboxNormalized: bboxNormalized,
+      boxId: Object.keys(drawer._allBoundingBox[index])[0], // Store the box ID
+      labelText: labelText // Store the label for this detection
+    };
     
-    // Add label to detection circle
-    detectionBox.appendChild(labelElement);
-    
-    // Add click event listener to toggle label visibility
+    // Add click handler to switch detection and call API with cropped area
     detectionBox.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (labelElement.style.display === 'none') {
-        labelElement.style.display = 'block';
-      } else {
-        labelElement.style.display = 'none';
-      }
+      console.log(`[Visual Search] 🖱️ Detection ${index} (${labelText || 'Unlabeled'}) clicked, switching to this area`);
+      const detectionData = this._detectionData;
+      switchToDetection(drawer, detectionData);
     });
+    
+    // If this is the largest detection, also add a rectangle outline (without animation)
+    if (isLargestDetection) {
+      const rectangleLeft = imgLeft + scaledBbox.x;
+      const rectangleTop = imgTop + scaledBbox.y;
+      const rectangleWidth = scaledBbox.width;
+      const rectangleHeight = scaledBbox.height;
+      
+      const detectionRectangle = document.createElement('div');
+      detectionRectangle.className = 'detection-rectangle';
+      detectionRectangle.id = `detection-rectangle-${index}`;
+      detectionRectangle.innerHTML = '&nbsp;';
+      detectionRectangle.style.cssText = `
+        position: absolute;
+        left: ${rectangleLeft}px;
+        top: ${rectangleTop}px;
+        width: ${rectangleWidth}px;
+        height: ${rectangleHeight}px;
+        border: 3px solid #FF0000;
+        background: #ea0d0d2b;
+        pointer-events: none;
+        z-index: ${999 + index};
+        border-radius: 4px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+      `;
+      
+      // Add label to the active rectangle if available
+      if (labelText) {
+        const rectangleLabel = document.createElement('div');
+        rectangleLabel.className = 'detection-rectangle-label';
+        rectangleLabel.innerHTML = labelText;
+        rectangleLabel.style.cssText = `
+          position: absolute;
+          top: -30px;
+          left: 0px;
+          background: #FF0000;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 600;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          z-index: ${1000 + index};
+        `;
+        detectionRectangle.appendChild(rectangleLabel);
+      }
+      
+      imageContainer.appendChild(detectionRectangle);
+    }
+    
     
     // Add detection circle to container
     imageContainer.appendChild(detectionBox);
+    
+    // Debug: Log the container and circle positioning
+    console.log('[Visual Search] 🔍 Debug positioning:', {
+      containerRect: {
+        left: containerRect.left,
+        top: containerRect.top,
+        width: containerRect.width,
+        height: containerRect.height
+      },
+      imageRect: {
+        left: imageRect.left,
+        top: imageRect.top,
+        width: imageRect.width,
+        height: imageRect.height
+      },
+      circlePosition: {
+        left: boxLeft,
+        top: boxTop
+      },
+      containerStyle: {
+        position: getComputedStyle(imageContainer).position,
+        overflow: getComputedStyle(imageContainer).overflow,
+        zIndex: getComputedStyle(imageContainer).zIndex
+      }
+    });
   }
 
   // ====================================================================
