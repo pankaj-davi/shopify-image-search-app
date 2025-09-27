@@ -62,15 +62,18 @@ export class FirebaseDatabase implements DatabaseInterface {
         updatedAt: FieldValue.serverTimestamp(),
       });
       
-      // Store product in subcollection under the store
-      const docRef = await this.firestore
+      // Store product in subcollection under the store using Shopify product ID as document ID
+      const shopifyId = product.shopifyProductId.replace('gid://shopify/Product/', '');
+      const docRef = this.firestore
         .collection('stores')
         .doc(product.shopDomain)
         .collection('products')
-        .add(productData);
-        
-      console.log('🔥 Product created in Firebase subcollection:', docRef.id);
-      return docRef.id;
+        .doc(shopifyId);
+
+      await docRef.set(productData);
+
+      console.log('🔥 Product created in Firebase subcollection:', shopifyId, productData);
+      return shopifyId;
     } catch (error) {
       console.error('❌ Error creating product in Firebase:', error);
       throw error;
@@ -356,8 +359,13 @@ export class FirebaseDatabase implements DatabaseInterface {
       };
 
       console.log('🔥 Event data prepared:', event);
-      await this.firestore.collection('storeEvents').add(event);
-      console.log(`🔥 Store event successfully recorded: ${eventType} for ${shopDomain}`);
+      // Save as subcollection under the store domain
+      await this.firestore
+        .collection('stores')
+        .doc(shopDomain)
+        .collection('events')
+        .add(event);
+      console.log(`🔥 Store event successfully recorded in subcollection: ${eventType} for ${shopDomain}`);
     } catch (error) {
       console.error('❌ Error recording store event in Firebase:', error);
       throw error;
@@ -387,7 +395,7 @@ export class FirebaseDatabase implements DatabaseInterface {
         .doc(usage.shopDomain)
         .collection('appBlockUsage')
         .add(usageData);
-      
+
       console.log('🔥 App block usage created in Firebase subcollection:', {
         id: docRef.id,
         shopDomain: usage.shopDomain,
@@ -399,6 +407,117 @@ export class FirebaseDatabase implements DatabaseInterface {
       return { id: docRef.id };
     } catch (error) {
       console.error('❌ Error creating app block usage in Firebase:', error);
+      throw error;
+    }
+  }
+
+  // ===============================
+  // PRODUCT WEBHOOK METHODS
+  // ===============================
+
+  async updateProductByShopifyId(shopDomain: string, shopifyProductId: string, productData: Partial<ProductData>): Promise<boolean> {
+    try {
+      // Extract numeric ID from Shopify GID or use as-is if already numeric
+      const productId = shopifyProductId.replace('gid://shopify/Product/', '');
+
+      const docRef = this.firestore
+        .collection('stores')
+        .doc(shopDomain)
+        .collection('products')
+        .doc(productId);
+
+      const doc = await docRef.get();
+
+      if (doc.exists) {
+        const updateData = sanitizeData({
+          ...productData,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        await docRef.update(updateData);
+        console.log(`🔥 Product updated in Firebase: ${productId}`);
+        return true;
+      } else {
+        console.log(`⚠️ Product not found for update: ${productId}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error updating product by Shopify ID:', error);
+      throw error;
+    }
+  }
+
+  async deleteProductByShopifyId(shopDomain: string, shopifyProductId: string): Promise<boolean> {
+    try {
+      // Extract numeric ID from Shopify GID or use as-is if already numeric
+      const productId = shopifyProductId.replace('gid://shopify/Product/', '');
+
+      const docRef = this.firestore
+        .collection('stores')
+        .doc(shopDomain)
+        .collection('products')
+        .doc(productId);
+
+      const doc = await docRef.get();
+
+      if (doc.exists) {
+        await docRef.delete();
+        console.log(`🔥 Product deleted from Firebase: ${productId}`);
+        return true;
+      } else {
+        console.log(`⚠️ Product not found for deletion: ${productId}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error deleting product by Shopify ID:', error);
+      throw error;
+    }
+  }
+
+  async getProductByShopifyId(shopDomain: string, shopifyProductId: string): Promise<ProductData | null> {
+    try {
+      // Extract numeric ID from Shopify GID or use as-is if already numeric
+      const productId = shopifyProductId.replace('gid://shopify/Product/', '');
+
+      const docRef = this.firestore
+        .collection('stores')
+        .doc(shopDomain)
+        .collection('products')
+        .doc(productId);
+
+      const doc = await docRef.get();
+
+      if (doc.exists) {
+        const data = doc.data()!;
+        return {
+          id: doc.id,
+          shopifyProductId: data.shopifyProductId,
+          title: data.title,
+          handle: data.handle,
+          status: data.status,
+          description: data.description,
+          vendor: data.vendor,
+          productType: data.productType,
+          tags: data.tags,
+          onlineStoreUrl: data.onlineStoreUrl,
+          totalInventory: data.totalInventory,
+          price: data.price,
+          sku: data.sku,
+          priceRange: data.priceRange,
+          featuredMedia: data.featuredMedia,
+          media: data.media,
+          options: data.options,
+          variants: data.variants,
+          metafields: data.metafields,
+          shopDomain: data.shopDomain,
+          createdAt: safeToDate(data.createdAt),
+          updatedAt: safeToDate(data.updatedAt),
+        };
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ Error getting product by Shopify ID:', error);
       throw error;
     }
   }
