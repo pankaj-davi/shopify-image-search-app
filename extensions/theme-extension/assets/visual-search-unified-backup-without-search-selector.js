@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://sorted-taken-passes-dans.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://sorted-taken-passes-dans.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://phentermine-flux-string-fraction.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://phentermine-flux-string-fraction.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -2159,10 +2159,9 @@
       }, 150);
     });
 
-    // Upload Another button handler
-    drawer.querySelector('#upload-another')?.addEventListener('click', () => {
-      showUploadSection(drawer);
-    });
+
+
+
 
     // Crop button handler
     drawer.querySelector('#crop-button')?.addEventListener('click', () => {
@@ -2217,7 +2216,33 @@
     // Hide upload section, show image preview
     drawer.querySelector('#upload-section').style.display = 'none';
     drawer.querySelector('#image-preview-section').style.display = 'block';
-    
+
+    // Setup Upload Another button event listener immediately when image preview is shown
+    const uploadAnotherBtn = drawer.querySelector('#upload-another');
+    console.log('Upload Another button element:', uploadAnotherBtn);
+    if (uploadAnotherBtn) {
+      // Remove any existing event listeners
+      uploadAnotherBtn.replaceWith(uploadAnotherBtn.cloneNode(true));
+      const newUploadAnotherBtn = drawer.querySelector('#upload-another');
+
+      // Add multiple event listeners to ensure it works
+      newUploadAnotherBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Upload Another button clicked');
+        showUploadSection(drawer);
+      }, true); // Use capture phase
+
+      newUploadAnotherBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Upload Another button mousedown');
+        showUploadSection(drawer);
+      });
+    } else {
+      console.log('Upload Another button not found in drawer');
+    }
+
     // On mobile, also add results mode class for better layout
     if (isMobile) {
       const modalContent = drawer.querySelector('#modal-content');
