@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://sherman-rough-moderators-franchise.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://sherman-rough-moderators-franchise.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://sorted-taken-passes-dans.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://sorted-taken-passes-dans.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -768,28 +768,11 @@
       `;
     },
 
-    // Crop box styles for image selection
-    cropBox: `
-      position: absolute;
-      border: 3px solid #f8f8f8;
-      cursor: grab;
-      box-sizing: border-box;
-      touch-action: none;
-      background: rgba(248, 248, 248, 0.02);
-      transition: all 0.2s ease;
-      opacity: 0;
-      transform: scale(0.9);
-      animation: crop-box-appear 0.3s ease forwards;
-      min-width: 50px;
-      min-height: 50px;
-      border-radius: 12px;
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
-    `,
-
-    cropBoxActive: `
-      border-color: #f0f0f0;
-      background: rgba(248, 248, 248, 0.05);
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(0, 0, 0, 0.1);
+    // Cropper.js integration styles
+    cropperContainer: `
+      position: relative;
+      max-width: 100%;
+      max-height: 100%;
     `,
 
     resizeHandle: (position) => `
@@ -1344,6 +1327,7 @@
             width: 100%;
             box-sizing: border-box;
             padding: 15px;
+            z-index: 1;
           ">
             <!-- Uploaded image and crop box will be inserted here -->
           </div>
@@ -1647,8 +1631,36 @@
     
     const style = document.createElement('style');
     style.id = 'visual-search-global-styles';
-    style.textContent = STYLES.spinnerKeyframes + STYLES.responsiveStyles + STYLES.cropBoxKeyframes;
+    style.textContent = STYLES.spinnerKeyframes + STYLES.responsiveStyles + STYLES.cropperStyles;
+
+    // Load cropper.js CSS and JS
+    loadCropperJS();
     document.head.appendChild(style);
+  }
+
+  function loadCropperJS() {
+    // Check if cropper.js is already loaded
+    if (window.Cropper) {
+      console.log('[Visual Search] 📦 Cropper.js already loaded');
+      return;
+    }
+
+    // Load CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css';
+    document.head.appendChild(link);
+
+    // Load JS
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js';
+    script.onload = () => {
+      console.log('[Visual Search] ✅ Cropper.js loaded successfully');
+    };
+    script.onerror = () => {
+      console.error('[Visual Search] ❌ Failed to load Cropper.js');
+    };
+    document.head.appendChild(script);
   }
 
   function isMobileDevice() {
@@ -1710,10 +1722,10 @@
     const drawer = document.querySelector('.visual-search-drawer');
     if (!drawer) return;
     
-    // Check if crop box already exists
-    const existingCropBox = drawer.querySelector('#crop-box');
-    
-    if (!existingCropBox) {
+    // Check if cropper already exists
+    const container = drawer.querySelector('#image-selection-container');
+
+    if (!container._cropper) {
       // Show crop box
       const imageContainer = drawer.querySelector('#image-selection-container');
       const img = drawer.querySelector('#uploaded-image');
@@ -1724,6 +1736,23 @@
         if (existingDetectionBox) {
           existingDetectionBox.remove();
         }
+
+        // Remove all detection-circle and detection-rectangle bounding boxes since they're no longer relevant after crop
+        const detectionCircles = imageContainer.querySelectorAll('.detection-circle');
+        const detectionRectangles = imageContainer.querySelectorAll('.detection-rectangle');
+
+        detectionCircles.forEach(circle => {
+          console.log('[Visual Search] 🗑️ Removing detection circle:', circle.id);
+          circle.remove();
+        });
+
+        detectionRectangles.forEach(rectangle => {
+          console.log('[Visual Search] 🗑️ Removing detection rectangle:', rectangle.id);
+          rectangle.remove();
+        });
+
+        console.log('[Visual Search] ✅ Removed', detectionCircles.length, 'detection circles and', detectionRectangles.length, 'detection rectangles before applying crop');
+
         addCropBox(imageContainer, img);
       } 
     }
@@ -2221,6 +2250,8 @@
         background: transparent;
         display: block;
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
       `;
       img.id = 'uploaded-image';
       img.src = imageFile._imageUrl;
@@ -2532,7 +2563,7 @@
     // Prepare form data for immediate analysis
     const formData = new FormData();
     formData.append('file', imageFile);
-    // formData.append('analyze', 'true');
+    formData.append('crop', 'false');
     
     console.log('[Visual Search] 📤 Sending immediate analysis request to:', CONFIG.EXTERNAL_API_URL);
     console.log('[Visual Search] 📄 File details:', {
@@ -2573,9 +2604,9 @@
     console.log('[Visual Search] 🔲 All bounding boxes:', allBoundingBox.length);
     console.log('[Visual Search] 🏷️ Detection labels:', labels);
     
-    // Show multiple detection bounding boxes if available (but not when crop box is active)
-    const cropBox = drawer.querySelector('#crop-box');
-    if (allBoundingBox.length > 0 && imageState.element && !cropBox) {
+    // Show multiple detection bounding boxes if available (but not when cropper is active)
+    const container = drawer.querySelector('#image-selection-container');
+    if (allBoundingBox.length > 0 && imageState.element && !container._cropper) {
       showMultipleDetections(drawer, allBoundingBox, largestBoundingBoxId, labels);
     }
     
@@ -2644,221 +2675,172 @@
   }
 
   function addCropBox(container, img) {
-    // Calculate image dimensions and position within container
-    const containerRect = container.getBoundingClientRect();
-    const imgRect = img.getBoundingClientRect();
-    
-    // Calculate relative position of image within container
-    const imgLeft = imgRect.left - containerRect.left;
-    const imgTop = imgRect.top - containerRect.top;
-    const imgWidth = imgRect.width;
-    const imgHeight = imgRect.height;
-    
-    // Mobile responsive sizing
-    const isMobile = window.innerWidth <= 768;
-    const minCropSize = isMobile ? 80 : 100; // Smaller minimum on mobile
-    const handleSize = isMobile ? 16 : 12; // Larger handles on mobile for easier touch
-    const handleOffset = isMobile ? 8 : 6; // Larger offset on mobile
-    
-    // Calculate safe boundaries - ensure handles stay within image bounds
-    const handleMargin = handleOffset + (handleSize / 2);
-    const safeImgLeft = imgLeft + handleMargin;
-    const safeImgTop = imgTop + handleMargin;
-    const safeImgWidth = imgWidth - (handleMargin * 2);
-    const safeImgHeight = imgHeight - (handleMargin * 2);
-    
-    // Create crop box (centered on image, responsive size) within safe boundaries
-    const cropPercentage = isMobile ? 0.6 : 0.5; // Smaller percentage to ensure handles fit
-    const maxCropWidth = Math.min(safeImgWidth, imgWidth * 0.8);
-    const maxCropHeight = Math.min(safeImgHeight, imgHeight * 0.8);
-    const cropWidth = Math.max(Math.min(maxCropWidth * cropPercentage, maxCropWidth), minCropSize);
-    const cropHeight = Math.max(Math.min(maxCropHeight * cropPercentage, maxCropHeight), minCropSize);
-    
-    // Center the crop box within safe boundaries
-    const cropLeft = safeImgLeft + (safeImgWidth - cropWidth) / 2;
-    const cropTop = safeImgTop + (safeImgHeight - cropHeight) / 2;
-    
-    const cropBox = document.createElement('div');
-    cropBox.id = 'crop-box';
-    cropBox.style.cssText = `
-      ${STYLES.cropBox}
-      left: ${cropLeft}px;
-      top: ${cropTop}px;
-      width: ${cropWidth}px;
-      height: ${cropHeight}px;
-      opacity: 1;
-      transform: scale(1);
-    `;
-    
-    // Create all 4 corner resize handles with mobile-responsive sizing
-    const cornerHandles = [
-      { id: 'nw', position: 'nw', cursor: 'nw-resize' },
-      { id: 'ne', position: 'ne', cursor: 'ne-resize' },
-      { id: 'sw', position: 'sw', cursor: 'sw-resize' },
-      { id: 'se', position: 'se', cursor: 'se-resize' }
-    ];
-    
-    cornerHandles.forEach(handle => {
-      const resizeHandle = document.createElement('div');
-      resizeHandle.id = `resize-handle-${handle.id}`;
-      resizeHandle.className = 'resize-handle resize-handle-corner';
-      resizeHandle.dataset.position = handle.position;
-      resizeHandle.dataset.type = 'corner';
-      resizeHandle.style.cssText = `
-        position: absolute;
-        width: ${handleSize}px;
-        height: ${handleSize}px;
-        background: rgba(248, 248, 248, 0.9);
-        border: 2px solid rgba(255, 255, 255, 0.95);
-        border-radius: ${isMobile ? '4px' : '2px'};
-        cursor: ${handle.cursor};
-        touch-action: none;
-        transition: all 0.2s ease;
-        z-index: 12;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-        ${handle.position === 'nw' ? `top: -${handleOffset}px; left: -${handleOffset}px;` : ''}
-        ${handle.position === 'ne' ? `top: -${handleOffset}px; right: -${handleOffset}px;` : ''}
-        ${handle.position === 'sw' ? `bottom: -${handleOffset}px; left: -${handleOffset}px;` : ''}
-        ${handle.position === 'se' ? `bottom: -${handleOffset}px; right: -${handleOffset}px;` : ''}
-      `;
-      cropBox.appendChild(resizeHandle);
-    });
-    
-    // Create border resize handles (top, bottom, left, right) - mobile responsive
-    const borderHandles = [
-      { id: 'top', side: 'top' },
-      { id: 'bottom', side: 'bottom' },
-      { id: 'left', side: 'left' },
-      { id: 'right', side: 'right' }
-    ];
-    
-    const borderHandleSize = isMobile ? 12 : 8;
-    const borderIndicatorSize = isMobile ? 20 : 16;
-    
-    borderHandles.forEach(handle => {
-      const resizeHandle = document.createElement('div');
-      resizeHandle.id = `resize-border-${handle.id}`;
-      resizeHandle.className = 'resize-handle resize-handle-border';
-      resizeHandle.dataset.side = handle.side;
-      resizeHandle.dataset.type = 'border';
-      resizeHandle.style.cssText = `
-        position: absolute;
-        background: transparent;
-        touch-action: none;
-        transition: all 0.2s ease;
-        cursor: ${handle.side === 'top' || handle.side === 'bottom' ? 'ns-resize' : 'ew-resize'};
-        ${handle.side === 'top' ? `top: -${borderHandleSize/2}px; left: ${handleSize + 4}px; right: ${handleSize + 4}px; height: ${borderHandleSize}px;` : ''}
-        ${handle.side === 'bottom' ? `bottom: -${borderHandleSize/2}px; left: ${handleSize + 4}px; right: ${handleSize + 4}px; height: ${borderHandleSize}px;` : ''}
-        ${handle.side === 'left' ? `left: -${borderHandleSize/2}px; top: ${handleSize + 4}px; bottom: ${handleSize + 4}px; width: ${borderHandleSize}px;` : ''}
-        ${handle.side === 'right' ? `right: -${borderHandleSize/2}px; top: ${handleSize + 4}px; bottom: ${handleSize + 4}px; width: ${borderHandleSize}px;` : ''}
-        z-index: 11;
-      `;
-      
-      // Add the visual indicator
-      const indicator = document.createElement('div');
-      indicator.style.cssText = `
-        position: absolute;
-        background: rgba(248, 248, 248, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.95);
-        border-radius: ${isMobile ? '3px' : '2px'};
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-        pointer-events: none;
-        ${handle.side === 'top' || handle.side === 'bottom' ? 
-          `left: 50%; top: 50%; transform: translate(-50%, -50%); width: ${borderIndicatorSize}px; height: ${isMobile ? 4 : 3}px;` : 
-          `left: 50%; top: 50%; transform: translate(-50%, -50%); width: ${isMobile ? 4 : 3}px; height: ${borderIndicatorSize}px;`
+    // Check if cropper.js is loaded
+    if (!window.Cropper) {
+      console.warn('[Visual Search] ⚠️ Cropper.js not loaded yet, retrying in 500ms...');
+      setTimeout(() => addCropBox(container, img), 500);
+      return;
+    }
+
+    // Clean up any existing cropper
+    if (container._cropper) {
+      container._cropper.destroy();
+      container._cropper = null;
+    }
+
+    // Clean up hide observer
+    if (container._hideObserver) {
+      container._hideObserver.disconnect();
+      container._hideObserver = null;
+    }
+
+    // Initialize cropper.js on the image
+    const cropper = new Cropper(img, {
+      aspectRatio: NaN, // Free aspect ratio
+      viewMode: 1, // Restrict crop box not to exceed canvas
+      dragMode: 'move',
+      autoCropArea: 0.5, // 50% of image area
+      restore: false,
+      guides: true,
+      center: true,
+      highlight: true,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      toggleDragModeOnDblclick: false,
+      responsive: true,
+      background: false, // Don't show background grid
+      modal: false, // Don't show modal (dark area outside crop)
+      ready() {
+        console.log('[Visual Search] ✅ Cropper.js initialized successfully');
+
+        // Get cropper elements for proper overlay styling
+        const cropperContainer = container.querySelector('.cropper-container');
+        const cropperCanvas = container.querySelector('.cropper-canvas');
+        const cropperDragBox = container.querySelector('.cropper-drag-box');
+        const cropperCropBox = container.querySelector('.cropper-crop-box');
+        const cropperViewBox = container.querySelector('.cropper-view-box');
+
+        if (cropperContainer) {
+          // Make cropper container overlay the image perfectly
+          cropperContainer.style.cssText += `
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-height: none !important;
+            z-index: 10 !important;
+            pointer-events: auto !important;
+          `;
         }
-      `;
-      resizeHandle.appendChild(indicator);
-      cropBox.appendChild(resizeHandle);
-    });
-    
-    container.appendChild(cropBox);
-    
-    // Add a center draggable area indicator - mobile responsive
-    const dragArea = document.createElement('div');
-    dragArea.className = 'crop-drag-area';
-    const dragAreaSize = isMobile ? 32 : 24;
-    dragArea.style.cssText = `
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: ${dragAreaSize}px;
-      height: ${dragAreaSize}px;
-      background: rgba(248, 248, 248, 0.9);
-      border: 2px solid rgba(255, 255, 255, 0.9);
-      border-radius: 50%;
-      cursor: grab;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.7;
-      transition: all 0.2s ease;
-      pointer-events: auto;
-      z-index: 10;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    `;
-    
-    // Add drag icon
-    const iconSize = isMobile ? 16 : 12;
-    dragArea.innerHTML = `
-      <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #666;">
-        <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
-      </svg>
-    `;
-    
-    cropBox.appendChild(dragArea);
-    
-    // Add hover effects for the crop box
-    cropBox.addEventListener('mouseenter', () => {
-      dragArea.style.opacity = '1';
-      dragArea.style.transform = 'translate(-50%, -50%) scale(1.1)';
-      dragArea.style.pointerEvents = 'auto';
-    });
-    
-    cropBox.addEventListener('mouseleave', () => {
-      dragArea.style.opacity = '0.7';
-      dragArea.style.transform = 'translate(-50%, -50%) scale(1)';
-      // Keep pointer events auto so dragging still works
-    });
-    
-    // Update drag area cursor on mouse down
-    cropBox.addEventListener('mousedown', (e) => {
-      if (!e.target.classList.contains('resize-handle') && !e.target.closest('.resize-handle')) {
-        dragArea.style.cursor = 'grabbing';
+
+        // Completely hide the cropper canvas to show the original image behind
+        if (cropperCanvas) {
+          cropperCanvas.style.cssText += `
+            opacity: 0 !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            pointer-events: none !important;
+            z-index: -1 !important;
+          `;
+        }
+
+        // Also hide any img elements inside the cropper container
+        const cropperImages = cropperContainer.querySelectorAll('img');
+        cropperImages.forEach(img => {
+          if (img.id !== 'uploaded-image') {
+            img.style.cssText += `
+              opacity: 0 !important;
+              visibility: hidden !important;
+              pointer-events: none !important;
+              z-index: -1 !important;
+            `;
+          }
+        });
+
+        if (cropperDragBox) {
+          cropperDragBox.style.zIndex = '11';
+        }
+
+        if (cropperCropBox) {
+          cropperCropBox.style.zIndex = '12';
+        }
+
+        if (cropperViewBox) {
+          cropperViewBox.style.zIndex = '13';
+        }
+
+        // Ensure the parent container supports the overlay
+        container.style.cssText += `
+          position: relative !important;
+          overflow: visible !important;
+        `;
+
+        // Set up observer to hide new cropper images (without watching style changes to avoid infinite loop)
+        const hideObserver = new MutationObserver((mutations) => {
+          mutations.forEach(mutation => {
+            if (mutation.type === 'childList') {
+              mutation.addedNodes.forEach(node => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                  const newImages = node.tagName === 'IMG' ? [node] : node.querySelectorAll('img');
+                  newImages.forEach(img => {
+                    if (img.id !== 'uploaded-image' && !img.dataset.hidden) {
+                      img.dataset.hidden = 'true'; // Mark to prevent re-processing
+                      img.style.cssText += `
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
+                        z-index: -1 !important;
+                      `;
+                    }
+                  });
+                }
+              });
+            }
+          });
+        });
+
+        hideObserver.observe(cropperContainer, {
+          childList: true,
+          subtree: true
+        });
+
+        // Store observer for cleanup
+        container._hideObserver = hideObserver;
+      },
+      crop(event) {
+        // Handle real-time crop changes
+        const data = event.detail;
+        console.log('[Visual Search] 📏 Crop area changed:', data);
+
+        // Trigger real-time analysis when user stops interacting
+        clearTimeout(container._cropTimeout);
+        container._cropTimeout = setTimeout(() => {
+          performRealTimeCropAnalysis(container);
+        }, 500);
+      },
+      cropend() {
+        // Called when crop interaction ends
+        console.log('[Visual Search] 🏁 Crop interaction ended');
+        performRealTimeCropAnalysis(container);
       }
     });
-    
-    document.addEventListener('mouseup', () => {
-      dragArea.style.cursor = 'grab';
-    });
-    
-    // Store image bounds for constraint checking - use actual image boundaries
-    cropBox._imageBounds = {
-      left: imgLeft,
-      top: imgTop,
-      right: imgLeft + imgWidth,
-      bottom: imgTop + imgHeight
-    };
-    
-    // Store mobile state for interaction handling
-    cropBox._isMobile = isMobile;
-    cropBox._minCropSize = minCropSize;
-    cropBox._handleSize = handleSize;
-    cropBox._handleOffset = handleOffset;
-    
-    // Set up drag and resize functionality
-    setupCropBoxInteraction(cropBox, container);
-    
-    // Auto-trigger search when crop box is created
-    // COMMENTED OUT: Crop API call disabled for now
-    // setTimeout(() => {
-    //   triggerAutoSearch(container);
-    // }, 500);
-    console.log('[Visual Search] 🔇 Auto-trigger crop search disabled');
+
+    // Store cropper instance for cleanup
+    container._cropper = cropper;
+
+    console.log('[Visual Search] 🌱 Cropper.js crop box added successfully');
   }
 
-  function setupCropBoxInteraction(cropBox, container) {
+  // setupCropBoxInteraction removed - cropper.js handles this automatically
+  function setupCropBoxInteraction_REMOVED() {
     let isDragging = false;
     let isResizing = false;
     let activeHandle = null;
@@ -3119,34 +3101,40 @@
   }
 
   function getCropData(drawer) {
-    const cropBox = drawer.querySelector('#crop-box');
-    const img = drawer.querySelector('#uploaded-image');
-    
-    if (!cropBox || !img) return null;
-    
     const container = drawer.querySelector('#image-selection-container');
-    const containerRect = container.getBoundingClientRect();
-    const imgRect = img.getBoundingClientRect();
-    const cropRect = cropBox.getBoundingClientRect();
-    
-    // Calculate crop coordinates relative to the actual image
-    const imgLeft = imgRect.left - containerRect.left;
-    const imgTop = imgRect.top - containerRect.top;
-    const cropLeft = cropRect.left - containerRect.left;
-    const cropTop = cropRect.top - containerRect.top;
-    
-    // Convert to image coordinates (0-1 scale)
-    const relativeX = (cropLeft - imgLeft) / imgRect.width;
-    const relativeY = (cropTop - imgTop) / imgRect.height;
-    const relativeWidth = cropRect.width / imgRect.width;
-    const relativeHeight = cropRect.height / imgRect.height;
-    
-    return {
-      x: Math.max(0, Math.min(1, relativeX)),
-      y: Math.max(0, Math.min(1, relativeY)),
-      width: Math.max(0, Math.min(1, relativeWidth)),
-      height: Math.max(0, Math.min(1, relativeHeight))
-    };
+    const img = drawer.querySelector('#uploaded-image');
+
+    if (!container || !img || !container._cropper) {
+      console.warn('[Visual Search] ⚠️ No cropper instance found');
+      return null;
+    }
+
+    try {
+      // Get crop data from cropper.js
+      const cropData = container._cropper.getData();
+      const canvasData = container._cropper.getCanvasData();
+      const imageData = container._cropper.getImageData();
+
+      console.log('[Visual Search] 📏 Cropper.js crop data:', cropData);
+      console.log('[Visual Search] 🖼️ Canvas data:', canvasData);
+      console.log('[Visual Search] 🖌️ Image data:', imageData);
+
+      // Convert to normalized coordinates (0-1 scale) relative to actual image
+      const relativeX = cropData.x / imageData.naturalWidth;
+      const relativeY = cropData.y / imageData.naturalHeight;
+      const relativeWidth = cropData.width / imageData.naturalWidth;
+      const relativeHeight = cropData.height / imageData.naturalHeight;
+
+      return {
+        x: Math.max(0, Math.min(1, relativeX)),
+        y: Math.max(0, Math.min(1, relativeY)),
+        width: Math.max(0, Math.min(1, relativeWidth)),
+        height: Math.max(0, Math.min(1, relativeHeight))
+      };
+    } catch (error) {
+      console.error('[Visual Search] ❌ Error getting crop data:', error);
+      return null;
+    }
   }
 
   async function performCroppedImageSearch(drawer, searchInput, cropData) {
@@ -3154,11 +3142,29 @@
       updateResultsHeader(drawer, 'Analyzing cropped area...', 'Detecting items in the selected area...');
       clearResults(drawer);
       showSkeletonLoaders(drawer);
-      
+
+      // Get the cropped image binary from cropper
+      const container = drawer.querySelector('#image-selection-container');
+      if (!container || !container._cropper) {
+        console.error('[Visual Search] ❌ No cropper found for extracting cropped image');
+        return;
+      }
+
+      // Extract cropped image as blob
+      const croppedCanvas = container._cropper.getCroppedCanvas();
+      if (!croppedCanvas) {
+        console.error('[Visual Search] ❌ Failed to get cropped canvas');
+        return;
+      }
+
+      // Convert canvas to blob
+      const croppedBlob = await new Promise(resolve => {
+        croppedCanvas.toBlob(resolve, 'image/jpeg', 0.9);
+      });
+
       const formData = new FormData();
-      formData.append('file', drawer._imageFile);
-      // formData.append('cropData', JSON.stringify(cropData));
-      // formData.append('analyze', 'true');
+      formData.append('file', croppedBlob, 'cropped-image.jpg');
+      formData.append('crop', 'true');
       
       console.log('[Visual Search] Sending cropped analysis request to:', CONFIG.EXTERNAL_API_URL);
       console.log('[Visual Search] Crop data:', cropData);
@@ -3270,10 +3276,17 @@
   }
 
   function showUploadSection(drawer) {
-    // Clean up crop box event listeners if they exist
-    const cropBox = drawer.querySelector('#crop-box');
-    if (cropBox && cropBox._cleanup) {
-      cropBox._cleanup();
+    // Clean up cropper if it exists
+    const container = drawer.querySelector('#image-selection-container');
+    if (container && container._cropper) {
+      container._cropper.destroy();
+      container._cropper = null;
+    }
+
+    // Clean up hide observer
+    if (container && container._hideObserver) {
+      container._hideObserver.disconnect();
+      container._hideObserver = null;
     }
     
     // Show upload section, hide preview
@@ -4602,6 +4615,7 @@
       // Call the API with cropped image (reuse existing API call logic)
       const formData = new FormData();
       formData.append('file', croppedImageFile);
+      formData.append('crop', 'true');
       
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
@@ -4710,10 +4724,10 @@
     drawer._allBoundingBox = allBoundingBox;
     drawer._currentSelectedDetection = largestBoundingBoxId;
     drawer._detectionLabels = labels;
-    // Don't show detection boxes when crop box is active
-    const cropBox = drawer.querySelector('#crop-box');
-    if (cropBox) {
-      console.log('[Visual Search] 🔇 Skipping detection boxes - crop box is active');
+    // Don't show detection boxes when cropper is active
+    const container = drawer.querySelector('#image-selection-container');
+    if (container && container._cropper) {
+      console.log('[Visual Search] 🔇 Skipping detection boxes - cropper is active');
       return;
     }
     
