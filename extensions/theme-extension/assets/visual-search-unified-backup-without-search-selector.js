@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://phentermine-flux-string-fraction.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://phentermine-flux-string-fraction.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://veterinary-temple-arab-moses.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://veterinary-temple-arab-moses.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - DISABLED
@@ -4601,7 +4601,6 @@
       pointer-events: none;
       z-index: 999;
       border-radius: 4px;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
     `;
     
     // Add label to the rectangle if available
@@ -4611,7 +4610,7 @@
       rectangleLabel.innerHTML = labelText;
       rectangleLabel.style.cssText = `
         position: absolute;
-        top: -25px;
+        top: -22px;
         left: 0px;
         background: #FF0000;
         color: white;
@@ -4620,7 +4619,6 @@
         font-size: 8px;
         font-weight: 600;
         white-space: nowrap;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         z-index: 1000;
       `;
       detectionRectangle.appendChild(rectangleLabel);
@@ -4938,7 +4936,6 @@
         pointer-events: none;
         z-index: ${999 + index};
         border-radius: 4px;
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
       `;
       
       // Add label to the active rectangle if available
