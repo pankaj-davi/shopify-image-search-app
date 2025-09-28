@@ -37,7 +37,7 @@ export class AppBlockTrackingService {
         url: data.url || null,
         userAgent: data.userAgent ? data.userAgent.substring(0, AppBlockTrackingService.USER_AGENT_MAX_LENGTH) : null, // Limit length
         metadata: data.metadata ? (typeof data.metadata === 'string' ? data.metadata : JSON.stringify(data.metadata)) : null,
-        timestamp: JSON.stringify(finalTimestamp)
+        timestamp: finalTimestamp.toISOString()
       };
 
       const result = await db.createAppBlockUsage(usageRecord);

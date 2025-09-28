@@ -378,16 +378,18 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async createAppBlockUsage(usage: any): Promise<{ id: string }> {
     try {
+      console.log('🔥 Creating app block usage with data:', usage);
+
       const usageData = sanitizeData({
         shopDomain: usage.shopDomain,
-        blockType: usage.blockType,
         action: usage.action,
         url: usage.url || null,
         userAgent: usage.userAgent || null,
-        metadata: usage.metadata ? JSON.stringify(usage.metadata) : null,
-        sessionId: usage.sessionId || null,
+        metadata: usage.metadata ? (typeof usage.metadata === 'string' ? usage.metadata : JSON.stringify(usage.metadata)) : null,
         timestamp: usage.timestamp || FieldValue.serverTimestamp(),
       });
+
+      console.log('🔥 Sanitized usage data:', usageData);
 
       // Store as subcollection under the store
       const docRef = await this.firestore
@@ -400,7 +402,7 @@ export class FirebaseDatabase implements DatabaseInterface {
         id: docRef.id,
         shopDomain: usage.shopDomain,
         action: usage.action,
-        blockType: usage.blockType,
+        path: `stores/${usage.shopDomain}/appBlockUsage/${docRef.id}`,
         savedTimestamp: usageData.timestamp
       });
 
@@ -520,5 +522,146 @@ export class FirebaseDatabase implements DatabaseInterface {
       console.error('❌ Error getting product by Shopify ID:', error);
       throw error;
     }
+  }
+
+  // ===============================
+  // ANALYTICS METHODS
+  // ===============================
+
+  async getVisualSearchAnalytics(filters: any): Promise<any> {
+    try {
+      const shopDomain = filters.shop;
+      if (!shopDomain) {
+        throw new Error('Shop domain is required for analytics');
+      }
+
+      const shopDocRef = this.firestore.collection('stores').doc(shopDomain);
+      const appBlockUsageRef = shopDocRef.collection('appBlockUsage');
+      const allRecordsSnapshot = await appBlockUsageRef.get();
+
+      const allEvents: any[] = [];
+      console.log(filters , "filtersfiltersfiltersfiltersfilters")
+      allRecordsSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        console.log(data, "datadddddddddddddddd")
+        if (data.metadata) {
+          try {
+            let metadata;
+            if (typeof data.metadata === 'string') {
+              metadata = JSON.parse(data.metadata);
+            } else {
+              metadata = data.metadata;
+            }
+            console.log(metadata.source , "metadata.sourcemetadata.sourcemetadata.source");
+            if (metadata && metadata.source) {
+              let timestamp;
+              if (data.timestamp?.toDate) {
+                timestamp = data.timestamp.toDate();
+              } else if (data.timestamp) {
+                timestamp = new Date(data.timestamp);
+              } else {
+                timestamp = new Date();
+              }
+
+              const startDate = new Date(filters.startDate);
+              const endDate = new Date(filters.endDate);
+              const isInRange = timestamp >= startDate && timestamp <= endDate;
+              console.log("allretuneObj" , {
+                  id: doc.id,
+                  shopDomain: shopDomain,
+                  action: data.action,
+                  url: data.url,
+                  metadata: metadata,
+                  timestamp: timestamp
+              })
+              if (isInRange) {
+                allEvents.push({
+                  id: doc.id,
+                  shopDomain: shopDomain,
+                  action: data.action,
+                  url: data.url,
+                  metadata: metadata,
+                  timestamp: timestamp
+                });
+              }
+            }
+          } catch (e) {
+            // Silently handle metadata parse errors
+          }
+        }
+      });
+
+      return this.processEventsIntoAnalytics(allEvents);
+
+    } catch (error) {
+      console.error('❌ Error getting visual search analytics from Firebase:', error);
+      throw error;
+    }
+  }
+
+  private processEventsIntoAnalytics(events: any[]): any {
+    const totalEvents = events.length;
+    console.log(events , "eventseventseventseventsevents")
+    // Action breakdown
+    const actionBreakdown = {
+      loaded: events.filter(e => e.action === 'loaded').length,
+      added: events.filter(e => e.action === 'added').length,
+      viewed: events.filter(e => e.action === 'viewed').length,
+      used: events.filter(e => e.action === 'used').length
+    };
+
+    // Daily trends (last 30 days)
+    const dailyTrends: any[] = [];
+    const last30Days = Array.from({ length: 30 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (29 - i));
+      return date.toISOString().split('T')[0];
+    });
+
+    last30Days.forEach(date => {
+      const dayEvents = events.filter(e => {
+        const eventDate = new Date(e.timestamp).toISOString().split('T')[0];
+        return eventDate === date;
+      });
+
+      dailyTrends.push({
+        date,
+        loaded: dayEvents.filter(e => e.action === 'loaded').length,
+        added: dayEvents.filter(e => e.action === 'added').length,
+        viewed: dayEvents.filter(e => e.action === 'viewed').length,
+        used: dayEvents.filter(e => e.action === 'used').length
+      });
+    });
+
+    // Device breakdown (from metadata)
+    const deviceBreakdown = {
+      mobile: events.filter(e => e.metadata?.isMobile === true).length,
+      desktop: events.filter(e => e.metadata?.isMobile === false).length
+    };
+
+    // Top shops
+    const shopCounts: { [key: string]: number } = {};
+    events.forEach(e => {
+      shopCounts[e.shopDomain] = (shopCounts[e.shopDomain] || 0) + 1;
+    });
+
+    const topShops = Object.entries(shopCounts)
+      .map(([shopDomain, eventCount]) => ({ shopDomain, eventCount }))
+      .sort((a, b) => b.eventCount - a.eventCount)
+      .slice(0, 10);
+
+    // Recent events
+    const recentEvents = events
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 50);
+
+    return {
+      totalEvents,
+      actionBreakdown,
+      dailyTrends,
+      deviceBreakdown,
+      topShops,
+      recentEvents
+    };
   }
 }

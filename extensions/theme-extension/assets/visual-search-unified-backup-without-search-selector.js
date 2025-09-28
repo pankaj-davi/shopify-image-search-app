@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://many-great-underlying-announcement.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://many-great-underlying-announcement.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://own-gentleman-adaptive-tions.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://own-gentleman-adaptive-tions.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - ENABLED
@@ -1990,32 +1990,56 @@
   // ANALYTICS UTILITIES
   // ====================================================================
 
-  function trackAnalyticsEvent(action, metadata = {}) {
-    if (!CONFIG.ANALYTICS_ENABLED) return;
+  function trackEvent(action, metadata = {}, type = 'analytics') {
+    if (type === 'analytics' && !CONFIG.ANALYTICS_ENABLED) return;
 
     try {
+      const cleanMetadata = { ...metadata };
+      delete cleanMetadata.action;
+
+      const payload = {
+        shop: CONFIG.SHOP_DOMAIN,
+        action: type === 'app_block' ? `app_block_${action}` : action,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          source: 'visual-search',
+          actionType: type === 'analytics' ? 'analytics-event' : 'app-block-usage',
+          ...cleanMetadata
+        }
+      };
+
       fetch(`${CONFIG.APP_URL}/api/cleanup-notification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          shop: CONFIG.SHOP_DOMAIN,
-          action: action,
-          url: window.location.href,
-          userAgent: navigator.userAgent,
-          metadata: {
-            source: 'visual-search',
-            ...metadata
-          },
-          timestamp: new Date().toISOString()
-        })
+        body: JSON.stringify(payload)
+      }).then(() => {
+        if (type === 'app_block') {
+          console.log(`[Visual Search] 📊 App block ${action} tracked`);
+        }
       }).catch(error => {
-        console.log(`[Visual Search] ${action} tracking failed:`, error);
+        const errorMessage = type === 'app_block'
+          ? `⚠️ Failed to track ${action}:`
+          : `${action} tracking failed:`;
+        console.log(`[Visual Search] ${errorMessage}`, error);
       });
     } catch (error) {
-      console.log(`[Visual Search] ${action} tracking error:`, error);
+      const errorMessage = type === 'app_block'
+        ? `⚠️ Tracking error for ${action}:`
+        : `${action} tracking error:`;
+      console.log(`[Visual Search] ${errorMessage}`, error);
     }
+  }
+
+  function trackAnalyticsEvent(action, metadata = {}) {
+    trackEvent(action, metadata, 'analytics');
+  }
+
+  function trackAppBlockUsage(action, metadata = {}) {
+    trackEvent(action, metadata, 'app_block');
   }
 
   // ====================================================================
@@ -4229,36 +4253,6 @@
     return true;
   }
   
-  // 🆕 TRACK APP BLOCK USAGE
-  function trackAppBlockUsage(action, metadata = {}) {
-    try {
-      const finalUrl = `${CONFIG.APP_URL}/api/cleanup-notification`;
-
-      fetch(finalUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          shop: CONFIG.SHOP_DOMAIN,
-          action: `app_block_${action}`,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          metadata: {
-            action,
-            ...metadata
-          }
-        })
-      }).then(() => {
-        console.log(`[Visual Search] 📊 App block ${action} tracked`);
-      }).catch(error => {
-        console.log(`[Visual Search] ⚠️ Failed to track ${action}:`, error);
-      });
-    } catch (error) {
-      console.log(`[Visual Search] ⚠️ Tracking error for ${action}:`, error);
-    }
-  }
 
   function initializeCleanupSystem() {
     console.log('[Visual Search] 🧹 Starting enhanced cleanup monitoring system...');
@@ -5112,8 +5106,8 @@
     
     trackAppBlockUsage('block_loaded', {
       feature: 'app_block_detected',
-      enabledBlockTypes: enabledBlockTypes,      
-      blockDetails: detection,               
+      enabledBlockTypes: enabledBlockTypes,
+      blockDetails: detection,
       pageUrl: window.location.href
     });
     

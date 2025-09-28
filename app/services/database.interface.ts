@@ -21,6 +21,9 @@ export interface DatabaseInterface {
   // App Block tracking (stored as subcollections under stores)
   createAppBlockUsage(usage: AppBlockUsageData): Promise<{ id: string }>;
 
+  // Analytics queries for visual search
+  getVisualSearchAnalytics(filters: AnalyticsFilters): Promise<VisualSearchAnalytics>;
+
   // Visual Search tracking (stored as subcollections under stores) - REMOVED
 }
 
@@ -176,13 +179,53 @@ export interface StoreData {
 // App Block tracking data types
 export interface AppBlockUsageData {
   shopDomain: string;
-  blockType: string;
-  action: string;
-  url?: string | null;
-  userAgent?: string | null;
-  metadata?: string | null;
-  sessionId?: string | null;
-  timestamp?: Date;
+  action: 'added' | 'removed' | 'used' | 'viewed' | 'loaded';
+  url: string;
+  userAgent: string;
+  metadata: any;
+  timestamp: string;
+}
+
+// Analytics interfaces for visual search
+export interface AnalyticsFilters {
+  startDate: string;
+  endDate: string;
+  shop?: string;
+  action?: string;
+  source?: string;
+}
+
+export interface VisualSearchAnalytics {
+  totalEvents: number;
+  actionBreakdown: {
+    loaded: number;
+    added: number;
+    viewed: number;
+    used: number;
+  };
+  dailyTrends: Array<{
+    date: string;
+    loaded: number;
+    added: number;
+    viewed: number;
+    used: number;
+  }>;
+  deviceBreakdown: {
+    mobile: number;
+    desktop: number;
+  };
+  topShops: Array<{
+    shopDomain: string;
+    eventCount: number;
+  }>;
+  recentEvents: Array<{
+    id: string;
+    shopDomain: string;
+    action: string;
+    url: string | null;
+    metadata: any;
+    timestamp: Date;
+  }>;
 }
 
 // Visual Search Usage Data - REMOVED - Now uses general app block tracking
