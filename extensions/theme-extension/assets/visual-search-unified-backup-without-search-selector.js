@@ -20,12 +20,12 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://veterinary-temple-arab-moses.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://veterinary-temple-arab-moses.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://many-great-underlying-announcement.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://many-great-underlying-announcement.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
-    // Analytics configuration - DISABLED
-    ANALYTICS_ENABLED: false,
+    // Analytics configuration - ENABLED
+    ANALYTICS_ENABLED: true,
     
   // App Block Selectors - CENTRALIZED CONFIGURATION
     // ⚠️ IMPORTANT: All app block selectors are defined here for easy maintenance
@@ -1987,16 +1987,57 @@
   }
 
   // ====================================================================
+  // ANALYTICS UTILITIES
+  // ====================================================================
+
+  function trackAnalyticsEvent(action, metadata = {}) {
+    if (!CONFIG.ANALYTICS_ENABLED) return;
+
+    try {
+      fetch(`${CONFIG.APP_URL}/api/cleanup-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          shop: CONFIG.SHOP_DOMAIN,
+          action: action,
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          metadata: {
+            source: 'visual-search',
+            ...metadata
+          },
+          timestamp: new Date().toISOString()
+        })
+      }).catch(error => {
+        console.log(`[Visual Search] ${action} tracking failed:`, error);
+      });
+    } catch (error) {
+      console.log(`[Visual Search] ${action} tracking error:`, error);
+    }
+  }
+
+  // ====================================================================
   // PINTEREST-STYLE DRAWER
   // ====================================================================
   
   function openVisualSearchDrawer(searchInput) {
     console.log('[Visual Search] 🚪 Opening drawer with searchInput:', !!searchInput, searchInput);
-    
+
+    // Track visual search component loaded
+    trackAnalyticsEvent('loaded', {
+      actionType: 'component-loaded',
+      hasSearchInput: !!searchInput,
+      browserWidth: window.innerWidth,
+      browserHeight: window.innerHeight,
+      isMobile: window.innerWidth <= 768
+    });
+
     // Read theme configuration from app blocks before creating drawer
     console.log('[Visual Search] 🎨 Reading theme configuration before opening drawer...');
     getThemeConfigFromAppBlocks();
-    
+
     // If searchInput is null/undefined, create a fallback
     if (!searchInput) {
       console.log('[Visual Search] ⚠️ No searchInput provided, creating fallback');
@@ -2191,11 +2232,20 @@
     fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file || !validateFile(file)) return;
-      
+
       try {
+        // Track image upload
+        trackAnalyticsEvent('added', {
+          actionType: 'image-upload',
+          fileSize: file.size,
+          fileType: file.type,
+          fileName: file.name,
+          uploadMethod: useCamera ? 'camera' : 'file-picker'
+        });
+
         // Show image preview immediately
         showImagePreview(drawer, file, searchInput);
-        
+
         // 🚀 IMMEDIATE API CALL - Call backend as soon as file is uploaded
         performImmediateImageAnalysis(drawer, file, searchInput);
         
@@ -3375,10 +3425,18 @@
     drawer._currentPage = 0;
     drawer._itemsPerPage = 20;
     drawer._searchInput = searchInput;
-    
+
+    // Track search results viewed
+    trackAnalyticsEvent('viewed', {
+      actionType: 'search-results-viewed',
+      searchType: searchType,
+      resultsCount: products.length,
+      itemsPerPage: drawer._itemsPerPage
+    });
+
     // Display all results directly (no filtering)
     displayAllResults(drawer, products);
-    
+
     // Setup infinite scroll for results container
     setupInfiniteScroll(drawer);
   }
@@ -3756,10 +3814,14 @@
         console.log('[Visual Search] 🔗 Navigating to product:', productUrl);
       }
       
-      // Track product click (if analytics enabled)
-      if (CONFIG.ANALYTICS_ENABLED) {
-        // Analytics tracking could be added here
-      }
+      // Track product click
+      trackAnalyticsEvent('used', {
+        actionType: 'product-click',
+        productId: product.id,
+        productHandle: product.handle,
+        productTitle: product.title,
+        clickType: product.selectedVariant ? 'variant-click' : 'product-click'
+      });
       
       // Open product page
       window.open(productUrl, '_blank');
