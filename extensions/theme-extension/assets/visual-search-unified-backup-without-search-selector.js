@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://own-gentleman-adaptive-tions.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://own-gentleman-adaptive-tions.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://heights-mold-tuner-routers.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://heights-mold-tuner-routers.trycloudflare.com/api/product-handle',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     
     // Analytics configuration - ENABLED
@@ -3974,10 +3974,10 @@
       console.log('[Visual Search] 📸 Image URL:', imageUrl);
       console.log('[Visual Search] 🔍 Search input exists:', !!searchInput);
       console.log('[Visual Search] 📦 Drawer exists:', !!drawer);
-      
+
       // Show feedback to user
       showNotification('Using this image for new search...', 'info');
-      
+
       // Create a fake file object for the result image
       const fakeFile = {
         name: 'result-image.jpg',
@@ -3985,15 +3985,15 @@
         size: 0,
         _imageUrl: imageUrl
       };
-      
+
       // Update the uploaded image display (this handles everything)
       showImagePreview(drawer, fakeFile, searchInput);
-      
-      // Update UI to show that we're using a new image
-      updateResultsHeader(drawer, 'New search starting...', 'Using selected result image for search');
-      
-      showSuccess('Image updated! Crop and adjust the area to search.');
-      
+
+      // 🚀 TRIGGER API CALL - Call backend to search with the new image
+      await performImmediateImageAnalysis(drawer, fakeFile, searchInput);
+
+      showSuccess('Searching with selected image...');
+
     } catch (error) {
       console.error('Search by result image error:', error);
       showError('Could not use this image for search. Please try again.');
