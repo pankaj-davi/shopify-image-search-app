@@ -1,5 +1,5 @@
 import { extractIdFromGid } from "./visual-search.server";
-import { getShopSession, createAdminClient } from "./shop.server";
+import { getValidShopSession, createValidatedAdminClient } from "./shop-auth.server";
 
 export interface ProductDetails {
   id: string;
@@ -228,22 +228,25 @@ export async function fetchProductDetailsWithAuth(
     productIds: string[]
 ): Promise<ProductDetails[]> {
     console.log("Fetching product details with auth for shop:", shopDomain);
-    
-    // Get stored session for this shop
-    const session = await getShopSession(shopDomain);
-    
+
+    // Get validated session for this shop (includes token validation)
+    const session = await getValidShopSession(shopDomain);
+
     if (!session) {
-        throw new Error(`No session found for shop ${shopDomain}. Please install the app first.`);
+        throw new Error(`SHOP_NOT_AUTHENTICATED: No valid session found for shop ${shopDomain}. Please install the app first.`);
     }
-    
-    // Check if session is expired
+
+    // Note: Offline tokens don't expire in production, but check just in case
     if (session.expires && new Date() > session.expires) {
-        throw new Error(`Session expired for shop ${shopDomain}. Please reinstall the app.`);
+        throw new Error(`SESSION_EXPIRED: Session expired for shop ${shopDomain}. Please reinstall the app.`);
     }
-    
-    // Create admin client with stored access token
-    const admin = createAdminClient(shopDomain, session.accessToken);
-    
+
+    // Create validated admin client (includes automatic token validation)
+    if (!session.accessToken) {
+        throw new Error(`SHOP_NOT_AUTHENTICATED: No access token found for shop ${shopDomain}. Please install the app first.`);
+    }
+    const admin = createValidatedAdminClient(shopDomain, session.accessToken);
+
     // Use existing fetchProductDetails logic
     return fetchProductDetails(admin, productIds);
 }

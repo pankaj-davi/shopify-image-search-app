@@ -16,18 +16,10 @@ function getCorsHeaders() {
   };
 }
 
-// Handle preflight OPTIONS request
+// Handle OPTIONS preflight in loader
 export async function loader({ request }: LoaderFunctionArgs) {
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
-  }
-  
-  // For non-OPTIONS requests, return method not allowed
-  return json({ error: "Method not allowed" }, { 
-    status: 405,
+  return new Response(null, {
+    status: 204,
     headers: getCorsHeaders(),
   });
 }
