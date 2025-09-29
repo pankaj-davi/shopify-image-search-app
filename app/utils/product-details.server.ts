@@ -1,5 +1,5 @@
 import { extractIdFromGid } from "./visual-search.server";
-import { getShopSession, createAdminClient } from "./shop.server";
+import { getValidShopSession, createValidatedAdminClient } from "./shop-auth.server";
 
 export interface ProductDetails {
   id: string;
@@ -188,24 +188,37 @@ export async function fetchProductDetails(
     admin: any, 
     productIds: string[]
 ): Promise<ProductDetails[]> {
-    console.log("EEFetching product details for IDs:", productIds);
+    const fetchStart = Date.now();
+    console.log(`[TIMING] Fetching product details for ${productIds.length} IDs`);
     try {
+        const graphqlStart = Date.now();
         const shopifyResponse = await admin.graphql(PRODUCT_DETAILS_QUERY, {
             variables: { ids: productIds }
         });
-        console.log("shopifyResponseShopify product details response:", shopifyResponse);
+        const graphqlEnd = Date.now();
+        console.log(`[TIMING] GraphQL query took: ${graphqlEnd - graphqlStart}ms`);
+        
+        const jsonStart = Date.now();
         const shopifyData = await shopifyResponse.json();
-        console.log("Shopify product details response:", shopifyData);
+        const jsonEnd = Date.now();
+        console.log(`[TIMING] Shopify JSON parsing took: ${jsonEnd - jsonStart}ms`);
         if (!shopifyData.data || !shopifyData.data.nodes) {
             throw new Error("Failed to fetch product details from Shopify");
         }
 
         // Transform Shopify data to required format
-        return shopifyData.data.nodes
+        const transformStart = Date.now();
+        const result = shopifyData.data.nodes
             .filter((node: any) => node !== null)
             .map((node: any) => transformProductNode(node));
+        const transformEnd = Date.now();
+        console.log(`[TIMING] Data transformation took: ${transformEnd - transformStart}ms`);
+        console.log(`[TIMING] Total product fetch took: ${Date.now() - fetchStart}ms`);
+        
+        return result;
     } catch (error) {
         console.error("Error fetching product details:", error);
+        console.log(`[TIMING] Product fetch failed after: ${Date.now() - fetchStart}ms`);
         throw error;
     }
 }
@@ -215,22 +228,25 @@ export async function fetchProductDetailsWithAuth(
     productIds: string[]
 ): Promise<ProductDetails[]> {
     console.log("Fetching product details with auth for shop:", shopDomain);
-    
-    // Get stored session for this shop
-    const session = await getShopSession(shopDomain);
-    
+
+    // Get validated session for this shop (includes token validation)
+    const session = await getValidShopSession(shopDomain);
+
     if (!session) {
-        throw new Error(`No session found for shop ${shopDomain}. Please install the app first.`);
+        throw new Error(`SHOP_NOT_AUTHENTICATED: No valid session found for shop ${shopDomain}. Please install the app first.`);
     }
-    
-    // Check if session is expired
+
+    // Note: Offline tokens don't expire in production, but check just in case
     if (session.expires && new Date() > session.expires) {
-        throw new Error(`Session expired for shop ${shopDomain}. Please reinstall the app.`);
+        throw new Error(`SESSION_EXPIRED: Session expired for shop ${shopDomain}. Please reinstall the app.`);
     }
-    
-    // Create admin client with stored access token
-    const admin = createAdminClient(shopDomain, session.accessToken);
-    
+
+    // Create validated admin client (includes automatic token validation)
+    if (!session.accessToken) {
+        throw new Error(`SHOP_NOT_AUTHENTICATED: No access token found for shop ${shopDomain}. Please install the app first.`);
+    }
+    const admin = createValidatedAdminClient(shopDomain, session.accessToken);
+
     // Use existing fetchProductDetails logic
     return fetchProductDetails(admin, productIds);
 }
@@ -252,7 +268,6 @@ function transformProductNode(node: any): ProductDetails {
     isAvailable = product.variants?.nodes?.some((variant: any) => variant.availableForSale) || false;
   }
   
-  console.log(node, 'DaivNode');
   
   return {
     id: extractIdFromGid(product.id),

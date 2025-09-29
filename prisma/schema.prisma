@@ -1,13 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
-// enough when changing adapters.
-// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
   provider = "sqlite"
   url      = "file:dev.sqlite"
@@ -32,42 +26,42 @@ model Session {
 }
 
 model Store {
-  id               String    @id @default(cuid())
-  shopDomain       String    @unique
-  name             String
-  myshopifyDomain  String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  products         Product[]
+  id              String    @id @default(cuid())
+  shopDomain      String    @unique
+  name            String
+  myshopifyDomain String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  products        Product[]
 }
 
 model Product {
-  id                String   @id @default(cuid())
-  shopifyProductId  String
-  title             String
-  handle            String
-  status            String
-  price             String?
-  sku               String?
-  shopDomain        String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  store             Store    @relation(fields: [shopDomain], references: [shopDomain])
+  id               String   @id @default(cuid())
+  shopifyProductId String
+  title            String
+  handle           String
+  status           String
+  price            String?
+  sku              String?
+  shopDomain       String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  store            Store    @relation(fields: [shopDomain], references: [shopDomain])
 
   @@index([shopDomain])
   @@index([shopifyProductId])
 }
 
 model AppBlockUsage {
-  id          String   @id @default(cuid())
-  shopDomain  String
-  blockType   String   // "visual-search"
-  action      String   // "added", "removed", "used", "viewed"
-  url         String?
-  timestamp   DateTime @default(now())
-  userAgent   String?
-  metadata    String?  // JSON string for additional data
-  sessionId   String?  // Optional session tracking
+  id         String   @id @default(cuid())
+  shopDomain String
+  blockType  String
+  action     String
+  url        String?
+  timestamp  DateTime @default(now())
+  userAgent  String?
+  metadata   String?
+  sessionId  String?
 
   @@index([shopDomain])
   @@index([blockType])
@@ -76,19 +70,30 @@ model AppBlockUsage {
 }
 
 model VisualSearchUsage {
-  id           String   @id @default(cuid())
-  shopDomain   String
-  searchType   String   // "image_upload", "crop_search", "url_input", "camera"
-  hasResults   Boolean  @default(false)
-  resultCount  Int      @default(0)
-  imageSize    Int?     // File size in bytes
-  imageType    String?  // MIME type
-  cropData     String?  // JSON string of crop coordinates
-  timestamp    DateTime @default(now())
-  sessionId    String?
-  url          String?
+  id          String   @id @default(cuid())
+  shopDomain  String
+  searchType  String
+  hasResults  Boolean  @default(false)
+  resultCount Int      @default(0)
+  imageSize   Int?
+  imageType   String?
+  cropData    String?
+  timestamp   DateTime @default(now())
+  sessionId   String?
+  url         String?
 
   @@index([shopDomain])
   @@index([searchType])
   @@index([timestamp])
+}
+
+model StorefrontToken {
+  id          String   @id
+  shopDomain  String   @unique
+  accessToken String
+  tokenId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  @@index([shopDomain])
 }

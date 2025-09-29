@@ -66,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
           shopDomain: shop,
           action: action || 'unknown',
           url: url || null,
-          userAgent: userAgent?.substring(0, 500) || null,
+          userAgent: userAgent || null,
           metadata: parsedMetadata || null,
           timestamp: timestamp || new Date().toISOString(),
         });

@@ -316,17 +316,22 @@ export default function Index() {
                             <Text as="p" variant="bodyMd">
                               Track how customers use visual search and optimize performance.
                             </Text>
-                            
+
                             <BlockStack gap="100">
-                              <Text as="p" variant="bodySm">📈 Search analytics</Text>
-                              <Text as="p" variant="bodySm">🎯 Conversion tracking</Text>
-                            <Text as="p" variant="bodySm">🔍 Popular searches</Text>
-                              <Text as="p" variant="bodySm">📱 Mobile insights</Text>
+                              <Text as="p" variant="bodySm">✅ Component loads</Text>
+                              <Text as="p" variant="bodySm">✅ Image uploads</Text>
+                              <Text as="p" variant="bodySm">✅ Product clicks</Text>
+                              <Text as="p" variant="bodySm">✅ Device breakdown</Text>
                             </BlockStack>
-                            
-                            <Text as="p" variant="bodyMd" tone="subdued">
-                              Analytics coming soon
-                            </Text>
+
+                            <Button
+                              url="/app/analytics"
+                              variant="secondary"
+                              size="large"
+                              fullWidth
+                            >
+                              View Analytics →
+                            </Button>
                           </BlockStack>
                         </Box>
                       </Card>
@@ -335,6 +340,7 @@ export default function Index() {
                 </BlockStack>
               </Box>
             </Card>
+
           </BlockStack>
         )}
 

@@ -2,6 +2,8 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { appDatabase } from "../services/app.database.service";
 
+const SHOPIFY_APP_EMBEDDINGS_URL = process.env.SHOPIFY_APP_EMBEDDINGS_URL;
+
 export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
   const shopDomain = session.shop;
@@ -466,7 +468,7 @@ export async function fullSyncAction({ request }: ActionFunctionArgs) {
     console.log('🎯 Starting embedding process...');
     try {
       console.log(`📡 Calling embedding API for shop: ${shopDomain}`);
-      const embeddingResponse = await fetch(`http://34.121.184.244:8000/sync/${shopDomain}`, {
+      const embeddingResponse = await fetch(`${SHOPIFY_APP_EMBEDDINGS_URL}/sync/${shopDomain}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(300000), // 5 min timeout
