@@ -30,11 +30,9 @@ export async function callVisualSearchAPI(
   searchFormData.append("store_domain", shopDomain);
   console.log(`[TIMING] FormData creation took: ${Date.now() - formDataStart}ms`);
 
-   const url = `${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/search`;
-
   try {
     const fetchStart = Date.now();
-    const searchResponse = await fetch(url, {
+    const searchResponse = await fetch(`${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/search`, {
       method: "POST",
       headers: {
         "accept": "application/json",
