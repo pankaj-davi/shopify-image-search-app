@@ -170,7 +170,8 @@ export interface StoreData {
     redirectLimitReached?: boolean;
   };
   
-  productCount?: number; // Track synced products count
+  productCount?: number; // Track synced products count in database
+  totalProductsInShopify?: number; // Total products in Shopify store
   lastSyncAt?: Date; // Track last sync timestamp
   createdAt: Date;
   updatedAt: Date;

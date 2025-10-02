@@ -36,7 +36,8 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
       products: [], // Don't load products on initial load
       isFirstTime: false,
       needsSync: !hasSyncedProducts, // Need sync if no products synced
-      productCount: actualProductCount, // Return actual count
+      productCount: actualProductCount, // Return actual count in DB
+      totalProductsInShopify: storeExists.totalProductsInShopify || 0, // Total in Shopify
       ongoingJobId, // Return ongoing job if exists
     };
   }
@@ -206,15 +207,33 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     `
     );
   const storeData = await storeResponse.json();
-  
-  await appDatabase.syncStore(storeData.data.shop);
+
+  // Get total product count from Shopify
+  const countResponse = await admin.graphql(`
+    query {
+      productsCount {
+        count
+      }
+    }
+  `);
+  const countData = await countResponse.json();
+  const totalProducts = countData.data?.productsCount?.count || 0;
+
+  console.log(`📊 Store has ${totalProducts} total products in Shopify`);
+
+  // Sync store with total product count from Shopify
+  await appDatabase.syncStore({
+    ...storeData.data.shop,
+    totalProductsInShopify: totalProducts // Save Shopify's total count
+  });
 
   return {
     store: storeData.data.shop,
     products: [], // Don't return products - user will sync manually
     isFirstTime: true,
     needsSync: true,
-    productCount: 0, // No products synced yet
+    productCount: 0, // No products synced to DB yet
+    totalProductsInShopify: totalProducts, // Total in Shopify
   };
 }
 
