@@ -18,7 +18,7 @@ export async function runBackgroundSync({ admin, shopDomain, jobId }: SyncWorker
     await appDatabase.updateSyncJob(jobId, {
       status: 'running',
       startedAt: new Date().toISOString()
-    });
+    }, shopDomain);
 
     // Get total product count
     const countResponse = await admin.graphql(`
@@ -36,7 +36,7 @@ export async function runBackgroundSync({ admin, shopDomain, jobId }: SyncWorker
     // Update total count
     await appDatabase.updateSyncJob(jobId, {
       totalProducts
-    });
+    }, shopDomain);
 
     // Sync in chunks
     const batchSize = 50;
@@ -178,7 +178,7 @@ export async function runBackgroundSync({ admin, shopDomain, jobId }: SyncWorker
         syncedCount,
         progress,
         cursor // Save cursor for resumability
-      });
+      }, shopDomain);
 
       console.log(`✅ Progress: ${syncedCount}/${totalProducts} (${progress}%)`);
 
@@ -222,7 +222,7 @@ export async function runBackgroundSync({ admin, shopDomain, jobId }: SyncWorker
       completedAt: new Date().toISOString(),
       progress: 100,
       embeddingSuccess
-    });
+    }, shopDomain);
 
     console.log(`🎉 Background sync completed successfully for job: ${jobId}`);
 
@@ -241,7 +241,7 @@ export async function runBackgroundSync({ admin, shopDomain, jobId }: SyncWorker
       status: 'failed',
       error: error.message,
       completedAt: new Date().toISOString()
-    });
+    }, shopDomain);
 
     throw error;
   }

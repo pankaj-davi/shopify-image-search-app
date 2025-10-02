@@ -644,11 +644,11 @@ export class AppDatabaseService {
     }
   }
 
-  async getSyncJob(jobId: string): Promise<any> {
+  async getSyncJob(jobId: string, shopDomain?: string): Promise<any> {
     const db = await this.getDB();
     try {
       if (db.getSyncJob) {
-        return await db.getSyncJob(jobId);
+        return await db.getSyncJob(jobId, shopDomain);
       }
       throw new Error('getSyncJob not supported by database');
     } catch (error) {
@@ -657,11 +657,11 @@ export class AppDatabaseService {
     }
   }
 
-  async updateSyncJob(jobId: string, updates: any): Promise<void> {
+  async updateSyncJob(jobId: string, updates: any, shopDomain?: string): Promise<void> {
     const db = await this.getDB();
     try {
       if (db.updateSyncJob) {
-        await db.updateSyncJob(jobId, updates);
+        await db.updateSyncJob(jobId, updates, shopDomain);
       } else {
         throw new Error('updateSyncJob not supported by database');
       }

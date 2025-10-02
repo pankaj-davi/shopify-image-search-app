@@ -537,6 +537,19 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async createSyncJob(shopDomain: string, totalProducts: number): Promise<string> {
     try {
+      // First, get the store document to use as parent
+      const storeSnapshot = await this.getFirestore()
+        .collection('stores')
+        .where('shopDomain', '==', shopDomain)
+        .limit(1)
+        .get();
+
+      if (storeSnapshot.empty) {
+        throw new Error(`Store not found: ${shopDomain}`);
+      }
+
+      const storeDoc = storeSnapshot.docs[0];
+
       const jobData = {
         shopDomain,
         status: 'pending', // pending, running, completed, failed
@@ -551,11 +564,14 @@ export class FirebaseDatabase implements DatabaseInterface {
         embeddingSuccess: false,
       };
 
+      // Store sync job as subcollection under store: stores/{storeId}/sync_jobs/{jobId}
       const jobRef = await this.getFirestore()
+        .collection('stores')
+        .doc(storeDoc.id)
         .collection('sync_jobs')
         .add(jobData);
 
-      console.log(`🔥 Sync job created: ${jobRef.id}`);
+      console.log(`🔥 Sync job created: ${jobRef.id} for store ${shopDomain}`);
       return jobRef.id;
     } catch (error) {
       console.error('❌ Error creating sync job:', error);
@@ -563,20 +579,67 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
-  async getSyncJob(jobId: string): Promise<any> {
+  async getSyncJob(jobId: string, shopDomain?: string): Promise<any> {
     try {
-      const doc = await this.getFirestore()
+      // If shopDomain not provided, search all stores (less efficient)
+      if (!shopDomain) {
+        const storesSnapshot = await this.getFirestore().collection('stores').get();
+
+        for (const storeDoc of storesSnapshot.docs) {
+          const jobDoc = await this.getFirestore()
+            .collection('stores')
+            .doc(storeDoc.id)
+            .collection('sync_jobs')
+            .doc(jobId)
+            .get();
+
+          if (jobDoc.exists) {
+            const data = jobDoc.data()!;
+            return {
+              id: jobDoc.id,
+              shopDomain: data.shopDomain,
+              status: data.status,
+              totalProducts: data.totalProducts,
+              syncedCount: data.syncedCount,
+              progress: data.progress,
+              cursor: data.cursor,
+              createdAt: data.createdAt,
+              startedAt: data.startedAt,
+              completedAt: data.completedAt,
+              error: data.error,
+              embeddingSuccess: data.embeddingSuccess,
+            };
+          }
+        }
+        return null;
+      }
+
+      // Efficient lookup with shopDomain
+      const storeSnapshot = await this.getFirestore()
+        .collection('stores')
+        .where('shopDomain', '==', shopDomain)
+        .limit(1)
+        .get();
+
+      if (storeSnapshot.empty) {
+        return null;
+      }
+
+      const storeDoc = storeSnapshot.docs[0];
+      const jobDoc = await this.getFirestore()
+        .collection('stores')
+        .doc(storeDoc.id)
         .collection('sync_jobs')
         .doc(jobId)
         .get();
 
-      if (!doc.exists) {
+      if (!jobDoc.exists) {
         return null;
       }
 
-      const data = doc.data()!;
+      const data = jobDoc.data()!;
       return {
-        id: doc.id,
+        id: jobDoc.id,
         shopDomain: data.shopDomain,
         status: data.status,
         totalProducts: data.totalProducts,
@@ -595,9 +658,51 @@ export class FirebaseDatabase implements DatabaseInterface {
     }
   }
 
-  async updateSyncJob(jobId: string, updates: any): Promise<void> {
+  async updateSyncJob(jobId: string, updates: any, shopDomain?: string): Promise<void> {
     try {
+      // If shopDomain not provided, search all stores
+      if (!shopDomain) {
+        const storesSnapshot = await this.getFirestore().collection('stores').get();
+
+        for (const storeDoc of storesSnapshot.docs) {
+          const jobDoc = await this.getFirestore()
+            .collection('stores')
+            .doc(storeDoc.id)
+            .collection('sync_jobs')
+            .doc(jobId)
+            .get();
+
+          if (jobDoc.exists) {
+            await this.getFirestore()
+              .collection('stores')
+              .doc(storeDoc.id)
+              .collection('sync_jobs')
+              .doc(jobId)
+              .update({
+                ...updates,
+                updatedAt: FieldValue.serverTimestamp()
+              });
+            return;
+          }
+        }
+        throw new Error(`Sync job not found: ${jobId}`);
+      }
+
+      // Efficient update with shopDomain
+      const storeSnapshot = await this.getFirestore()
+        .collection('stores')
+        .where('shopDomain', '==', shopDomain)
+        .limit(1)
+        .get();
+
+      if (storeSnapshot.empty) {
+        throw new Error(`Store not found: ${shopDomain}`);
+      }
+
+      const storeDoc = storeSnapshot.docs[0];
       await this.getFirestore()
+        .collection('stores')
+        .doc(storeDoc.id)
         .collection('sync_jobs')
         .doc(jobId)
         .update({
@@ -612,9 +717,21 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async getLatestSyncJob(shopDomain: string): Promise<any> {
     try {
-      const snapshot = await this.getFirestore()
-        .collection('sync_jobs')
+      const storeSnapshot = await this.getFirestore()
+        .collection('stores')
         .where('shopDomain', '==', shopDomain)
+        .limit(1)
+        .get();
+
+      if (storeSnapshot.empty) {
+        return null;
+      }
+
+      const storeDoc = storeSnapshot.docs[0];
+      const snapshot = await this.getFirestore()
+        .collection('stores')
+        .doc(storeDoc.id)
+        .collection('sync_jobs')
         .orderBy('createdAt', 'desc')
         .limit(1)
         .get();
