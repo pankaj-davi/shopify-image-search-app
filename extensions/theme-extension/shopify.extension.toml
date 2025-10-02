@@ -1,0 +1,16 @@
+name = "visual-search-theme"
+
+uid = "8ef726fe-3504-d189-ce7b-23b0fe62c43f0c42d042"
+
+type = "theme"
+
+[[app_blocks]]
+  name = "Float Image Search"
+  target = "body"
+  icon = "visual-search-logo.svg"
+
+[[app_blocks]]
+  name = "VS Icon_pankaj"
+  target = "section"
+  icon = "visual-search-logo.svg"
+

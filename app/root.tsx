@@ -17,6 +17,7 @@ export default function App() {
           rel="stylesheet"
           href="https://cdn.shopify.com/static/fonts/inter/v4/styles.css"
         />
+        <link rel="stylesheet" href="/app/styles/polaris-theme.css" />
         <Meta />
         <Links />
       </head>

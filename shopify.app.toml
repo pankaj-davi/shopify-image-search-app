@@ -2,31 +2,54 @@
 
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
-handle = "newp"
-application_url = "https://blend-gorgeous-absorption-javascript.trycloudflare.com"
+application_url = "https://new-p-shopify-test.netlify.app"
 embedded = true
+handle = "newp"
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-07"
 
   [[webhooks.subscriptions]]
-  topics = ["app/uninstalled"]
+  topics = [ "products/create" ]
+  uri = "/webhooks/products/create"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/update" ]
+  uri = "/webhooks/products/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/delete" ]
+  uri = "/webhooks/products/delete"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
   uri = "/webhooks/app/uninstalled"
 
   [[webhooks.subscriptions]]
   topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
 
+  [[webhooks.subscriptions]]
+  topics = [ "shop/update" ]
+  uri = "/webhooks/shop/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "bulk_operations/finish" ]
+  uri = "/webhooks/bulk_operations/finish"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "write_products,write_script_tags"
 
 [auth]
-redirect_urls = ["https://blend-gorgeous-absorption-javascript.trycloudflare.com/auth/callback", "https://blend-gorgeous-absorption-javascript.trycloudflare.com/auth/shopify/callback", "https://blend-gorgeous-absorption-javascript.trycloudflare.com/api/auth/callback"]
+redirect_urls = [
+  "https://new-p-shopify-test.netlify.app/auth/callback",
+  "https://new-p-shopify-test.netlify.app/auth/shopify/callback",
+  "https://new-p-shopify-test.netlify.app/api/auth/callback"
+]
 
 [pos]
 embedded = false

@@ -1,0 +1,511 @@
+{%- if block.settings.embed_enabled -%}
+<style>
+  .vs-enhanced-search-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+  
+  .vs-search-icon {
+    position: absolute;
+    top: 50%;
+    right: {{ block.settings.icon_margin | default: 8 }}px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: {{ block.settings.icon_color | default: '#5f6368' }};
+    background-color: {{ block.settings.icon_background | default: 'transparent' }};
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    padding: 4px;
+    border-radius: 4px;
+    width: {{ block.settings.icon_size | default: 34 }}px;
+    height: {{ block.settings.icon_size | default: 34 }}px;
+    /* Instant visibility optimizations */
+    opacity: 1;
+    visibility: visible;
+    will-change: opacity, transform;
+  }
+  
+  .vs-search-icon:hover {
+    opacity: 0.8;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .vs-search-icon.vs-loading {
+    opacity: 0.6;
+    animation: vs-pulse 1s infinite;
+  }
+  
+  @keyframes vs-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.8; }
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+  
+  const config = {
+    blockId: '{{ block.id }}',
+    shopDomain: '{{ shop.permanent_domain }}',
+    appUrl: 'https://new-p-shopify-test.netlify.app',
+    settings: {
+      embedEnabled: {{ block.settings.embed_enabled | default: true }},
+      iconSize: {{ block.settings.icon_size | default: 34 }},
+      iconMargin: {{ block.settings.icon_margin | default: 8 }},
+      advancedSettings: '{{ block.settings.custom_settings | default: "" }}'
+    }
+  };
+  
+  // Parse advanced settings
+  function parseAdvancedSettings(settingsString) {
+    const settings = { customIconUrl: '', customSelector: '' };
+    if (!settingsString) return settings;
+    
+    const pairs = settingsString.split('|');
+    pairs.forEach(pair => {
+      const [key, value] = pair.split(':');
+      if (key && value !== undefined) {
+        if (key.trim() === 'icon_url' && value.trim()) {
+          settings.customIconUrl = value.trim();
+        } else if (key.trim() === 'selectors' && value.trim()) {
+          settings.customSelector = value.trim();
+        }
+      }
+    });
+    return settings;
+  }
+  
+  const advancedSettings = parseAdvancedSettings(config.settings.advancedSettings);
+  
+  if (!config.settings.embedEnabled) {
+    console.log('[Visual Search Embed] 🚫 Embed disabled via settings');
+    return;
+  }
+
+  // Load the main script immediately (same method as floating block)
+  const visualSearchScript = document.createElement('script');
+  visualSearchScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+  document.head.appendChild(visualSearchScript);
+
+  function waitForMainScript() {
+    console.log('[Visual Search Embed] ⚡ Fast-loading icon initialization...');
+    
+    // Initialize icons immediately, don't wait for main script
+    initializeEmbedEnhancer();
+    
+    // Then load main functionality in background
+    let attempts = 0;
+    const maxAttempts = 20; // Reduced from 40
+    
+    const checkScript = setInterval(() => {
+      attempts++;
+      
+      if (window.visualSearchUnified || attempts >= maxAttempts) {
+        clearInterval(checkScript);
+        
+        if (window.visualSearchUnified) {
+          console.log('[Visual Search Embed] ✅ Main script loaded, enhancing functionality...');
+          enhanceWithMainScript();
+        } else {
+          console.warn('[Visual Search Embed] ⚠️ Main script not available, icons will show error message when clicked');
+        }
+      }
+    }, 250); // Check more frequently (250ms instead of 500ms)
+  }
+  
+  function enhanceWithMainScript() {
+    // Update existing icons to enable full functionality
+    const icons = document.querySelectorAll('.vs-search-icon[data-vs-trigger="embed-{{ block.id }}"]');
+    icons.forEach(icon => {
+      icon.classList.remove('vs-loading');
+      icon.setAttribute('data-vs-ready', 'true');
+    });
+    console.log('[Visual Search Embed] ✅ Enhanced', icons.length, 'icons with full functionality');
+  }
+  
+  function initializeEmbedEnhancer() {
+    console.log('[Visual Search Embed] 🎯 Starting search input detection...');
+    
+    // Universal search selectors for common themes
+    const searchSelectors = [
+      // Custom selectors from merchant settings (highest priority)
+      ...(advancedSettings.customSelector ? advancedSettings.customSelector.split(',').map(s => s.trim()).filter(s => s) : []),
+      
+      // Standard selectors
+      'input[name="q"]',
+      'input[name="search"]',
+      'input[type="search"]',
+      'input[placeholder*="Search" i]',
+      'input[placeholder*="search" i]',
+      'input[aria-label*="Search" i]',
+      'input[aria-label*="search" i]',
+      
+      // Theme-specific selectors
+      '.search-bar input',
+      '.search__input',
+      '.header__search input',
+      '.predictive-search__input',
+      '.search-modal input',
+      '#SearchInput',
+      '#SearchDrawer input',
+      '.drawer__search input',
+      '.search-form input',
+      '.searchbox input',
+      
+      // Dawn theme specific
+      '.header__search-input',
+      '.search-modal__form input',
+      '.predictive-search-input',
+      
+      // Debut theme specific
+      '.search-bar__input',
+      '.site-header__search-input',
+      
+      // Brooklyn theme specific
+      '.search__terms',
+      '.search-bar__terms'
+    ];
+    
+    function detectAndEnhanceSearchInputs() {
+      // Use requestAnimationFrame for smoother execution
+      requestAnimationFrame(() => {
+        const allInputs = document.querySelectorAll(searchSelectors.join(', '));
+        let enhancedCount = 0;
+        
+        console.log(`[Visual Search Embed] 🔍 Found ${allInputs.length} potential search inputs`);
+        
+        // Process inputs in batches to avoid blocking the UI
+        const processInput = (input, index) => {
+          if (shouldEnhanceInput(input)) {
+            enhanceSearchInputForEmbed(input, config, index);
+            enhancedCount++;
+          }
+        };
+        
+        // Process first 3 inputs immediately
+        for (let i = 0; i < Math.min(3, allInputs.length); i++) {
+          processInput(allInputs[i], i);
+        }
+        
+        // Process remaining inputs with small delays to avoid blocking
+        for (let i = 3; i < allInputs.length; i++) {
+          setTimeout(() => processInput(allInputs[i], i), i * 10);
+        }
+        
+        setTimeout(() => {
+          console.log(`[Visual Search Embed] ✨ Enhanced ${enhancedCount} search inputs`);
+          
+          // Provide helpful suggestions if no inputs were enhanced
+          if (enhancedCount === 0) {
+            console.group('[Visual Search Embed] 💡 No search inputs found - Here are some suggestions:');
+            
+            if (config.settings.advancedSettings) {
+              console.log('❌ Your custom selector didn\'t match any elements:', advancedSettings.customSelector);
+              console.log('   Please check the selector syntax and try again.');
+            } else {
+              console.log('🔧 Try adding custom selectors in Theme Settings > App Embeds > Visual Search');
+            }
+            
+            // Suggest potential search inputs
+            console.log('🔍 Potential search inputs found on this page:');
+            const potentialInputs = document.querySelectorAll('input');
+            let suggestionCount = 0;
+            
+            potentialInputs.forEach((input, i) => {
+              if (input.type === 'text' || input.type === 'search' || 
+                  input.placeholder?.toLowerCase().includes('search') ||
+                  input.name?.toLowerCase().includes('search') ||
+                  input.id?.toLowerCase().includes('search')) {
+                suggestionCount++;
+                const suggestions = [];
+                if (input.name) suggestions.push(`input[name="${input.name}"]`);
+                if (input.id) suggestions.push(`#${input.id}`);
+                if (input.className) suggestions.push(`.${input.className.split(' ').join('.')}`);
+                
+                console.log(`   ${suggestionCount}. ${suggestions.join(' or ')}`);
+                if (input.placeholder) console.log(`      Placeholder: "${input.placeholder}"`);
+              }
+            });
+            
+            if (suggestionCount === 0) {
+              console.log('   No obvious search inputs found. The search might be loaded dynamically.');
+            } else {
+              console.log('📝 Copy one of the selectors above and paste it in Theme Settings > App Embeds > Visual Search > Custom Search Selectors');
+            }
+            
+            console.groupEnd();
+          }
+        }, 100);
+      });
+    }
+    
+    function shouldEnhanceInput(input) {
+      return input && 
+             isElementVisible(input) && 
+             !input.hasAttribute('data-vs-enhanced-{{ block.id }}');
+    }
+    
+    function enhanceSearchInputForEmbed(input, config, index) {
+      console.log('[Visual Search Embed] 🎨 Enhancing search input:', {
+        element: input,
+        type: input.type,
+        name: input.name,
+        id: input.id,
+        className: input.className,
+        placeholder: input.placeholder
+      });
+      
+      // Mark as enhanced for this specific embed
+      input.setAttribute('data-vs-enhanced-{{ block.id }}', 'true');
+      
+      // Create container wrapper only if it doesn't exist
+      let container = input.closest('.vs-enhanced-search-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'vs-enhanced-search-container';
+        container.setAttribute('data-vs-embed', '{{ block.id }}');
+        container.setAttribute('data-visual-search-block', 'input-embed');
+        container.setAttribute('data-app-block', 'visual-search-embed');
+        
+        // Wrap the input
+        input.parentNode.insertBefore(container, input);
+        container.appendChild(input);
+        
+        console.log('[Visual Search Embed] 📦 Created container wrapper for input');
+      }
+      
+      // Create visual search icon
+      const icon = createSearchIcon(config, index);
+      container.appendChild(icon);
+      
+      console.log('[Visual Search Embed] ✅ Search input successfully enhanced with visual search icon');
+    }
+    
+    function createSearchIcon(config, index) {
+      const settings = config.settings;
+      const icon = document.createElement('div');
+      
+      icon.className = 'vs-search-icon';
+      icon.setAttribute('data-vs-trigger', 'embed-{{ block.id }}');
+      icon.setAttribute('data-visual-search-trigger', 'embed');
+      icon.setAttribute('data-visual-search-block', 'input-embed');
+      icon.setAttribute('data-vs-block-type', 'embed');
+      icon.setAttribute('data-vs-input-index', index);
+      
+      // Add icon (custom image or default SVG)
+      if (advancedSettings.customIconUrl && advancedSettings.customIconUrl.trim()) {
+        icon.innerHTML = `<img src="${advancedSettings.customIconUrl}" alt="Visual Search" style="width: ${settings.iconSize}px; height: ${settings.iconSize}px; object-fit: contain;" />`;
+      } else {
+        icon.innerHTML = `
+          <svg width="${settings.iconSize}" height="${settings.iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+        `;
+      }
+      
+      // Add click handler - integrates with your existing system
+      icon.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Check if main script is ready
+        if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {
+          // Show loading state
+          icon.classList.add('vs-loading');
+          
+          // Find the associated search input
+          const searchInput = icon.closest('.vs-enhanced-search-container').querySelector('input');
+          
+          console.log('[Visual Search Embed] 🚀 Opening visual search drawer for input:', searchInput);
+          window.visualSearchUnified.openDrawer(searchInput);
+          
+          // Restore icon after delay
+          setTimeout(() => {
+            icon.classList.remove('vs-loading');
+          }, 1000);
+        } else {
+          // Show user-friendly message while script loads
+          icon.classList.add('vs-loading');
+          console.log('[Visual Search Embed] ⏳ Main script still loading, please wait...');
+          
+          // Show temporary feedback to user
+          const originalHTML = icon.innerHTML;
+          icon.innerHTML = `
+            <svg width="${settings.iconSize}" height="${settings.iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          `;
+          
+          // Try loading the script again with faster retry
+          const retryScript = document.createElement('script');
+          retryScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+          retryScript.onload = function() {
+            setTimeout(() => {
+              if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {
+                console.log('[Visual Search Embed] ✅ Retry successful, opening drawer...');
+                const searchInput = icon.closest('.vs-enhanced-search-container').querySelector('input');
+                window.visualSearchUnified.openDrawer(searchInput);
+                icon.innerHTML = originalHTML;
+              } else {
+                console.error('[Visual Search Embed] ❌ Retry failed - script still not available');
+                // Show error state briefly, then restore
+                icon.innerHTML = `
+                  <svg width="${settings.iconSize}" height="${settings.iconSize}" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
+                `;
+                setTimeout(() => {
+                  icon.innerHTML = originalHTML;
+                }, 2000);
+              }
+              icon.classList.remove('vs-loading');
+            }, 500);
+          };
+          
+          retryScript.onerror = function() {
+            console.error('[Visual Search Embed] ❌ Failed to retry loading script');
+            icon.classList.remove('vs-loading');
+            icon.innerHTML = originalHTML;
+          };
+          
+          document.head.appendChild(retryScript);
+        }
+        
+        // Track usage
+        trackEmbedUsage('icon_clicked', {
+          embedId: config.blockId,
+          inputIndex: index,
+          inputType: searchInput ? searchInput.type : 'unknown',
+          inputName: searchInput ? searchInput.name : 'unknown'
+        });
+      });
+      
+      return icon;
+    }
+    
+    function isElementVisible(element) {
+      const style = window.getComputedStyle(element);
+      return style.display !== 'none' && 
+             style.visibility !== 'hidden' && 
+             style.opacity !== '0' &&
+             element.offsetWidth > 0 && 
+             element.offsetHeight > 0;
+    }
+    
+    function trackEmbedUsage(action, metadata = {}) {
+      try {
+        console.log('[Visual Search Embed] 📊 Track:', action, metadata);
+        // Add actual analytics here if needed
+      } catch (e) {
+        // Silent fail
+      }
+    }
+    
+    // Initialize enhancement
+    detectAndEnhanceSearchInputs();
+    
+    // Re-enhance on DOM changes (for AJAX/SPA themes) - throttled for performance
+    let mutationTimeout;
+    const observer = new MutationObserver(() => {
+      clearTimeout(mutationTimeout);
+      mutationTimeout = setTimeout(detectAndEnhanceSearchInputs, 200);
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: false, // Don't watch attribute changes for better performance
+      characterData: false // Don't watch text changes
+    });
+    
+    // Re-enhance on Shopify theme events
+    const shopifyEvents = [
+      'shopify:section:load',
+      'shopify:section:reorder',
+      'theme:header:search:opened',
+      'predictive-search:open'
+    ];
+    
+    shopifyEvents.forEach(event => {
+      document.addEventListener(event, () => {
+        setTimeout(detectAndEnhanceSearchInputs, 200);
+      });
+    });
+    
+    console.log('[Visual Search Embed] ✅ Embed enhancer initialization complete');
+  }
+  
+  // Start initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', waitForMainScript);
+  } else {
+    waitForMainScript();
+  }
+  
+})();
+</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Visual Search Input",
+  "target": "head",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "embed_enabled",
+      "label": "Enable Visual Search",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon Size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "default": 34,
+      "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon Color",
+      "default": "#5f6368"
+    },
+    {
+      "type": "color",
+      "id": "icon_background",
+      "label": "Icon Background Color",
+      "default": "transparent"
+    },
+    {
+      "type": "text",
+      "id": "custom_settings",
+      "label": "Advanced Settings",
+      "default": "icon_url:|selectors:",
+      "info": "Format: icon_url:https://example.com/icon.png|selectors:input[name='q'],.search-input (separate with | and use : for values)"
+    },
+    {
+      "type": "range",
+      "id": "icon_margin",
+      "label": "Icon Margin from Edge",
+      "min": 4,
+      "max": 100,
+      "step": 2,
+      "default": 8,
+      "unit": "px"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4ecdc4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#45b7d1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background rounded rectangle -->
+  <rect x="8" y="8" width="112" height="112" rx="20" ry="20" fill="url(#grad2)"/>
+  
+  <!-- Main icon container -->
+  <g fill="white">
+    <!-- Camera body -->
+    <rect x="32" y="44" width="64" height="40" rx="6" ry="6"/>
+    <!-- Camera top -->
+    <path d="M48 44l4-8h24l4 8z"/>
+    <!-- Lens outer -->
+    <circle cx="64" cy="64" r="12" fill="none" stroke="white" stroke-width="3"/>
+    <!-- Lens inner -->
+    <circle cx="64" cy="64" r="6" fill="white" opacity="0.9"/>
+    <!-- Flash -->
+    <circle cx="84" cy="52" r="3"/>
+    
+    <!-- AI/Search elements -->
+    <g opacity="0.8">
+      <!-- Search magnifier -->
+      <circle cx="96" cy="32" r="8" fill="none" stroke="white" stroke-width="2"/>
+      <path d="102 38l6 6" stroke="white" stroke-width="2"/>
+      
+      <!-- AI dots pattern -->
+      <circle cx="32" cy="32" r="2"/>
+      <circle cx="40" cy="28" r="2"/>
+      <circle cx="48" cy="32" r="2"/>
+      <circle cx="32" cy="96" r="2"/>
+      <circle cx="40" cy="100" r="2"/>
+      <circle cx="48" cy="96" r="2"/>
+    </g>
+  </g>
+  
+  <!-- Brand text -->
+  <text x="64" y="110" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="white">Visual Search</text>
+</svg>

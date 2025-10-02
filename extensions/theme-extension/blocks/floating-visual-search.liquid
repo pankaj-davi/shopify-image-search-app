@@ -1,0 +1,432 @@
+{%- comment -%}
+  Floating Visual Search App Block
+  This creates a floating action button for visual search that can be added to any section
+{%- endcomment -%}
+
+{%- liquid
+  assign icon_size = block.settings.icon_size | default: 34
+  assign icon_color = block.settings.icon_color | default: '#5f6368'
+  assign hover_color = block.settings.hover_color | default: '#202124'
+  assign background_color = block.settings.background_color | default: 'transparent'
+  assign hover_background = '#ffffff'
+  assign border_radius = block.settings.border_radius | default: 4
+  assign padding = block.settings.padding | default: 8
+  assign margin = block.settings.margin | default: 0
+  assign border_width = block.settings.border_width | default: 0
+  assign border_color = block.settings.border_color | default: 'transparent'
+  assign hover_scale = block.settings.hover_scale | default: 1.1
+  assign focus_color = block.settings.focus_color | default: '#008060'
+  assign position = block.settings.position | default: 'right'
+-%}
+
+<div 
+    id="floating-visual-search-fab-{{ block.id }}"
+    class="visual-search-floating-app-block visual-search-fab-block"
+    data-visual-search-trigger="floating"
+    data-visual-search-block="floating-block" 
+    data-app-block="floating-visual-search"
+    data-vs-shop="{{ shop.permanent_domain }}"
+    data-vs-block-id="floating-{{ block.id }}"
+    data-vs-block-type="floating"
+    tabindex="0"
+    role="button"
+    aria-label="{{ block.settings.aria_label | default: 'Open Visual Search' }}"
+    {{ block.shopify_attributes }}
+  >
+    <style>
+      .visual-search-floating-app-block {
+        position: fixed !important;
+        width: {{ icon_size }}px;
+        height: {{ icon_size }}px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: {{ border_radius }}px;
+        transition: all 0.2s ease;
+        color: {{ icon_color }};
+        background: {{ background_color }};
+        padding: {{ padding }}px;
+        margin: {{ margin }}px;
+        border: {{ border_width }}px solid {{ border_color }};
+        z-index: 999999 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        
+        /* Position based on user selection */
+        {%- case position -%}
+          {%- when 'left' -%}
+            top: {{ block.settings.margin_top_desktop | default: 150 }}px;
+            left: {{ block.settings.margin_left | default: 20 }}px;
+          {%- when 'bottom' -%}
+            bottom: {{ block.settings.margin_bottom | default: 20 }}px;
+            right: {{ block.settings.margin_right | default: 20 }}px;
+          {%- else -%}
+            top: {{ block.settings.margin_top_desktop | default: 150 }}px;
+            right: {{ block.settings.margin_right | default: 20 }}px;
+        {%- endcase -%}
+      }
+
+      .visual-search-floating-app-block:hover {
+        color: {{ hover_color }};
+        background: {{ hover_background }};
+        transform: scale({{ hover_scale }});
+      }
+
+      .visual-search-floating-app-block:active {
+        transform: scale(0.95);
+      }
+      
+      .visual-search-floating-app-block:focus {
+        outline: 2px solid {{ focus_color }};
+        outline-offset: 2px;
+      }
+
+      .visual-search-floating-app-block svg {
+        width: {{ icon_size }}px;
+        height: {{ icon_size }}px;
+        transition: transform 0.2s ease;
+      }
+
+      .visual-search-floating-app-block:hover svg {
+        transform: rotate(10deg);
+      }
+
+      .visual-search-floating-app-block img {
+        width: {{ icon_size }}px;
+        height: {{ icon_size }}px;
+        object-fit: contain;
+        border-radius: {{ border_radius | divided_by: 2 }}px;
+      }
+
+        @media (max-width: 768px) {
+        .visual-search-floating-app-block {
+          width: {{ icon_size | at_most: 32 }}px;
+          height: {{ icon_size | at_most: 32 }}px;
+          
+          /* Mobile position based on user selection */
+          {%- case position -%}
+            {%- when 'left' -%}
+              top: {{ block.settings.margin_top_mobile | default: 150 }}px;
+              left: {{ block.settings.margin_left | default: 20 | at_most: 16 }}px;
+              right: auto;
+            {%- when 'bottom' -%}
+              bottom: {{ block.settings.margin_bottom | default: 20 | at_most: 16 }}px;
+              right: {{ block.settings.margin_right | default: 20 | at_most: 16 }}px;
+              top: auto;
+            {%- else -%}
+              top: {{ block.settings.margin_top_mobile | default: 150 }}px;
+              right: {{ block.settings.margin_right | default: 20 | at_most: 16 }}px;
+              left: auto;
+          {%- endcase -%}
+        }        .visual-search-floating-app-block svg {
+          width: {{ icon_size | at_most: 32 }}px;
+          height: {{ icon_size | at_most: 32 }}px;
+        }
+        
+        .visual-search-floating-app-block img {
+          width: {{ icon_size | at_most: 32 }}px;
+          height: {{ icon_size | at_most: 32 }}px;
+        }
+      }
+
+      {%- assign show_mobile = block.settings.show_on_mobile | default: true -%}
+      {%- assign show_desktop = block.settings.show_on_desktop | default: true -%}
+      
+      {%- unless show_mobile -%}
+        @media (max-width: 768px) {
+          .visual-search-floating-app-block {
+            display: none !important;
+          }
+        }
+      {%- endunless -%}
+
+      {%- unless show_desktop -%}
+        @media (min-width: 769px) {
+          .visual-search-floating-app-block {
+            display: none !important;
+          }
+        }
+      {%- endunless -%}
+    </style>
+
+    <script>
+      const visualSearchScript = document.createElement('script');
+      visualSearchScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+      document.head.appendChild(visualSearchScript);
+    </script>
+
+    <script>
+      setTimeout(function() {
+        const fab = document.getElementById('floating-visual-search-fab-{{ block.id }}');
+        
+        if (fab) {
+          fab.onclick = function() {
+            if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {
+              window.visualSearchUnified.openDrawer();
+            } else {
+              // Try loading script again
+              const script = document.createElement('script');
+              script.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+              script.onload = function() {
+                setTimeout(function() {
+                  if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {
+                    window.visualSearchUnified.openDrawer();
+                  }
+                }, 500);
+              };
+              document.head.appendChild(script);
+            }
+          };
+        }
+      }, 1000);
+    </script>
+
+    {%- if block.settings.custom_icon -%}
+      <img 
+        src="{{ block.settings.custom_icon | image_url: width: icon_size }}" 
+        alt="Visual Search"
+        width="{{ block.settings.icon_size | default: 24 }}"
+        height="{{ block.settings.icon_size | default: 24 }}"
+      >
+    {%- else -%}
+      {%- case block.settings.icon_style -%}
+        {%- when 'camera' -%}
+          <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+        {%- when 'search' -%}
+          <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        {%- when 'image' -%}
+          <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21,15 16,10 5,21"/>
+          </svg>
+        {%- else -%}
+          <svg width="{{ icon_size }}" height="{{ icon_size }}" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+      {%- endcase -%}
+    {%- endif -%}
+  </div>
+
+{% schema %}
+{
+  "name": "Float Image Search",
+  "target": "body",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Icon Settings"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_icon",
+      "label": "Custom Icon",
+      "info": "Upload images - No file chosen by default"
+    },
+    {
+      "type": "select",
+      "id": "icon_style",
+      "label": "Select Icon Style",
+      "options": [
+        {"value": "camera", "label": "Camera"},
+        {"value": "search", "label": "Search"},
+        {"value": "image", "label": "Image Search"}
+      ],
+      "default": "camera",
+      "info": "Explore free images - used when no custom icon is uploaded"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon Size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "default": 34,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon Color",
+      "default": "#5f6368"
+    },
+    {
+      "type": "color",
+      "id": "hover_color",
+      "label": "Hover Color",
+      "default": "#202124"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "focus_color",
+      "label": "Focus Outline Color",
+      "default": "#008060"
+    },
+    {
+      "type": "header",
+      "content": "Position & Spacing"
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Float Position",
+      "options": [
+        {"value": "right", "label": "Right Side"},
+        {"value": "left", "label": "Left Side"},
+        {"value": "bottom", "label": "Bottom Right"}
+      ],
+      "default": "right",
+      "info": "Choose where the floating button appears"
+    },
+    {
+      "type": "range",
+      "id": "margin_top_desktop",
+      "label": "Margin Top Desktop (px)",
+      "min": 50,
+      "max": 500,
+      "step": 10,
+      "default": 150,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_top_mobile",
+      "label": "Margin Top Mobile (px)",
+      "min": 50,
+      "max": 500,
+      "step": 10,
+      "default": 150,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_right",
+      "label": "Right Margin",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_left",
+      "label": "Left Margin",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Bottom Margin",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "default": 20,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "label": "Padding",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "margin",
+      "label": "Margin",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 4,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Border & Shape"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border Radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 4,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border Width",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "transparent"
+    },
+    {
+      "type": "header",
+      "content": "Animation & Effects"
+    },
+    {
+      "type": "range",
+      "id": "hover_scale",
+      "label": "Hover Scale",
+      "min": 1.0,
+      "max": 1.3,
+      "step": 0.1,
+      "default": 1.1
+    },
+    {
+      "type": "header",
+      "content": "Visibility Controls"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_mobile",
+      "label": "Show on Mobile",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_desktop",
+      "label": "Show on Desktop",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

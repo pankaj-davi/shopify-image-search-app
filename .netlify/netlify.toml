@@ -1,0 +1,31 @@
+plugins = []
+functionsDirectory = "D:\\AI\\UUD\\new-p\\build\\server"
+functionsDirectoryOrigin = "config"
+headers = []
+redirects = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "D:\\AI\\UUD\\new-p\\build\\client"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build"
+functions = "D:\\AI\\UUD\\new-p\\build\\server"
+
+[build.environment]
+NODE_VERSION = "18"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]

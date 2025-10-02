@@ -5,10 +5,8 @@ import {
   shopifyApp,
   DeliveryMethod,
 } from "@shopify/shopify-app-remix/server";
-import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import prisma from "./db.server";
 import type { Session } from "@shopify/shopify-app-remix/server";
-import { initializeFirebase } from "./services/firebase.service";
+import { sessionStorage } from "./session-storage.server";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -17,8 +15,9 @@ const shopify = shopifyApp({
   scopes: process.env.SCOPES?.split(","),
   appUrl: process.env.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
-  sessionStorage: new PrismaSessionStorage(prisma),
+  sessionStorage,
   distribution: AppDistribution.AppStore,
+  useOnlineTokens: false, // Use offline tokens for persistent API access
   webhooks: {
     APP_UNINSTALLED: {
       deliveryMethod: DeliveryMethod.Http,
@@ -27,12 +26,19 @@ const shopify = shopifyApp({
   },
   afterAuth: async (session: Session) => {
     await shopify.registerWebhooks({ session });
-    const firestore = initializeFirebase();
-    await firestore.collection("storeEvents").add({
-      shopDomain: session.shop,
-      installed: true,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      // Lazy load Firebase to avoid initialization errors
+      const { initializeFirebase } = await import("./services/firebase.service");
+      const firestore = initializeFirebase();
+      await firestore.collection("storeEvents").add({
+        shopDomain: session.shop,
+        installed: true,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Failed to record store event in Firebase:", error);
+      // Continue anyway - don't block authentication due to Firebase errors
+    }
     return true;
   },
   future: {
@@ -51,4 +57,3 @@ export const authenticate = shopify.authenticate;
 export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
-export const sessionStorage = shopify.sessionStorage;
