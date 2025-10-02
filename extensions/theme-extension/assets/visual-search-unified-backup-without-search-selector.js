@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://playlist-jar-confirmed-consult.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://playlist-jar-confirmed-consult.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://new-p-shopify-test.netlify.app',
+    EXTERNAL_API_URL: 'https://new-p-shopify-test.netlify.app/api/product-handle',
     // SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'test-neno3.myshopify.com',
     
