@@ -2689,6 +2689,9 @@
     // Make API call immediately
     const response = await fetch(CONFIG.EXTERNAL_API_URL, {
       method: 'POST',
+      headers: {
+        'shopDomainURL': CONFIG.SHOP_DOMAIN
+      },
       body: formData,
     });
     
@@ -3294,9 +3297,12 @@
       console.log('[Visual Search] Sending cropped analysis request to:', CONFIG.EXTERNAL_API_URL);
       console.log('[Visual Search] Crop data:', cropData);
       console.log('[Visual Search] Shop domain:', CONFIG.SHOP_DOMAIN);
-      
+
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
+        headers: {
+          'shopDomainURL': CONFIG.SHOP_DOMAIN
+        },
         body: formData,
       });
       
@@ -4733,9 +4739,12 @@
       const formData = new FormData();
       formData.append('file', croppedImageFile);
       formData.append('crop', 'true');
-      
+
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
+        headers: {
+          'shopDomainURL': CONFIG.SHOP_DOMAIN
+        },
         body: formData
       });
       
