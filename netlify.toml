@@ -6,10 +6,6 @@
   directory = "build/server"
   node_bundler = "esbuild"
 
-[[functions]]
-  path = "/*"
-  node_bundler = "esbuild"
-
 # Cache static assets
 [[headers]]
   for = "/assets/*"

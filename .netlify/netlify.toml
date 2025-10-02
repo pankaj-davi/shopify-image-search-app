@@ -1,22 +1,24 @@
+headersOrigin = "config"
+redirectsOrigin = "config"
 plugins = []
 functionsDirectory = "D:\\AI\\UUD\\new-p\\build\\server"
 functionsDirectoryOrigin = "config"
-headers = []
-redirects = []
 
 [functions]
 
 [functions."*"]
+node_bundler = "esbuild"
 
 [build]
 publish = "D:\\AI\\UUD\\new-p\\build\\client"
 publishOrigin = "config"
 commandOrigin = "config"
-command = "npm run build"
+command = "rm -rf .cache build && npm run build"
 functions = "D:\\AI\\UUD\\new-p\\build\\server"
 
 [build.environment]
 NODE_VERSION = "18"
+NETLIFY_CACHE_INVALIDATOR = "2025-10-03-v3"
 
 [build.processing]
 
@@ -29,3 +31,39 @@ NODE_VERSION = "18"
 [build.processing.js]
 
 [build.services]
+
+[[headers]]
+for = "/assets/*"
+
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+X-Frame-Options = "ALLOW-FROM https://admin.shopify.com/"
+
+[[redirects]]
+from = "/assets/*"
+to = "/assets/:splat"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/*"
+to = "/.netlify/functions/server"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

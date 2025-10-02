@@ -614,6 +614,60 @@ export class AppDatabaseService {
       isConnected: !!db,
     };
   }
+
+  // Job tracking methods for background sync
+  async createSyncJob(shopDomain: string, totalProducts: number): Promise<string> {
+    const db = await this.getDB();
+    try {
+      if (db.createSyncJob) {
+        return await db.createSyncJob(shopDomain, totalProducts);
+      }
+      throw new Error('createSyncJob not supported by database');
+    } catch (error) {
+      console.error('❌ Error creating sync job:', error);
+      throw error;
+    }
+  }
+
+  async getSyncJob(jobId: string): Promise<any> {
+    const db = await this.getDB();
+    try {
+      if (db.getSyncJob) {
+        return await db.getSyncJob(jobId);
+      }
+      throw new Error('getSyncJob not supported by database');
+    } catch (error) {
+      console.error('❌ Error getting sync job:', error);
+      throw error;
+    }
+  }
+
+  async updateSyncJob(jobId: string, updates: any): Promise<void> {
+    const db = await this.getDB();
+    try {
+      if (db.updateSyncJob) {
+        await db.updateSyncJob(jobId, updates);
+      } else {
+        throw new Error('updateSyncJob not supported by database');
+      }
+    } catch (error) {
+      console.error('❌ Error updating sync job:', error);
+      throw error;
+    }
+  }
+
+  async getLatestSyncJob(shopDomain: string): Promise<any | null> {
+    const db = await this.getDB();
+    try {
+      if (db.getLatestSyncJob) {
+        return await db.getLatestSyncJob(shopDomain);
+      }
+      throw new Error('getLatestSyncJob not supported by database');
+    } catch (error) {
+      console.error('❌ Error getting latest sync job:', error);
+      return null;
+    }
+  }
 }
 
 // Export singleton instance
