@@ -63,7 +63,7 @@
   </style>
 
   <!-- Load Visual Search Script -->
-  <script src="{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}" defer></script>
+  <script src="{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}?v={{ 'now' | date: '%s' }}" defer></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
