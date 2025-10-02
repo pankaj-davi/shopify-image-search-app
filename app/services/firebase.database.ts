@@ -532,6 +532,157 @@ export class FirebaseDatabase implements DatabaseInterface {
   }
 
   // ===============================
+  // SYNC JOB TRACKING METHODS
+  // ===============================
+
+  async createSyncJob(shopDomain: string, totalProducts: number): Promise<string> {
+    try {
+      const jobData = {
+        shopDomain,
+        status: 'pending', // pending, running, completed, failed
+        totalProducts,
+        syncedCount: 0,
+        progress: 0,
+        cursor: null,
+        createdAt: FieldValue.serverTimestamp(),
+        startedAt: null,
+        completedAt: null,
+        error: null,
+        embeddingSuccess: false,
+      };
+
+      const jobRef = await this.getFirestore()
+        .collection('sync_jobs')
+        .add(jobData);
+
+      console.log(`🔥 Sync job created: ${jobRef.id}`);
+      return jobRef.id;
+    } catch (error) {
+      console.error('❌ Error creating sync job:', error);
+      throw error;
+    }
+  }
+
+  async getSyncJob(jobId: string): Promise<any> {
+    try {
+      const doc = await this.getFirestore()
+        .collection('sync_jobs')
+        .doc(jobId)
+        .get();
+
+      if (!doc.exists) {
+        return null;
+      }
+
+      const data = doc.data()!;
+      return {
+        id: doc.id,
+        shopDomain: data.shopDomain,
+        status: data.status,
+        totalProducts: data.totalProducts,
+        syncedCount: data.syncedCount,
+        progress: data.progress,
+        cursor: data.cursor,
+        createdAt: data.createdAt,
+        startedAt: data.startedAt,
+        completedAt: data.completedAt,
+        error: data.error,
+        embeddingSuccess: data.embeddingSuccess,
+      };
+    } catch (error) {
+      console.error('❌ Error getting sync job:', error);
+      throw error;
+    }
+  }
+
+  async updateSyncJob(jobId: string, updates: any): Promise<void> {
+    try {
+      await this.getFirestore()
+        .collection('sync_jobs')
+        .doc(jobId)
+        .update({
+          ...updates,
+          updatedAt: FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+      console.error('❌ Error updating sync job:', error);
+      throw error;
+    }
+  }
+
+  async getLatestSyncJob(shopDomain: string): Promise<any> {
+    try {
+      const snapshot = await this.getFirestore()
+        .collection('sync_jobs')
+        .where('shopDomain', '==', shopDomain)
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
+
+      if (snapshot.empty) {
+        return null;
+      }
+
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data
+      };
+    } catch (error) {
+      console.error('❌ Error getting latest sync job:', error);
+      throw error;
+    }
+  }
+
+  async saveProductsBatch(shopDomain: string, products: any[]): Promise<void> {
+    try {
+      const batch = this.getFirestore().batch();
+
+      for (const product of products) {
+        const productId = product.id.replace('gid://shopify/Product/', '');
+        const productRef = this.getFirestore()
+          .collection('stores')
+          .doc(shopDomain)
+          .collection('products')
+          .doc(productId);
+
+        batch.set(productRef, {
+          ...product,
+          shopDomain,
+          syncedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
+
+      await batch.commit();
+      console.log(`🔥 Saved batch of ${products.length} products`);
+    } catch (error) {
+      console.error('❌ Error saving products batch:', error);
+      throw error;
+    }
+  }
+
+  async getStoreProducts(shopDomain: string, limit: number = 1000): Promise<any[]> {
+    try {
+      const snapshot = await this.getFirestore()
+        .collection('stores')
+        .doc(shopDomain)
+        .collection('products')
+        .limit(limit)
+        .get();
+
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('❌ Error getting store products:', error);
+      throw error;
+    }
+  }
+
+  // ===============================
   // ANALYTICS METHODS
   // ===============================
 

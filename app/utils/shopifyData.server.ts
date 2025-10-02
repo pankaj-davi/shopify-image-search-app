@@ -16,15 +16,28 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     const storeProducts = await appDatabase.getStoreProducts(shopDomain, 1000); // Get more to count
     const hasSyncedProducts = storeProducts.length > 0;
     const actualProductCount = storeProducts.length;
-    
+
     console.log(`📊 Found ${actualProductCount} products in database`);
-    
+
+    // Check for ongoing sync job
+    let ongoingJobId = null;
+    try {
+      const latestJob = await appDatabase.getLatestSyncJob(shopDomain);
+      if (latestJob && (latestJob.status === 'pending' || latestJob.status === 'running')) {
+        ongoingJobId = latestJob.id;
+        console.log(`🔄 Found ongoing sync job: ${ongoingJobId}`);
+      }
+    } catch (error) {
+      console.error('❌ Error checking for ongoing sync:', error);
+    }
+
     return {
       store: storeExists,
       products: [], // Don't load products on initial load
       isFirstTime: false,
       needsSync: !hasSyncedProducts, // Need sync if no products synced
       productCount: actualProductCount, // Return actual count
+      ongoingJobId, // Return ongoing job if exists
     };
   }
 
@@ -242,12 +255,16 @@ export async function fullSyncAction({ request }: ActionFunctionArgs) {
       console.log('🔄 Starting batch sync process...');
 
       try {
-        // Sync products in batches of 250
-        const batchSize = 250;
+        // Sync products in batches of 50 (reduced from 250 for speed)
+        const batchSize = 50;
         let cursor: string | null = null;
         let syncedCount = 0;
 
-        while (syncedCount < totalProducts) {
+        // CRITICAL: Limit to first 5 batches to avoid timeout (250 products max)
+        const maxBatches = 5;
+        let batchCount = 0;
+
+        while (syncedCount < totalProducts && batchCount < maxBatches) {
           const query: string = cursor 
             ? `query {
                 products(first: ${batchSize}, after: "${cursor}") {
@@ -424,18 +441,24 @@ export async function fullSyncAction({ request }: ActionFunctionArgs) {
       // Save products batch
       console.log(`💾 Saving batch of ${products.length} products...`);
       await appDatabase.saveProductsBatch(shopDomain, products);
-      
+
       syncedCount += products.length;
+      batchCount++;
       cursor = data.data.products.pageInfo.endCursor;
-      console.log(`✅ Progress: ${syncedCount}/${totalProducts} products synced`);
-      
+      console.log(`✅ Progress: ${syncedCount}/${totalProducts} products synced (batch ${batchCount}/${maxBatches})`);
+
       // Rate limiting - wait 50ms between batches
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       // Break if no more pages
       if (!data.data.products.pageInfo.hasNextPage) {
         break;
       }
+    }
+
+    // If we hit the batch limit, warn that more products exist
+    if (batchCount >= maxBatches && syncedCount < totalProducts) {
+      console.warn(`⚠️ Partial sync: ${syncedCount}/${totalProducts} products synced due to timeout limits`);
     }
 
     dbSyncStatus = {
@@ -472,7 +495,7 @@ export async function fullSyncAction({ request }: ActionFunctionArgs) {
       const embeddingResponse = await fetch(`${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/sync`, {
         method: 'POST',
         body: formData,
-        signal: AbortSignal.timeout(3000000), // 5 min timeout
+        signal: AbortSignal.timeout(8000), // 8s timeout to stay within 10s Netlify limit
       });
       console.log('📊 Embedding API Response:', {
         status: embeddingResponse.status,

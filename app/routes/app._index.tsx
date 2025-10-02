@@ -1,4 +1,5 @@
 import { useLoaderData, useFetcher } from "@remix-run/react";
+import { useEffect, useState } from "react";
 import {
   Page,
   Text,
@@ -7,7 +8,8 @@ import {
   InlineStack,
   Button,
   Box,
-  Spinner
+  Spinner,
+  ProgressBar
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
@@ -21,12 +23,57 @@ export default function Index() {
   const loaderData = useLoaderData<typeof loader>();
   const { store, products, needsSync } = loaderData;
   const productCount = (loaderData as any).productCount || 0;
-  
+  const ongoingJobId = (loaderData as any).ongoingJobId; // Check for ongoing sync
+
   const syncFetcher = useFetcher();
+  const statusFetcher = useFetcher();
+
+  const [currentJobId, setCurrentJobId] = useState<string | null>(ongoingJobId || null);
+  const [syncStatus, setSyncStatus] = useState<any>(null);
 
   const isLoading = syncFetcher.state === "loading" || syncFetcher.state === "submitting";
   const syncResult = syncFetcher.data as any;
   const syncSuccess = syncResult?.success;
+
+  // Poll for sync status when we have a jobId
+  useEffect(() => {
+    // Don't poll if no jobId or if products are already synced
+    if (!currentJobId || !needsSync) return;
+
+    const pollStatus = async () => {
+      statusFetcher.load(`/app/sync-status/${currentJobId}`);
+    };
+
+    // Initial poll
+    pollStatus();
+
+    // Poll every 2 seconds
+    const interval = setInterval(pollStatus, 2000);
+
+    return () => clearInterval(interval);
+  }, [currentJobId, needsSync]);
+
+  // Update sync status from fetcher
+  useEffect(() => {
+    if (statusFetcher.data) {
+      const data = statusFetcher.data as any;
+      if (data.success && data.job) {
+        setSyncStatus(data.job);
+
+        // Stop polling if completed or failed
+        if (data.job.status === 'completed' || data.job.status === 'failed') {
+          setCurrentJobId(null);
+        }
+      }
+    }
+  }, [statusFetcher.data]);
+
+  // When sync starts, save jobId
+  useEffect(() => {
+    if (syncResult?.success && syncResult?.jobId) {
+      setCurrentJobId(syncResult.jobId);
+    }
+  }, [syncResult]);
 
   // Handle different failure states
   const getErrorUI = () => {
@@ -113,24 +160,44 @@ export default function Index() {
         
 
 
-        {/* Loading State */}
-        {isLoading && (
+        {/* Sync In Progress State */}
+        {(isLoading || (syncStatus && syncStatus.status !== 'completed' && syncStatus.status !== 'failed')) && (
           <Card>
             <Box padding="600">
-              <BlockStack gap="400" align="center">
-                <Box>
-                  <Spinner size="large" />
-                </Box>
+              <BlockStack gap="400">
                 <BlockStack gap="200" align="center">
+                  {!syncStatus || syncStatus.status === 'pending' ? (
+                    <Spinner size="large" />
+                  ) : null}
                   <Text as="h2" variant="headingLg" alignment="center">
-                    {syncResult?.phase === 'embedding' 
-                      ? 'Setting up visual search...'
-                      : 'Syncing your products...'}
+                    {syncStatus?.status === 'running'
+                      ? `Syncing Products...`
+                      : 'Starting sync...'}
                   </Text>
                   <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
-                    Please wait while we set up your store
+                    {syncStatus?.status === 'running'
+                      ? 'Your sync is running in the background. You can close this page - it will continue!'
+                      : 'Please wait while we prepare your sync'}
                   </Text>
                 </BlockStack>
+
+                {syncStatus && syncStatus.status === 'running' && (
+                  <BlockStack gap="300">
+                    <ProgressBar
+                      progress={syncStatus.progress || 0}
+                      size="medium"
+                      tone="primary"
+                    />
+                    <InlineStack align="space-between">
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {syncStatus.syncedCount || 0} of {syncStatus.totalProducts || 0} products
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="success" fontWeight="semibold">
+                        {syncStatus.progress || 0}%
+                      </Text>
+                    </InlineStack>
+                  </BlockStack>
+                )}
               </BlockStack>
             </Box>
           </Card>
