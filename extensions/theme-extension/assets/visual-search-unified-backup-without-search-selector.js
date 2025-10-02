@@ -2690,10 +2690,6 @@
     const response = await fetch(CONFIG.EXTERNAL_API_URL, {
       method: 'POST',
       body: formData,
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'shopDomainURL': CONFIG.SHOP_DOMAIN
-      }
     });
     
     console.log('[Visual Search] 📥 Immediate analysis response status:', response.status);
@@ -3302,10 +3298,6 @@
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
         body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'shopDomainURL': CONFIG.SHOP_DOMAIN
-        }
       });
       
       console.log('[Visual Search] Response status:', response.status);
@@ -4744,9 +4736,6 @@
       
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
-        headers: {
-          'shopDomainURL': CONFIG.SHOP_DOMAIN
-        },
         body: formData
       });
       
