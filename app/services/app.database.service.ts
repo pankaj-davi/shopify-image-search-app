@@ -229,6 +229,9 @@ export class AppDatabaseService {
         };
       });
 
+      // Set the actual product count
+      storeData.productCount = products.length;
+
       // Use the new atomic sync method
       await db.syncStoreWithProducts(storeData, products);
       console.log(`✅ Store and products synced atomically: ${shopDomain} (${products.length} products)`);
@@ -290,6 +293,8 @@ export class AppDatabaseService {
     const db = await this.getDB();
 
     try {
+      console.log(`📊 Saving batch of ${products.length} products for ${shopDomain}`);
+
       const productData: ProductData[] = products.map(product => {
         const variant = product.variants?.edges?.[0]?.node;
         
@@ -384,8 +389,18 @@ export class AppDatabaseService {
           await db.createProduct(product);
         }
       }
-      
+
       console.log(`✅ Products batch saved: ${products.length} products for ${shopDomain}`);
+
+      // Update store's product count after saving batch
+      const currentProducts = await this.getStoreProducts(shopDomain, 10000);
+      const totalCount = currentProducts.length;
+
+      console.log(`📈 Updating store product count to ${totalCount}`);
+      await this.updateStore(shopDomain, {
+        productCount: totalCount
+      });
+
     } catch (error) {
       console.error('❌ Error saving products batch:', error);
       throw error;
