@@ -4,14 +4,19 @@ import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   console.log('Loader function triggered');
-const { session } = await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
   console.log('Session retrieved:', session);
-  const db = await getDatabase();
-  console.log('Database instance obtained');
-  await db.recordStoreEvent(session.shop, "install", {
-    sessionId: session.id,
-  });
-  console.log('recordStoreEvent called');
+  try {
+    const db = await getDatabase();
+    console.log('Database instance obtained');
+    await db.recordStoreEvent(session.shop, "install", {
+      sessionId: session.id,
+    });
+    console.log('recordStoreEvent called');
+  } catch (error) {
+    console.error('Failed to record store event:', error);
+    // Continue anyway - don't block authentication
+  }
 
   return null;
 };

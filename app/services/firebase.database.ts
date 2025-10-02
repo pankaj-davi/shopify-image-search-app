@@ -51,7 +51,14 @@ function sanitizeData(obj: any): any {
 }
 
 export class FirebaseDatabase implements DatabaseInterface {
-  private firestore = getFirestoreInstance();
+  private firestoreInstance?: ReturnType<typeof getFirestoreInstance>;
+
+  private getFirestore() {
+    if (!this.firestoreInstance) {
+      this.firestoreInstance = getFirestoreInstance();
+    }
+    return this.firestoreInstance;
+  }
 
   // Product operations (using subcollections)
   async createProduct(product: ProductData): Promise<string> {
@@ -64,7 +71,7 @@ export class FirebaseDatabase implements DatabaseInterface {
       
       // Store product in subcollection under the store using Shopify product ID as document ID
       const shopifyId = product.shopifyProductId.replace('gid://shopify/Product/', '');
-      const docRef = this.firestore
+      const docRef = this.getFirestore()
         .collection('stores')
         .doc(product.shopDomain)
         .collection('products')
@@ -85,7 +92,7 @@ export class FirebaseDatabase implements DatabaseInterface {
   async getProducts(limit: number = 10): Promise<ProductData[]> {
     try {
       // Use collection group query to get products from all stores
-      const collectionGroup = this.firestore.collectionGroup('products');
+      const collectionGroup = this.getFirestore().collectionGroup('products');
       const query = collectionGroup
         .orderBy('createdAt', 'desc')
         .limit(limit);
@@ -145,7 +152,7 @@ export class FirebaseDatabase implements DatabaseInterface {
       });
       
       // Use shopDomain as document ID for easy retrieval
-      const docRef = this.firestore.collection('stores').doc(store.shopDomain);
+      const docRef = this.getFirestore().collection('stores').doc(store.shopDomain);
       await docRef.set(storeData);
       
       console.log('🔥 Store created in Firebase:', store.shopDomain);
@@ -158,7 +165,7 @@ export class FirebaseDatabase implements DatabaseInterface {
 
   async getStore(shopDomain: string): Promise<StoreData | null> {
     try {
-      const doc = await this.firestore.collection('stores').doc(shopDomain).get();
+      const doc = await this.getFirestore().collection('stores').doc(shopDomain).get();
       
       if (!doc.exists) {
         return null;
@@ -194,7 +201,7 @@ export class FirebaseDatabase implements DatabaseInterface {
         updatedAt: FieldValue.serverTimestamp(),
       });
       
-      await this.firestore.collection('stores').doc(shopDomain).update(updateData);
+      await this.getFirestore().collection('stores').doc(shopDomain).update(updateData);
       console.log('🔥 Store updated in Firebase:', shopDomain);
     } catch (error) {
       console.error('❌ Error updating store in Firebase:', error);
@@ -225,9 +232,9 @@ export class FirebaseDatabase implements DatabaseInterface {
     try {
       console.log(`🔥 Starting Firebase transaction to sync store ${storeData.shopDomain} with ${products.length} products`);
       
-      await this.firestore.runTransaction(async (transaction) => {
+      await this.getFirestore().runTransaction(async (transaction) => {
         // Update or create store
-        const storeRef = this.firestore.collection('stores').doc(storeData.shopDomain);
+        const storeRef = this.getFirestore().collection('stores').doc(storeData.shopDomain);
         const storeDoc = await transaction.get(storeRef);
         
         const storeUpdateData: any = sanitizeData({
@@ -250,12 +257,12 @@ export class FirebaseDatabase implements DatabaseInterface {
       // Handle products in batches using subcollections
       const batchSize = 400; // Leave some room for safety
       for (let i = 0; i < products.length; i += batchSize) {
-        const batch = this.firestore.batch();
+        const batch = this.getFirestore().batch();
         const productBatch = products.slice(i, i + batchSize);
         
         for (const product of productBatch) {
           // Check if product exists by shopifyProductId in the store's subcollection
-          const existingProductQuery = await this.firestore
+          const existingProductQuery = await this.getFirestore()
             .collection('stores')
             .doc(storeData.shopDomain)
             .collection('products')
@@ -273,7 +280,7 @@ export class FirebaseDatabase implements DatabaseInterface {
             batch.update(existingDoc.ref, updateData);
           } else {
             // Create new product in subcollection
-            const newProductRef = this.firestore
+            const newProductRef = this.getFirestore()
               .collection('stores')
               .doc(storeData.shopDomain)
               .collection('products')
@@ -302,7 +309,7 @@ export class FirebaseDatabase implements DatabaseInterface {
   // Firebase-specific methods
   async getProductsByShop(shopDomain: string, limit: number = 10): Promise<ProductData[]> {
     try {
-      const query = this.firestore
+      const query = this.getFirestore()
         .collection('stores')
         .doc(shopDomain)
         .collection('products')
@@ -360,7 +367,7 @@ export class FirebaseDatabase implements DatabaseInterface {
 
       console.log('🔥 Event data prepared:', event);
       // Save as subcollection under the store domain
-      await this.firestore
+      await this.getFirestore()
         .collection('stores')
         .doc(shopDomain)
         .collection('events')
@@ -392,7 +399,7 @@ export class FirebaseDatabase implements DatabaseInterface {
       console.log('🔥 Sanitized usage data:', usageData);
 
       // Store as subcollection under the store
-      const docRef = await this.firestore
+      const docRef = await this.getFirestore()
         .collection('stores')
         .doc(usage.shopDomain)
         .collection('appBlockUsage')
@@ -422,7 +429,7 @@ export class FirebaseDatabase implements DatabaseInterface {
       // Extract numeric ID from Shopify GID or use as-is if already numeric
       const productId = shopifyProductId.replace('gid://shopify/Product/', '');
 
-      const docRef = this.firestore
+      const docRef = this.getFirestore()
         .collection('stores')
         .doc(shopDomain)
         .collection('products')
@@ -454,7 +461,7 @@ export class FirebaseDatabase implements DatabaseInterface {
       // Extract numeric ID from Shopify GID or use as-is if already numeric
       const productId = shopifyProductId.replace('gid://shopify/Product/', '');
 
-      const docRef = this.firestore
+      const docRef = this.getFirestore()
         .collection('stores')
         .doc(shopDomain)
         .collection('products')
@@ -481,7 +488,7 @@ export class FirebaseDatabase implements DatabaseInterface {
       // Extract numeric ID from Shopify GID or use as-is if already numeric
       const productId = shopifyProductId.replace('gid://shopify/Product/', '');
 
-      const docRef = this.firestore
+      const docRef = this.getFirestore()
         .collection('stores')
         .doc(shopDomain)
         .collection('products')
@@ -535,7 +542,7 @@ export class FirebaseDatabase implements DatabaseInterface {
         throw new Error('Shop domain is required for analytics');
       }
 
-      const shopDocRef = this.firestore.collection('stores').doc(shopDomain);
+      const shopDocRef = this.getFirestore().collection('stores').doc(shopDomain);
       const appBlockUsageRef = shopDocRef.collection('appBlockUsage');
       const allRecordsSnapshot = await appBlockUsageRef.get();
 

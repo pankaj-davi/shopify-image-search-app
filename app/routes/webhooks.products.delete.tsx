@@ -1,6 +1,5 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
-import { FirebaseDatabase } from "../services/firebase.database";
 import { validateWebhookPayload, logWebhookEvent, syncProductToExternalAPI } from "../utils/webhookUtils.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -12,7 +11,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return new Response("Missing required data", { status: 400 });
     }
 
-    // Initialize Firebase database
+    // Lazy load Firebase database to avoid module-level initialization
+    const { FirebaseDatabase } = await import("../services/firebase.database");
     const firebaseDb = new FirebaseDatabase();
 
     // Delete the product from Firebase

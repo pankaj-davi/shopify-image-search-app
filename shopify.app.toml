@@ -2,23 +2,15 @@
 
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
-handle = "newp"
-application_url = "https://new-p-shopify.netlify.app"
+application_url = "https://permit-required-metadata-aims.trycloudflare.com"
 embedded = true
+handle = "newp"
 
 [build]
 automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "/webhooks/app/scopes_update"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
 
   [[webhooks.subscriptions]]
   topics = [ "products/create" ]
@@ -32,12 +24,32 @@ api_version = "2025-07"
   topics = [ "products/delete" ]
   uri = "/webhooks/products/delete"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "shop/update" ]
+  uri = "/webhooks/shop/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "bulk_operations/finish" ]
+  uri = "/webhooks/bulk_operations/finish"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products,write_script_tags"
 
 [auth]
-redirect_urls = ["https://new-p-shopify.netlify.app/auth/callback", "https://new-p-shopify.netlify.app/auth/shopify/callback", "https://new-p-shopify.netlify.app/api/auth/callback"]
+redirect_urls = [
+  "https://permit-required-metadata-aims.trycloudflare.com/auth/callback",
+  "https://permit-required-metadata-aims.trycloudflare.com/auth/shopify/callback",
+  "https://permit-required-metadata-aims.trycloudflare.com/api/auth/callback"
+]
 
 [pos]
 embedded = false

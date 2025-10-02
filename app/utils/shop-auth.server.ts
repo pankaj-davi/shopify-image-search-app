@@ -1,9 +1,18 @@
-import { sessionStorage } from "../shopify.server";
+import { sessionStorage } from "../session-storage.server";
 
 export async function getValidShopSession(shopDomain: string) {
   try {
     // Use Shopify's session storage to get valid sessions
     const offlineSessionId = `offline_${shopDomain}`;
+    console.log(`🔍 Looking for session with ID: ${offlineSessionId}`);
+
+    // Also check if there are ANY sessions for this shop
+    const allSessions = await sessionStorage.findSessionsByShop(shopDomain);
+    console.log(`📊 Found ${allSessions.length} total session(s) for shop ${shopDomain}`);
+    if (allSessions.length > 0) {
+      console.log(`📋 Session IDs: ${allSessions.map(s => s.id).join(', ')}`);
+    }
+
     const session = await sessionStorage.loadSession(offlineSessionId);
 
     if (session && session.accessToken) {
@@ -13,8 +22,9 @@ export async function getValidShopSession(shopDomain: string) {
         return session;
       } else {
         console.warn(`Invalid access token found for shop: ${shopDomain}`);
-        // Remove invalid session
-        await sessionStorage.deleteSession(offlineSessionId);
+        console.warn(`Shop needs to reinstall the app at: https://${shopDomain}/admin/apps`);
+        // DON'T delete the session - let it be replaced on next successful auth
+        // Deleting it prevents the shop from being recognized during reinstall
         return null;
       }
     }

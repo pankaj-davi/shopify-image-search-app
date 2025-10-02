@@ -5,15 +5,32 @@ export async function logWebhookEvent(
   shopDomain: string,
   eventType: string,
   payload: any,
-  topic: string
+  topic: string,
+  additionalData?: Record<string, any>
 ) {
   try {
-    await firebaseDb.recordStoreEvent(shopDomain, eventType, {
-      productId: payload.id,
-      productTitle: payload.title || 'Unknown',
+    const eventData: Record<string, any> = {
       timestamp: new Date().toISOString(),
-      webhookTopic: topic
-    });
+      webhookTopic: topic,
+      ...additionalData
+    };
+
+    // Add product-specific data if available
+    if (payload?.id) {
+      eventData.productId = payload.id;
+    }
+    if (payload?.title) {
+      eventData.productTitle = payload.title;
+    }
+    if (payload?.name) {
+      eventData.name = payload.name;
+    }
+    if (payload?.role) {
+      eventData.role = payload.role;
+    }
+
+    await firebaseDb.recordStoreEvent(shopDomain, eventType, eventData);
+    console.log(`✅ Webhook event logged: ${eventType} for ${shopDomain}`);
   } catch (error) {
     console.error(`❌ Failed to log webhook event ${eventType}:`, error);
   }
@@ -23,7 +40,7 @@ export async function syncProductToExternalAPI(shopDomain: string, productIds: s
   try {
     console.log(`🔄 Syncing products to external API: ${action} - ${productIds.join(', ')}`);
 
-    const response = await fetch(`${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/sync`, {
+    const response = await fetch(`${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/${shopDomain}/selective`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

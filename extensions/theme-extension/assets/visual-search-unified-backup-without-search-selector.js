@@ -20,9 +20,10 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://heights-mold-tuner-routers.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://heights-mold-tuner-routers.trycloudflare.com/api/product-handle',
-    SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://permit-required-metadata-aims.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://permit-required-metadata-aims.trycloudflare.com/api/product-handle',
+    // SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
+    SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'test-neno3.myshopify.com',
     
     // Analytics configuration - ENABLED
     ANALYTICS_ENABLED: true,
@@ -2688,6 +2689,22 @@
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[Visual Search] ❌ Immediate analysis server error:', errorText);
+
+      // Handle authentication errors specifically
+      if (response.status === 401) {
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.code === 'SHOP_NOT_AUTHENTICATED' || errorData.code === 'SESSION_EXPIRED') {
+            showError('App authentication expired. Please contact the store owner to reinstall the app.');
+            updateResultsHeader(drawer, 'Authentication Required', 'The app needs to be reinstalled by the store owner');
+            removeSkeletonLoaders(drawer);
+            return;
+          }
+        } catch (e) {
+          // If parsing fails, fall through to generic error
+        }
+      }
+
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
     
@@ -3283,6 +3300,22 @@
       if (!response.ok) {
         const errorText = await response.text();
         console.error('[Visual Search] Server error response:', errorText);
+
+        // Handle authentication errors specifically
+        if (response.status === 401) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.code === 'SHOP_NOT_AUTHENTICATED' || errorData.code === 'SESSION_EXPIRED') {
+              showError('App authentication expired. Please contact the store owner to reinstall the app.');
+              updateResultsHeader(drawer, 'Authentication Required', 'The app needs to be reinstalled by the store owner');
+              removeSkeletonLoaders(drawer);
+              return;
+            }
+          } catch (e) {
+            // If parsing fails, fall through to generic error
+          }
+        }
+
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
       
@@ -4705,9 +4738,26 @@
       });
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Visual Search] ❌ API error:', errorText);
+
+        // Handle authentication errors specifically
+        if (response.status === 401) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.code === 'SHOP_NOT_AUTHENTICATED' || errorData.code === 'SESSION_EXPIRED') {
+              showError('App authentication expired. Please contact the store owner to reinstall the app.');
+              hideLoadingState(drawer);
+              return;
+            }
+          } catch (e) {
+            // If parsing fails, fall through to generic error
+          }
+        }
+
         throw new Error(`API call failed: ${response.status} ${response.statusText}`);
       }
-      
+
       const result = await response.json();
       console.log('[Visual Search] ✅ Cropped image API response:', result);
       
