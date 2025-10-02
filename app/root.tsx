@@ -5,6 +5,11 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import polarisStyles from "./styles/polaris-theme.css?url";
+
+export function links() {
+  return [{ rel: "stylesheet", href: polarisStyles }];
+}
 
 export default function App() {
   return (
@@ -17,7 +22,6 @@ export default function App() {
           rel="stylesheet"
           href="https://cdn.shopify.com/static/fonts/inter/v4/styles.css"
         />
-        <link rel="stylesheet" href="/app/styles/polaris-theme.css" />
         <Meta />
         <Links />
       </head>

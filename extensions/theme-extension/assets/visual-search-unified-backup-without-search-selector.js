@@ -22,8 +22,8 @@
     // App configuration - Dynamic values from Liquid template
     APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://new-p-shopify-test.netlify.app',
     EXTERNAL_API_URL: 'https://new-p-shopify-test.netlify.app/api/product-handle',
-    // SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
-    SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'test-neno3.myshopify.com',
+    // Always use actual hostname from the browser
+    SHOP_DOMAIN: window.location.hostname,
     
     // Analytics configuration - ENABLED
     ANALYTICS_ENABLED: true,
@@ -2690,10 +2690,6 @@
     const response = await fetch(CONFIG.EXTERNAL_API_URL, {
       method: 'POST',
       body: formData,
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'shopDomainURL': CONFIG.SHOP_DOMAIN
-      }
     });
     
     console.log('[Visual Search] 📥 Immediate analysis response status:', response.status);
@@ -3302,10 +3298,6 @@
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
         body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'shopDomainURL': CONFIG.SHOP_DOMAIN
-        }
       });
       
       console.log('[Visual Search] Response status:', response.status);
@@ -4744,9 +4736,6 @@
       
       const response = await fetch(CONFIG.EXTERNAL_API_URL, {
         method: 'POST',
-        headers: {
-          'shopDomainURL': CONFIG.SHOP_DOMAIN
-        },
         body: formData
       });
       

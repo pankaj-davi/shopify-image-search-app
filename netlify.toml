@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "rm -rf .cache build && npm run build"
   publish = "build/client"
 
 [functions]
@@ -7,3 +7,5 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # Force fresh builds by clearing cache
+  NETLIFY_CACHE_INVALIDATOR = "2025-10-03"
