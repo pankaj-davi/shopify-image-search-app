@@ -22,8 +22,8 @@
     // App configuration - Dynamic values from Liquid template
     APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://new-p-shopify-test.netlify.app',
     EXTERNAL_API_URL: 'https://new-p-shopify-test.netlify.app/api/product-handle',
-    // SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
-    SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || window.location.hostname,
+    // Always use actual hostname from the browser
+    SHOP_DOMAIN: window.location.hostname,
     
     // Analytics configuration - ENABLED
     ANALYTICS_ENABLED: true,
