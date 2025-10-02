@@ -90,7 +90,7 @@
 
   // Load the main script immediately (same method as floating block)
   const visualSearchScript = document.createElement('script');
-  visualSearchScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+  visualSearchScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}?v={{ 'now' | date: '%s' }}";
   document.head.appendChild(visualSearchScript);
 
   function waitForMainScript() {
@@ -346,7 +346,7 @@
           
           // Try loading the script again with faster retry
           const retryScript = document.createElement('script');
-          retryScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+          retryScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}?v={{ 'now' | date: '%s' }}";
           retryScript.onload = function() {
             setTimeout(() => {
               if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {

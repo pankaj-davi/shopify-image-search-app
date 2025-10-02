@@ -153,7 +153,7 @@
 
     <script>
       const visualSearchScript = document.createElement('script');
-      visualSearchScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+      visualSearchScript.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}?v={{ 'now' | date: '%s' }}";
       document.head.appendChild(visualSearchScript);
     </script>
 
@@ -168,7 +168,7 @@
             } else {
               // Try loading script again
               const script = document.createElement('script');
-              script.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}";
+              script.src = "{{ 'visual-search-unified-backup-without-search-selector.js' | asset_url }}?v={{ 'now' | date: '%s' }}";
               script.onload = function() {
                 setTimeout(function() {
                   if (window.visualSearchUnified && window.visualSearchUnified.openDrawer) {
