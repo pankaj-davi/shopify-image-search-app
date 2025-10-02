@@ -468,10 +468,13 @@ export async function fullSyncAction({ request }: ActionFunctionArgs) {
     console.log('🎯 Starting embedding process...');
     try {
       console.log(`📡 Calling embedding API for shop: ${shopDomain}`);
-      const embeddingResponse = await fetch(`${SHOPIFY_APP_EMBEDDINGS_URL}/sync/${shopDomain}`, {
+      const formData = new FormData();
+      formData.append('store_domain', shopDomain);
+      console.log(`🔧 Curl equivalent: curl --location "${SHOPIFY_APP_EMBEDDINGS_URL}/sync" --form 'store_domain="${shopDomain}"'`);
+      const embeddingResponse = await fetch(`${SHOPIFY_APP_EMBEDDINGS_URL}/sync`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(300000), // 5 min timeout
+        body: formData,
+        signal: AbortSignal.timeout(3000000), // 5 min timeout
       });
       console.log('📊 Embedding API Response:', {
         status: embeddingResponse.status,

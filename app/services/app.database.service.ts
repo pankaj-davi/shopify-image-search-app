@@ -31,7 +31,8 @@ export class AppDatabaseService {
           timezoneOffset: storeInfo.timezoneOffset,
           timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
           plan: storeInfo.plan,
-          
+          productCount: 0, // Initialize with 0 products
+
           // Enhanced store details
           description: storeInfo.description,
           url: storeInfo.url,
@@ -50,7 +51,7 @@ export class AppDatabaseService {
           transactionalSmsDisabled: storeInfo.transactionalSmsDisabled,
           features: storeInfo.features,
           resourceLimits: storeInfo.resourceLimits,
-          
+
           createdAt: storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date(),
           updatedAt: storeInfo.updatedAt && typeof storeInfo.updatedAt === 'string' ? new Date(storeInfo.updatedAt) : (storeInfo.createdAt && typeof storeInfo.createdAt === 'string' ? new Date(storeInfo.createdAt) : new Date()),
         };
@@ -253,6 +254,7 @@ export class AppDatabaseService {
         timezoneOffset: storeInfo.timezoneOffset,
         timezoneOffsetMinutes: storeInfo.timezoneOffsetMinutes,
         plan: storeInfo.plan,
+        productCount: 0, // Initialize with 0 products
         description: storeInfo.description,
         url: storeInfo.url,
         primaryDomain: storeInfo.primaryDomain,

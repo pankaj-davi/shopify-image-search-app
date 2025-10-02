@@ -40,16 +40,14 @@ export async function syncProductToExternalAPI(shopDomain: string, productIds: s
   try {
     console.log(`🔄 Syncing products to external API: ${action} - ${productIds.join(', ')}`);
 
-    const response = await fetch(`${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/${shopDomain}/selective`, {
+    const formData = new FormData();
+    formData.append('store_domain', shopDomain);
+    formData.append('productIds', JSON.stringify(productIds));
+    formData.append('action', action);
+
+    const response = await fetch(`${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/sync`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        shopDomain,
-        productIds,
-        action
-      }),
+      body: formData,
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
 

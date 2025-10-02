@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://permit-required-metadata-aims.trycloudflare.com',
-    EXTERNAL_API_URL: 'https://permit-required-metadata-aims.trycloudflare.com/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://playlist-jar-confirmed-consult.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://playlist-jar-confirmed-consult.trycloudflare.com/api/product-handle',
     // SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'pixel-dress-store.myshopify.com',
     SHOP_DOMAIN: window.VISUAL_SEARCH_CONFIG?.shopDomain || 'test-neno3.myshopify.com',
     
@@ -90,7 +90,20 @@
     
     // File upload settings - Static limits
     MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
-    ACCEPTED_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    ACCEPTED_TYPES: [
+      'image/jpeg',
+      'image/jpg',        // JPEG variant
+      'image/pjpeg',      // Progressive JPEG
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/heic',       // iPhone format
+      'image/heif',       // iPhone format variant
+      'image/avif',       // Next-gen format
+      'image/bmp',        // Bitmap
+      'image/tiff',       // High-quality
+      'image/svg+xml'     // Vector graphics
+    ]
   };
   
   console.log('[Visual Search] Static Configuration loaded: PankajTest', {
@@ -4220,7 +4233,7 @@
     }
     
     if (!CONFIG.ACCEPTED_TYPES.includes(file.type)) {
-      showError('Please select a valid image file (JPEG, PNG, WebP, or GIF).');
+      showError('Please select a valid image file (JPEG, PNG, WebP, GIF, HEIC, AVIF, BMP, TIFF, or SVG).');
       return false;
     }
     

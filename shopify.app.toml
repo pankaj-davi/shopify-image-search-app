@@ -2,7 +2,7 @@
 
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
-application_url = "https://permit-required-metadata-aims.trycloudflare.com"
+application_url = "https://playlist-jar-confirmed-consult.trycloudflare.com"
 embedded = true
 handle = "newp"
 
@@ -46,9 +46,9 @@ scopes = "write_products,write_script_tags"
 
 [auth]
 redirect_urls = [
-  "https://permit-required-metadata-aims.trycloudflare.com/auth/callback",
-  "https://permit-required-metadata-aims.trycloudflare.com/auth/shopify/callback",
-  "https://permit-required-metadata-aims.trycloudflare.com/api/auth/callback"
+  "https://playlist-jar-confirmed-consult.trycloudflare.com/auth/callback",
+  "https://playlist-jar-confirmed-consult.trycloudflare.com/auth/shopify/callback",
+  "https://playlist-jar-confirmed-consult.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

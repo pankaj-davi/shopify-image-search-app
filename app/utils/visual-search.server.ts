@@ -27,10 +27,11 @@ export async function callVisualSearchAPI(
   const formDataStart = Date.now();
   const searchFormData = new FormData();
   searchFormData.append("file", imageFile);
+  searchFormData.append("store_domain", shopDomain);
   console.log(`[TIMING] FormData creation took: ${Date.now() - formDataStart}ms`);
-  
-   const url = `${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/search/${shopDomain}`;
-  
+
+   const url = `${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/search`;
+
   try {
     const fetchStart = Date.now();
     const searchResponse = await fetch(url, {
