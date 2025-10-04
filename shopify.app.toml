@@ -2,7 +2,7 @@
 
 client_id = "19b92a0c7d4e217c2220271d82babe19"
 name = "newP"
-application_url = "https://new-p-shopify-test.netlify.app"
+application_url = "https://supervisor-leon-perfect-widescreen.trycloudflare.com"
 embedded = true
 handle = "newp"
 
@@ -46,9 +46,9 @@ scopes = "write_products,write_script_tags"
 
 [auth]
 redirect_urls = [
-  "https://new-p-shopify-test.netlify.app/auth/callback",
-  "https://new-p-shopify-test.netlify.app/auth/shopify/callback",
-  "https://new-p-shopify-test.netlify.app/api/auth/callback"
+  "https://supervisor-leon-perfect-widescreen.trycloudflare.com/auth/callback",
+  "https://supervisor-leon-perfect-widescreen.trycloudflare.com/auth/shopify/callback",
+  "https://supervisor-leon-perfect-widescreen.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

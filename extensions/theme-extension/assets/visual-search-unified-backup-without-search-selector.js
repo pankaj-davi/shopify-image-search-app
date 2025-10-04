@@ -20,8 +20,8 @@
   
   const CONFIG = {
     // App configuration - Dynamic values from Liquid template
-    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://new-p-shopify-test.netlify.app',
-    EXTERNAL_API_URL: 'https://new-p-shopify-test.netlify.app/api/product-handle',
+    APP_URL: window.VISUAL_SEARCH_CONFIG?.appUrl || 'https://supervisor-leon-perfect-widescreen.trycloudflare.com',
+    EXTERNAL_API_URL: 'https://supervisor-leon-perfect-widescreen.trycloudflare.com/api/product-handle',
     // Always use actual hostname from the browser
     SHOP_DOMAIN: window.location.hostname,
     
