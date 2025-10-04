@@ -35,35 +35,8 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
       console.log(`🔄 Resuming failed sync from ${existingJob.syncedCount}/${existingJob.totalProducts}`);
     }
 
-    // Get total product count quickly
-    const countResponse = await admin.graphql(`
-      query {
-        productsCount {
-          count
-        }
-      }
-    `);
-    const countData = await countResponse.json();
-
-    // EDGE CASE: Handle GraphQL errors
-    if (countData.errors) {
-      throw new Error(`Shopify API error: ${JSON.stringify(countData.errors)}`);
-    }
-
-    const totalProducts = countData.data?.productsCount?.count || 0;
-
-    // EDGE CASE: No products to sync
-    if (totalProducts === 0) {
-      return json({
-        success: true,
-        jobId: null,
-        totalProducts: 0,
-        message: "No products to sync"
-      });
-    }
-
-    // Use existing failed job or create new one
-    const jobId = shouldResumeJob ? existingJob.id : await appDatabase.createSyncJob(shopDomain, totalProducts);
+    // Create job (Python will get product count)
+    const jobId = shouldResumeJob ? existingJob.id : await appDatabase.createSyncJob(shopDomain, 0);
 
     console.log(shouldResumeJob
       ? `✅ Resuming job: ${jobId}`
@@ -76,6 +49,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
     const syncEndpoint = `${pythonServerUrl}/api/sync-products`;
 
     // Fire-and-forget HTTP call to Python server
+    // Python will get product count from Shopify
     fetch(syncEndpoint, {
       method: 'POST',
       headers: {
@@ -85,8 +59,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
         shopDomain,
         jobId,
         accessToken: session.accessToken,
-        shopifyApiVersion: '2024-10',
-        totalProducts
+        shopifyApiVersion: '2024-10'
       })
     }).catch((error: any) => {
       console.error(`❌ Python server error for job ${jobId}:`, error);
@@ -95,11 +68,10 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 
     console.log(`✅ Python Server invoked successfully`);
 
-    // Return immediately with jobId
+    // Return immediately with jobId (totalProducts will be set by Python)
     return json({
       success: true,
       jobId,
-      totalProducts,
       message: "Sync started in background"
     });
 

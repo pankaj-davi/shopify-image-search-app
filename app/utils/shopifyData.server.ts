@@ -46,19 +46,9 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
         }
       }
 
-      // Fallback: If no sync job or count is 0, count from database (old method)
-      if (actualProductCount === 0) {
-        const storeProducts = await appDatabase.getStoreProducts(shopDomain, 1000);
-        actualProductCount = storeProducts.length;
-        hasSyncedProducts = storeProducts.length > 0;
-        console.log(`📊 Fallback: Counted ${actualProductCount} products from database (capped at 1000)`);
-      }
+      // No Firestore products - count comes from sync_jobs only
     } catch (error) {
       console.error('❌ Error checking for sync job:', error);
-      // Final fallback: count from database
-      const storeProducts = await appDatabase.getStoreProducts(shopDomain, 1000);
-      actualProductCount = storeProducts.length;
-      hasSyncedProducts = storeProducts.length > 0;
     }
 
     return {
