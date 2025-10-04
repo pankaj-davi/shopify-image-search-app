@@ -2,7 +2,6 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { appDatabase } from "../services/app.database.service";
-import { runBackgroundSync } from "../utils/sync.worker.server";
 
 export async function action({ request, params, context }: ActionFunctionArgs) {
   if (request.method !== "POST") {
@@ -15,8 +14,10 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
 
     console.log(`🚀 Sync requested for shop: ${shopDomain}`);
 
-    // EDGE CASE: Check for existing running sync
+    // EDGE CASE: Check for existing running or failed sync
     const existingJob = await appDatabase.getLatestSyncJob(shopDomain);
+
+    // If sync is running, return existing job
     if (existingJob && (existingJob.status === 'pending' || existingJob.status === 'running')) {
       console.log(`⚠️ Sync already in progress: ${existingJob.id}`);
       return json({
@@ -26,6 +27,12 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
         message: "Sync already in progress",
         alreadyRunning: true
       });
+    }
+
+    // If failed, we'll resume this job (use same jobId)
+    const shouldResumeJob = existingJob && existingJob.status === 'failed' && existingJob.cursor;
+    if (shouldResumeJob) {
+      console.log(`🔄 Resuming failed sync from ${existingJob.syncedCount}/${existingJob.totalProducts}`);
     }
 
     // Get total product count quickly
@@ -55,16 +62,38 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
       });
     }
 
-    // Create sync job in Firebase
-    const jobId = await appDatabase.createSyncJob(shopDomain, totalProducts);
+    // Use existing failed job or create new one
+    const jobId = shouldResumeJob ? existingJob.id : await appDatabase.createSyncJob(shopDomain, totalProducts);
 
-    console.log(`✅ Sync job created: ${jobId}`);
+    console.log(shouldResumeJob
+      ? `✅ Resuming job: ${jobId}`
+      : `✅ Sync job created: ${jobId}`);
 
-    // Start background sync (fire and forget - continues even if client disconnects)
-    runBackgroundSync({ admin, shopDomain, jobId }).catch((error) => {
-      console.error(`❌ Background sync error for job ${jobId}:`, error);
-      // Error is already logged in job status, no need to throw
+    // Invoke Python Server for background sync (no timeout limits)
+    console.log(`🐍 Invoking Python Server for background sync`);
+
+    const pythonServerUrl = process.env.PYTHON_SERVER_URL;
+    const syncEndpoint = `${pythonServerUrl}/api/sync-products`;
+
+    // Fire-and-forget HTTP call to Python server
+    fetch(syncEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        shopDomain,
+        jobId,
+        accessToken: session.accessToken,
+        shopifyApiVersion: '2024-10',
+        totalProducts
+      })
+    }).catch((error: any) => {
+      console.error(`❌ Python server error for job ${jobId}:`, error);
+      // Error will be logged in Python server and job status updated
     });
+
+    console.log(`✅ Python Server invoked successfully`);
 
     // Return immediately with jobId
     return json({

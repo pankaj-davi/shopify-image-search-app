@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { appDatabase } from "../services/app.database.service";
 
@@ -12,23 +12,53 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
   
   if (storeExists) {
     console.log("🔍 Store exists, checking product sync status...");
-    // Check if we have any synced products and get actual count
-    const storeProducts = await appDatabase.getStoreProducts(shopDomain, 1000); // Get more to count
-    const hasSyncedProducts = storeProducts.length > 0;
-    const actualProductCount = storeProducts.length;
 
-    console.log(`📊 Found ${actualProductCount} products in database`);
-
-    // Check for ongoing sync job
+    let actualProductCount = 0;
+    let hasSyncedProducts = false;
     let ongoingJobId = null;
+
+    // Check for latest sync job (any status for UI state restoration)
     try {
       const latestJob = await appDatabase.getLatestSyncJob(shopDomain);
-      if (latestJob && (latestJob.status === 'pending' || latestJob.status === 'running')) {
-        ongoingJobId = latestJob.id;
-        console.log(`🔄 Found ongoing sync job: ${ongoingJobId}`);
+
+      if (latestJob) {
+        // Use syncedCount from sync job for accurate count (handles >1000 products)
+        if (latestJob.syncedCount && latestJob.syncedCount > 0) {
+          actualProductCount = latestJob.syncedCount;
+          hasSyncedProducts = true;
+          console.log(`📊 Using count from sync job (${latestJob.status}): ${actualProductCount}`);
+        }
+
+        // Return job if it's pending, running, or failed (to allow resume)
+        if (latestJob.status === 'pending' || latestJob.status === 'running' || latestJob.status === 'failed') {
+          ongoingJobId = latestJob.id;
+          console.log(`🔄 Found sync job (${latestJob.status}): ${ongoingJobId}`);
+        }
+        // For completed jobs, show success message briefly (10 seconds)
+        else if (latestJob.status === 'completed' && latestJob.completedAt) {
+          const completedAt = new Date(latestJob.completedAt);
+          const now = new Date();
+          const secondsSinceComplete = (now.getTime() - completedAt.getTime()) / 1000;
+          if (secondsSinceComplete < 10) {
+            ongoingJobId = latestJob.id;
+            console.log(`✅ Found recently completed job: ${ongoingJobId}`);
+          }
+        }
+      }
+
+      // Fallback: If no sync job or count is 0, count from database (old method)
+      if (actualProductCount === 0) {
+        const storeProducts = await appDatabase.getStoreProducts(shopDomain, 1000);
+        actualProductCount = storeProducts.length;
+        hasSyncedProducts = storeProducts.length > 0;
+        console.log(`📊 Fallback: Counted ${actualProductCount} products from database (capped at 1000)`);
       }
     } catch (error) {
-      console.error('❌ Error checking for ongoing sync:', error);
+      console.error('❌ Error checking for sync job:', error);
+      // Final fallback: count from database
+      const storeProducts = await appDatabase.getStoreProducts(shopDomain, 1000);
+      actualProductCount = storeProducts.length;
+      hasSyncedProducts = storeProducts.length > 0;
     }
 
     return {
@@ -235,337 +265,4 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     productCount: 0, // No products synced to DB yet
     totalProductsInShopify: totalProducts, // Total in Shopify
   };
-}
-
-// Action function for full sync
-export async function fullSyncAction({ request }: ActionFunctionArgs) {
-  console.log('🚀 Starting full sync action...');
-  const { admin, session } = await authenticate.admin(request);
-  const shopDomain = session.shop;
-  console.log(`📍 Shop Domain: ${shopDomain}`);
-
-  try {
-    let dbSyncStatus = {
-      success: false,
-      syncedCount: 0,
-      totalProducts: 0
-    };
-    console.log('📊 Initial sync status:', dbSyncStatus);
-
-    // Check if DB sync is needed (if previous embedding failed)
-    console.log('🔍 Checking if database sync is needed...');
-    const existingProducts = await appDatabase.getStoreProducts(shopDomain, 1);
-    const needsDBSync = existingProducts.length === 0;
-    console.log(`📌 Database sync needed: ${needsDBSync ? 'Yes' : 'No'}`);
-
-    if (needsDBSync) {
-      console.log('📥 Starting database sync...');
-      // Get total product count first
-      const countResponse = await admin.graphql(`
-        query {
-          productsCount {
-            count
-          }
-        }
-      `);
-      const countData = await countResponse.json();
-      const totalProducts = countData.data.productsCount.count;
-      console.log(`📦 Total products to sync: ${totalProducts}`);
-      console.log('🔄 Starting batch sync process...');
-
-      try {
-        // Sync products in batches of 50 (reduced from 250 for speed)
-        const batchSize = 50;
-        let cursor: string | null = null;
-        let syncedCount = 0;
-
-        // CRITICAL: Limit to first 5 batches to avoid timeout (250 products max)
-        const maxBatches = 5;
-        let batchCount = 0;
-
-        while (syncedCount < totalProducts && batchCount < maxBatches) {
-          const query: string = cursor 
-            ? `query {
-                products(first: ${batchSize}, after: "${cursor}") {
-                  pageInfo {
-                    hasNextPage
-                    endCursor
-                  }
-                  edges {
-                    node {
-                      id
-                      title
-                      handle
-                      status
-                      description
-                      vendor
-                      productType
-                      tags
-                      createdAt
-                      updatedAt
-                  onlineStoreUrl
-                  totalInventory
-                  options { name values }
-                  priceRangeV2 {
-                    minVariantPrice { amount currencyCode }
-                    maxVariantPrice { amount currencyCode }
-                  }
-                  featuredMedia {
-                    mediaContentType
-                    ... on MediaImage {
-                      image {
-                        url
-                        altText
-                      }
-                    }
-                  }
-                  media(first: 10) {
-                    edges {
-                      node {
-                        mediaContentType
-                        ... on MediaImage {
-                          image {
-                            url
-                            altText
-                            width
-                            height
-                          }
-                        }
-                      }
-                    }
-                  }
-                  variants(first: 10) {
-                    edges {
-                      node {
-                        id
-                        price
-                        sku
-                        title
-                        availableForSale
-                        image {
-                          url
-                          altText
-                          width
-                          height
-                        }
-                      }
-                    }
-                  }
-                  metafields(first: 10) {
-                    edges {
-                      node {
-                        namespace
-                        key
-                        value
-                        type
-                        definition {
-                          description
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }`
-        : `query {
-            products(first: ${batchSize}) {
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-              edges {
-                node {
-                  id
-                  title
-                  handle
-                  status
-                  description
-                  vendor
-                  productType
-                  tags
-                  createdAt
-                  updatedAt
-                  onlineStoreUrl
-                  totalInventory
-                  options { name values }
-                  priceRangeV2 {
-                    minVariantPrice { amount currencyCode }
-                    maxVariantPrice { amount currencyCode }
-                  }
-                  featuredMedia {
-                    mediaContentType
-                    ... on MediaImage {
-                      image {
-                        url
-                        altText
-                      }
-                    }
-                  }
-                  media(first: 10) {
-                    edges {
-                      node {
-                        mediaContentType
-                        ... on MediaImage {
-                          image {
-                            url
-                            altText
-                            width
-                            height
-                          }
-                        }
-                      }
-                    }
-                  }
-                  variants(first: 10) {
-                    edges {
-                      node {
-                        id
-                        price
-                        sku
-                        title
-                        availableForSale
-                        image {
-                          url
-                          altText
-                          width
-                          height
-                        }
-                      }
-                    }
-                  }
-                  metafields(first: 10) {
-                    edges {
-                      node {
-                        namespace
-                        key
-                        value
-                        type
-                        definition {
-                          description
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }`;
-
-      const response: any = await admin.graphql(query);
-      const data: any = await response.json();
-      
-      const products = data.data.products.edges.map((edge: any) => edge.node);
-      
-      // Save products batch
-      console.log(`💾 Saving batch of ${products.length} products...`);
-      await appDatabase.saveProductsBatch(shopDomain, products);
-
-      syncedCount += products.length;
-      batchCount++;
-      cursor = data.data.products.pageInfo.endCursor;
-      console.log(`✅ Progress: ${syncedCount}/${totalProducts} products synced (batch ${batchCount}/${maxBatches})`);
-
-      // Rate limiting - wait 50ms between batches
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Break if no more pages
-      if (!data.data.products.pageInfo.hasNextPage) {
-        break;
-      }
-    }
-
-    // If we hit the batch limit, warn that more products exist
-    if (batchCount >= maxBatches && syncedCount < totalProducts) {
-      console.warn(`⚠️ Partial sync: ${syncedCount}/${totalProducts} products synced due to timeout limits`);
-    }
-
-    dbSyncStatus = {
-      success: true,
-      syncedCount: syncedCount,
-      totalProducts: totalProducts
-    };
-    console.log('✨ Database sync completed successfully:', dbSyncStatus);
-      } catch (dbError: any) {
-        console.error('❌ Database sync failed:', dbError);
-        return {
-          success: false,
-          error: dbError?.message || 'Database sync failed',
-          phase: 'database',
-          needsDBSync: true,
-          needsEmbeddingSync: true
-        };
-      }
-    } else {
-      dbSyncStatus = {
-        success: true,
-        syncedCount: existingProducts.length,
-        totalProducts: existingProducts.length
-      };
-    }
-
-    // If DB sync succeeded or wasn't needed, try embedding
-    console.log('🎯 Starting embedding process...');
-    try {
-      console.log(`📡 Calling embedding API for shop: ${shopDomain}`);
-      const formData = new FormData();
-      formData.append('store_domain', shopDomain);
-      console.log(`🔧 Curl equivalent: curl --location "${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/sync" --form 'store_domain="${shopDomain}"'`);
-      const embeddingResponse = await fetch(`${process.env.SHOPIFY_APP_EMBEDDINGS_URL}/sync`, {
-        method: 'POST',
-        body: formData,
-        signal: AbortSignal.timeout(8000), // 8s timeout to stay within 10s Netlify limit
-      });
-      console.log('📊 Embedding API Response:', {
-        status: embeddingResponse.status,
-        statusText: embeddingResponse.statusText,
-        ok: embeddingResponse.ok
-      });
-      if (!embeddingResponse.ok) {
-        console.warn('⚠️ Embedding API returned error status:', embeddingResponse.status);
-        return {
-          success: false,
-          error: 'Visual search setup incomplete',
-          phase: 'embedding',
-          needsDBSync: false,
-          needsEmbeddingSync: true,
-          dbStatus: dbSyncStatus
-        };
-      }
-
-      console.log('🎉 Everything succeeded - both database and embedding sync complete');
-      // Everything succeeded
-      return {
-        success: true,
-        syncedProducts: dbSyncStatus.syncedCount,
-        totalProducts: dbSyncStatus.totalProducts,
-        embeddingSuccess: true
-      };
-
-    } catch (embeddingError: any) {
-      console.error('❌ Embedding sync error:', {
-        error: embeddingError.message,
-        name: embeddingError.name,
-        stack: embeddingError.stack
-      });
-      return {
-        success: false,
-        error: 'Visual search setup incomplete',
-        phase: 'embedding',
-        needsDBSync: false,
-        needsEmbeddingSync: true,
-        dbStatus: dbSyncStatus
-      };
-    }
-
-  } catch (error: any) {
-    console.error('Full sync error:', error);
-    return {
-      success: false,
-      error: error?.message || 'Unexpected error occurred',
-      phase: 'unknown',
-      needsDBSync: true,
-      needsEmbeddingSync: true
-    };
-  }
 }

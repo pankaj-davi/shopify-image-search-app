@@ -33,12 +33,16 @@ export default function Index() {
 
   const isLoading = syncFetcher.state === "loading" || syncFetcher.state === "submitting";
   const syncResult = syncFetcher.data as any;
-  const syncSuccess = syncResult?.success;
 
   // Poll for sync status when we have a jobId
   useEffect(() => {
-    // Don't poll if no jobId or if products are already synced
-    if (!currentJobId || !needsSync) return;
+    // Don't poll if no jobId
+    if (!currentJobId) return;
+
+    // Don't poll if sync is already completed or failed
+    if (syncStatus && (syncStatus.status === 'completed' || syncStatus.status === 'failed')) {
+      return;
+    }
 
     const pollStatus = async () => {
       statusFetcher.load(`/app/sync-status/${currentJobId}`);
@@ -47,11 +51,11 @@ export default function Index() {
     // Initial poll
     pollStatus();
 
-    // Poll every 2 seconds
-    const interval = setInterval(pollStatus, 2000);
+    // Poll every 5 seconds
+    const interval = setInterval(pollStatus, 5000);
 
     return () => clearInterval(interval);
-  }, [currentJobId, needsSync]);
+  }, [currentJobId, syncStatus]);
 
   // Update sync status from fetcher
   useEffect(() => {
@@ -60,10 +64,9 @@ export default function Index() {
       if (data.success && data.job) {
         setSyncStatus(data.job);
 
-        // Stop polling if completed or failed
-        if (data.job.status === 'completed' || data.job.status === 'failed') {
-          setCurrentJobId(null);
-        }
+        // Keep jobId for both completed and failed states
+        // This allows UI to show success/resume messages
+        // Don't clear jobId - only polling will stop
       }
     }
   }, [statusFetcher.data]);
@@ -140,8 +143,10 @@ export default function Index() {
   };
   
   // Update local state based on sync result - no reload needed!
-  const effectiveNeedsSync = syncSuccess ? false : needsSync;
-  const effectiveProductCount = syncSuccess ? (syncFetcher.data as any)?.syncedProducts || productCount : productCount;
+  const effectiveNeedsSync = (syncStatus?.status === 'completed') ? false : needsSync;
+  const effectiveProductCount = (syncStatus?.status === 'completed')
+    ? syncStatus.syncedCount || productCount
+    : productCount;
 
   const handleSync = () => {
     syncFetcher.submit({}, {
@@ -171,12 +176,14 @@ export default function Index() {
                   ) : null}
                   <Text as="h2" variant="headingLg" alignment="center">
                     {syncStatus?.status === 'running'
-                      ? `Syncing Products...`
+                      ? (syncStatus.syncedCount > 0 ? `Resuming Sync...` : `Syncing Products...`)
                       : 'Starting sync...'}
                   </Text>
                   <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
                     {syncStatus?.status === 'running'
-                      ? 'Your sync is running in the background. You can close this page - it will continue!'
+                      ? (syncStatus.syncedCount > 0
+                          ? `Continuing from ${syncStatus.syncedCount} products. Your sync is running in the background!`
+                          : 'Your sync is running in the background. You can close this page - it will continue!')
                       : 'Please wait while we prepare your sync'}
                   </Text>
                 </BlockStack>
@@ -203,8 +210,37 @@ export default function Index() {
           </Card>
         )}
 
+        {/* Failed State - Show Resume Option */}
+        {syncStatus && syncStatus.status === 'failed' && !isLoading && (
+          <Card>
+            <Box padding="500">
+              <BlockStack gap="400" align="center">
+                <Box>
+                  <Text as="span" variant="headingXl">⚠️</Text>
+                </Box>
+                <BlockStack gap="200" align="center">
+                  <Text as="h2" variant="headingLg" alignment="center">
+                    Sync Paused
+                  </Text>
+                  <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
+                    Sync stopped at {syncStatus.syncedCount} of {syncStatus.totalProducts} products ({syncStatus.progress}%)
+                  </Text>
+                  {syncStatus.error && (
+                    <Text as="p" variant="bodySm" tone="critical" alignment="center">
+                      Reason: Rate limit reached
+                    </Text>
+                  )}
+                </BlockStack>
+                <Button onClick={handleSync} variant="primary" size="large">
+                  Resume Sync from {syncStatus.syncedCount} products →
+                </Button>
+              </BlockStack>
+            </Box>
+          </Card>
+        )}
+
         {/* Success State - More engaging */}
-        {syncSuccess && !isLoading && (
+        {syncStatus && syncStatus.status === 'completed' && !isLoading && (
           <Card>
             <Box padding="500">
               <BlockStack gap="400" align="center">
@@ -218,11 +254,9 @@ export default function Index() {
                   <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
                     Your products are now ready for visual search!
                   </Text>
-                  {(syncFetcher.data as any)?.syncedProducts && (
-                    <Text as="p" variant="bodySm" tone="success" alignment="center">
-                      ✅ {(syncFetcher.data as any).syncedProducts} products synced successfully
-                    </Text>
-                  )}
+                  <Text as="p" variant="bodySm" tone="success" alignment="center">
+                    ✅ {syncStatus.syncedCount} products synced successfully
+                  </Text>
                 </BlockStack>
               </BlockStack>
             </Box>
@@ -282,8 +316,8 @@ export default function Index() {
               </BlockStack>
             </InlineStack>
 
-            {/* Quick setup CTA for users who need sync */}
-            {effectiveNeedsSync && !isLoading && (
+            {/* Quick setup CTA for users who need sync - ONLY show if no sync is running */}
+            {effectiveNeedsSync && !isLoading && !currentJobId && !syncStatus && (
               <Box background="bg-surface-info" padding="400" borderRadius="200">
                 <BlockStack gap="300">
                   <InlineStack gap="200" align="start">

@@ -45,3 +45,12 @@ test-firebase.js
 
 # Local Netlify folder
 .netlify
+
+# Python Server
+python-server/__pycache__/
+python-server/*.pyc
+python-server/.env
+python-server/venv/
+python-server/env/
+python-server/*.log
+python-server/*serviceAccountKey.json

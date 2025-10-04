@@ -1,13 +1,8 @@
+functionsDirectory = "D:\\AI\\UUD\\new-p\\build\\server"
+functionsDirectoryOrigin = "config"
 headersOrigin = "config"
 redirectsOrigin = "config"
 plugins = []
-functionsDirectory = "D:\\AI\\UUD\\new-p\\build\\server"
-functionsDirectoryOrigin = "config"
-
-[functions]
-
-[functions."*"]
-node_bundler = "esbuild"
 
 [build]
 publish = "D:\\AI\\UUD\\new-p\\build\\client"
@@ -31,6 +26,11 @@ NETLIFY_CACHE_INVALIDATOR = "2025-10-03-v3"
 [build.processing.js]
 
 [build.services]
+
+[functions]
+
+[functions."*"]
+node_bundler = "esbuild"
 
 [[headers]]
 for = "/assets/*"
