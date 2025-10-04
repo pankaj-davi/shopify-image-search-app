@@ -561,7 +561,6 @@ export class FirebaseDatabase implements DatabaseInterface {
         startedAt: null,
         completedAt: null,
         error: null,
-        embeddingSuccess: false,
       };
 
       // Store sync job as subcollection under store: stores/{storeId}/sync_jobs/{jobId}
@@ -607,7 +606,6 @@ export class FirebaseDatabase implements DatabaseInterface {
               startedAt: data.startedAt,
               completedAt: data.completedAt,
               error: data.error,
-              embeddingSuccess: data.embeddingSuccess,
             };
           }
         }
@@ -650,7 +648,6 @@ export class FirebaseDatabase implements DatabaseInterface {
         startedAt: data.startedAt,
         completedAt: data.completedAt,
         error: data.error,
-        embeddingSuccess: data.embeddingSuccess,
       };
     } catch (error) {
       console.error('❌ Error getting sync job:', error);
