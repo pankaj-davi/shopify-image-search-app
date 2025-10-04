@@ -18,11 +18,9 @@ DATABASE_PROVIDER=firebase
 #### 🔥 Firebase (Recommended for rapid development)
 ```env
 DATABASE_PROVIDER=firebase
-FIREBASE_PROJECT_ID=your-firebase-project-id
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----"
 ```
-**📋 [See detailed Firebase setup guide](./FIREBASE_SETUP.md)**
 
 #### 🗄️ Prisma (SQL databases)
 ```env

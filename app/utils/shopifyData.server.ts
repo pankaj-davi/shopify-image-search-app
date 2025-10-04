@@ -72,7 +72,7 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
     };
   }
 
-  // Fetch store information and products from Shopify (with images, metafields, and more shop details)
+  // Fetch store information from Shopify (Python server handles product fetching)
   const storeResponse = await admin.graphql(
     `#graphql
       query {
@@ -88,13 +88,13 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
           timezoneOffsetMinutes
           createdAt
           updatedAt
-          
+
           # Plan Details (enhanced)
           plan {
             partnerDevelopment
             shopifyPlus
           }
-          
+
           # Store Details (NEW)
           description
           url
@@ -103,16 +103,16 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
             sslEnabled
             url
           }
-          
+
           # Contact & Communication (NEW)
           contactEmail
-          
+
           # Location & Settings (NEW)
           ianaTimezone
           weightUnit
           unitSystem
           enabledPresentmentCurrencies
-          
+
           # Address Information (NEW)
           billingAddress {
             address1
@@ -126,7 +126,7 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
             provinceCode
             zip
           }
-          
+
           # Store Configuration (NEW)
           checkoutApiSupported
           setupRequired
@@ -134,7 +134,7 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
           taxShipping
           marketingSmsConsentEnabledAtCheckout
           transactionalSmsDisabled
-          
+
           # Store Features (NEW)
           features {
             avalaraAvatax
@@ -147,90 +147,13 @@ export async function shopifyStoreLoader({ request }: LoaderFunctionArgs) {
             showMetrics
             storefront
           }
-          
+
           # Resource Limits (NEW)
           resourceLimits {
             locationLimit
             maxProductOptions
             maxProductVariants
             redirectLimitReached
-          }
-        }
-        products(first: 25) {
-          edges {
-            node {
-              id
-              title
-              handle
-              status
-              description
-              vendor
-              productType
-              tags
-              createdAt
-              updatedAt
-              onlineStoreUrl
-              totalInventory
-              options { name values }
-              priceRangeV2 {
-                minVariantPrice { amount currencyCode }
-                maxVariantPrice { amount currencyCode }
-              }
-              featuredMedia {
-                mediaContentType
-                ... on MediaImage {
-                  image {
-                    url
-                    altText
-                  }
-                }
-              }
-              media(first: 10) {
-                edges {
-                  node {
-                    mediaContentType
-                    ... on MediaImage {
-                      image {
-                        url
-                        altText
-                        width
-                        height
-                      }
-                    }
-                  }
-                }
-              }
-              variants(first: 10) {
-                edges {
-                  node {
-                    id
-                    price
-                    sku
-                    title
-                    availableForSale
-                    image {
-                      url
-                      altText
-                      width
-                      height
-                    }
-                  }
-                }
-              }
-              metafields(first: 10) {
-                edges {
-                  node {
-                    namespace
-                    key
-                    value
-                    type
-                    definition {
-                      description
-                    }
-                  }
-                }
-              }
-            }
           }
         }
       }

@@ -24,7 +24,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
         progress: job.progress,
         syncedCount: job.syncedCount,
         totalProducts: job.totalProducts,
-        embeddingSuccess: job.embeddingSuccess,
         error: job.error,
         createdAt: job.createdAt,
         completedAt: job.completedAt

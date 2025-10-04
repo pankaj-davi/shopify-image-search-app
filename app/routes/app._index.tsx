@@ -78,59 +78,30 @@ export default function Index() {
     }
   }, [syncResult]);
 
-  // Handle different failure states
+  // Handle sync errors (simplified - Python server handles all logic)
   const getErrorUI = () => {
     if (!syncResult?.error) return null;
 
-    const getErrorMessage = () => {
-      switch (syncResult.phase) {
-        case 'database':
-          return "Failed to save products to database";
-        case 'embedding':
-          return "Visual search setup incomplete";
-        default:
-          return syncResult.error;
-      }
-    };
-
-    const getRetryMessage = () => {
-      switch (syncResult.phase) {
-        case 'database':
-          return "Retry Database Sync";
-        case 'embedding':
-          return "Retry Visual Search Setup";
-        default:
-          return "Try Again";
-      }
-    };
-    
     return (
       <Card>
         <Box padding="400">
           <BlockStack gap="400" align="center">
-            <Text as="span" variant="headingLg">
-              {syncResult.phase === 'database' ? '💾' : '🔍'}
-            </Text>
+            <Text as="span" variant="headingLg">⚠️</Text>
             <BlockStack gap="200" align="center">
               <Text as="h3" variant="headingMd" alignment="center">
-                {syncResult.phase === 'database' ? 'Database Sync Failed' : 'Visual Search Setup Incomplete'}
+                Sync Failed
               </Text>
               <Text as="p" variant="bodyMd" tone="critical" alignment="center">
-                {getErrorMessage()}
+                {syncResult.error}
               </Text>
-              {syncResult.dbStatus?.success && (
-                <Text as="p" variant="bodySm" tone="success" alignment="center">
-                  ✅ {syncResult.dbStatus.syncedCount} products saved to database
-                </Text>
-              )}
             </BlockStack>
             <InlineStack gap="300">
-              <Button 
-                onClick={handleSync} 
+              <Button
+                onClick={handleSync}
                 variant="primary"
-                tone={syncResult.phase === 'database' ? "critical" : undefined}
+                tone="critical"
               >
-                {getRetryMessage()}
+                Try Again
               </Button>
               <Button variant="secondary" url="/app/support">
                 Get Help
